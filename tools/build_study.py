@@ -39,6 +39,19 @@ def unit_order(p):
     return 999 if p == '0' else int(p)
 
 
+def strings(o):
+    """블록 안의 모든 문자열 (svg 제외). JSON 문자열 전체에 정규식을 걸면 표의 [[ 가 섞인다."""
+    if isinstance(o, str):
+        yield o
+    elif isinstance(o, list):
+        for x in o:
+            yield from strings(x)
+    elif isinstance(o, dict):
+        for k, x in o.items():
+            if k not in ('svg', 'src', 'file'):
+                yield from strings(x)
+
+
 def main(slug):
     C = os.path.join(ROOT, 'content', slug)
     P = os.path.join(ROOT, 'subjects', slug, 'index.html')
@@ -99,9 +112,10 @@ def main(slug):
                         else:
                             b['src'] = 'data:image/jpeg;base64,' + base64.b64encode(open(fp, 'rb').read()).decode()
                         del b['file']
-                    for k in re.findall(r'\[\[(.+?)\]\]', json.dumps(b, ensure_ascii=False)):
-                        if k not in terms:
-                            missing_terms[k] += 1
+                    for txt in strings(b):
+                        for k in re.findall(r'\[\[(.+?)\]\]', txt):
+                            if k not in terms:
+                                missing_terms[k] += 1
     if missing_terms:
         problems.append('사전에 없는 용어 %d개: %s' % (len(missing_terms), ', '.join(list(missing_terms)[:30])))
 

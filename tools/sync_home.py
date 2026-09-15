@@ -57,6 +57,7 @@ def scan(path):
         'count': len(bank),
         'types': {k: c.get(k, 0) for k in ('mcq', 'short', 'ox', 'essay')},
         'units': units,
+        'lessons': lessons,
         'features': feats,
         'ready': len(bank) > 0,
     }

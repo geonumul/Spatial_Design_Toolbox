@@ -28,6 +28,15 @@
 - 작업가이드 10절 절차대로 넣고 11절 검증, 끝나면 `python tools/sync_home.py`.
 - 중간/기말 범위가 정해지면 PARTS의 `scope`만 고친다.
 
+### 회독 공부 과목 (현재 IoT 스마트홈)
+
+어려운 과목은 정리노트 대신 "회독 공부" 탭(1회독 큰그림 초등학생 수준, 2회독 중학생 조금 자세히, 3회독 중학생 말투로 자세히 + 기출)과 "용어 도감" 탭을 쓴다. 이 과목은 HTML을 직접 고치지 않고 JSON을 추가한 뒤 빌드한다.
+
+1. 강의자료 1개 → `content/<slug>/unit<N>.json`, 용어 `terms_unit<N>.json`, 문항 `bank_unit<N>.json` (형식: `docs/STUDY_FORMAT.md`). 그림은 `content/<slug>/img/`.
+2. 용어 key는 기존 `terms*.json`에 있는 이름을 그대로 재사용한다(같은 용어가 도감에 두 번 생기지 않게).
+3. `python tools/build_study.py <slug>` → "확인 필요" 목록이 비어야 한다.
+4. 레슨 id(`u3l2` 등)는 한 번 정하면 바꾸지 않는다(회독 완료 기록 연결).
+
 ## 3. 기출문제
 
 1. 기출 문항은 원문 그대로 문제은행에 넣고 `"src":"기출"`을 붙인다. 유형은 원래 형식에 맞춘다(선택형 → mcq, 단답 → short, 나열형과 서술형 → essay의 points, 계산 → short에 숫자 답과 풀이를 e에).

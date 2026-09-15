@@ -280,22 +280,29 @@ function readProgress(key){
   var seen=d.seen||{}, wrong=d.wrong||{}, n=0, ok=0, att=0, w=0, k;
   for(k in seen){ if(seen.hasOwnProperty(k)){ n++; ok+=seen[k].ok||0; att+=seen[k].n||0; } }
   for(k in wrong){ if(wrong.hasOwnProperty(k) && !wrong[k].resolved) w++; }
-  return {seen:n, acc:att?Math.round(ok/att*100):null, wrong:w, extra:(d.extra||[]).length};
+  var reads=0; if(d.study && d.study.done){ for(k in d.study.done){ if(d.study.done.hasOwnProperty(k)) reads++; } }
+  return {seen:n, acc:att?Math.round(ok/att*100):null, wrong:w, extra:(d.extra||[]).length, reads:reads, xp:d.study?d.study.xp||0:0};
 }
 
 /* ---------- 카드 ---------- */
 function renderSubjects(){
   var h="", total=0, wrongAll=0;
   SUBJECTS.forEach(function(s){
-    var p=readProgress(s.key), count=s.count+p.extra, ready=count>0;
+    var p=readProgress(s.key), count=s.count+p.extra, ready=count>0, lessons=s.lessons||0;
     total+=count; wrongAll+=p.wrong;
     var feats=s.features.length ? s.features.map(function(f){ return '<span>'+esc(f)+'</span>'; }).join("") : '<span class="off">정리노트 준비 중</span>';
     if(p.extra) feats+='<span>내가 추가한 문제 '+p.extra+'개</span>';
-    var t=s.types, line;
-    if(p.seen){
-      line=Math.min(p.seen,count)+' / '+count+'문항 풀이'+(p.acc!==null?', 정답률 '+p.acc+'%':'')+(p.wrong?', 오답 '+p.wrong+'개':'');
-    } else line = ready ? '아직 푼 문제가 없습니다' : '강의자료 준비 중';
-    var pct=count?Math.min(100,Math.round(p.seen/count*100)):0;
+    var t=s.types, line, pct;
+    if(lessons){
+      // 회독 공부 과목: 진도는 회독 완료 수(레슨 x 3회독) 기준
+      line='회독 '+Math.min(p.reads, lessons*3)+' / '+(lessons*3)+(p.xp?', '+p.xp+' XP':'')+(p.seen?', 문제 '+p.seen+'개 풀이':'')+(p.wrong?', 오답 '+p.wrong+'개':'');
+      pct=Math.min(100, Math.round(p.reads/(lessons*3)*100));
+    } else {
+      if(p.seen){
+        line=Math.min(p.seen,count)+' / '+count+'문항 풀이'+(p.acc!==null?', 정답률 '+p.acc+'%':'')+(p.wrong?', 오답 '+p.wrong+'개':'');
+      } else line = ready ? '아직 푼 문제가 없습니다' : '강의자료 준비 중';
+      pct=count?Math.min(100,Math.round(p.seen/count*100)):0;
+    }
     h+='<a class="subj'+(ready?'':' wait')+'" href="'+esc(s.href)+'">'
       +'<div class="top"><span class="no">'+esc(s.no)+'</span><span class="badge '+(ready?'ready">공부 가능':'wait">준비 중')+'</span></div>'
       +'<h3>'+esc(s.name)+'</h3>'+(s.sub?'<div class="sub">'+esc(s.sub)+'</div>':'')

@@ -144,12 +144,23 @@ function appendBlock(b, i){
   bindBlock(b, el);
   // 이 레슨에서 처음 본 용어는 본 횟수 +1
   var s=sd();
-  JSON.stringify(b).replace(/\[\[(.+?)\]\]/g, function(m, k){
-    if(TERM_BY[k] && !pl.terms[k]){ pl.terms[k]=1; var r=s.terms[k]||[0,0]; r[0]++; s.terms[k]=r; }
-    return m;
+  blockStrings(b).forEach(function(txt){
+    txt.replace(/\[\[(.+?)\]\]/g, function(m, k){
+      if(TERM_BY[k] && !pl.terms[k]){ pl.terms[k]=1; var r=s.terms[k]||[0,0]; r[0]++; s.terms[k]=r; }
+      return m;
+    });
   });
   save();
   return el;
+}
+/* 블록 안의 문자열만 모은다(표 rows 같은 중첩 배열의 [[ 와 섞이지 않게) */
+function blockStrings(o){
+  var out=[];
+  (function walk(x, key){
+    if(typeof x==="string"){ if(key!=="svg" && key!=="src") out.push(x); }
+    else if(x && typeof x==="object"){ for(var k in x){ if(x.hasOwnProperty(k)) walk(x[k], Array.isArray(x)?key:k); } }
+  })(o, "");
+  return out;
 }
 
 /* ---------- 블록 그리기 ---------- */

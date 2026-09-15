@@ -24,6 +24,9 @@ assets/firebase-config.js       Firebase 설정. null 이면 로그인 꺼짐
 firestore.rules                 DB 규칙(각자 자기 기록만)
 tools/new_subject.py            빈 과목 페이지 만들기 (근현대 페이지의 엔진을 복사하고 내용만 비움)
 tools/sync_home.py              과목 파일에서 문항 수, 단원 수를 읽어 홈 카드 숫자 갱신
+tools/build_study.py            회독 공부 과목 빌드: content/<slug>/ JSON → 과목 페이지 (docs/STUDY_FORMAT.md)
+tools/study/                    회독 공부, 용어 도감 화면 코드(css, html, js)
+content/<slug>/                 회독 공부 과목의 원본 데이터(단원, 용어, 문항, 그림)
 docs/WORKFLOW.md                강의자료, 기출문제, 녹음 반영 절차
 docs/LOGIN_SETUP.md             로그인(Firebase) 켜는 법
 docs/modern-space-design/       작업가이드, 코딩 가이드라인, 검증 보고서 (모든 과목 공통 규칙)
