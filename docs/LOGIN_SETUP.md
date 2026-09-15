@@ -13,18 +13,21 @@
 7. 왼쪽 위 톱니바퀴 **프로젝트 설정 → 일반 → 내 앱 → 웹(`</>`) 아이콘** → 앱 닉네임 아무거나 → Firebase 호스팅은 체크하지 않음 → 앱 등록.
 8. 화면에 나오는 `const firebaseConfig = { apiKey: "...", authDomain: "...", ... };` 의 중괄호 부분을 복사.
 
+> 현재 상태(2026-09-15): 프로젝트 `spatialstudy-fdaa2`로 설정 완료. Google 로그인 사용, 승인된 도메인에 `geonumul.github.io` 등록, Firestore 규칙 게시(익명 쓰기 거부 확인)까지 끝났다.
+
 ## 2. 사이트에 넣기
 
-`assets/firebase-config.js` 의 `window.SDT_FIREBASE = null;` 을 아래처럼 바꾸고 커밋, 푸시한다. (복사한 값을 Claude에게 주면 대신 넣어 준다.)
+`assets/firebase-config.js` 의 `window.SDT_FIREBASE` 에 아래처럼 넣고 커밋, 푸시한다. (복사한 값을 Claude에게 주면 대신 넣어 준다.) 현재 값:
 
 ```js
 window.SDT_FIREBASE = {
-  apiKey: "...",
-  authDomain: "spatial-design-toolbox.firebaseapp.com",
-  projectId: "spatial-design-toolbox",
-  storageBucket: "...",
-  messagingSenderId: "...",
-  appId: "..."
+  apiKey: "AIzaSyDdD74H4l9Ao34tsPGvJtcfFbRTo0KxFvw",
+  authDomain: "spatialstudy-fdaa2.firebaseapp.com",
+  projectId: "spatialstudy-fdaa2",
+  storageBucket: "spatialstudy-fdaa2.firebasestorage.app",
+  messagingSenderId: "328320680745",
+  appId: "1:328320680745:web:fe599f162837708b3f6d38",
+  measurementId: "G-BXZLWT6TRC"
 };
 ```
 

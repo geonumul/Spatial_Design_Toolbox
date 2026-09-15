@@ -29,18 +29,30 @@ def scan(path):
     s = io.open(path, encoding='utf-8').read()
     bank = load_bank(s)
     c = Counter(q['type'] for q in bank)
-    units = len(re.findall(r'<section id="s[1-9]\d*">', re.sub(r'<!--.*?-->', '', s, flags=re.S)))
+    nc = re.sub(r'<!--.*?-->', '', s, flags=re.S)
+    units = len(re.findall(r'<h1 class="part">', nc))
+    secs = len(re.findall(r'<section id="s[1-9]\d*">', nc))
     i = s.find('<section id="tips"')
     tips = s[i:s.find('<section id="note"', i)].count('<div class="card"><h3')
     tl = json.loads(re.search(r'var TIMELINE = (\[.*?\]);\n', s, re.S).group(1))
-    has_time_tab = 'data-tab="time"' in s
+    m = re.search(r'var STUDY = (\[.*?\]);\nvar TERMS = (\[.*?\]);\n', s, re.S)
+    study, terms = (json.loads(m.group(1)), json.loads(m.group(2))) if m else ([], [])
+    lessons = sum(len(u['lessons']) for u in study)
+    exam = sum(1 for q in bank if q.get('src') == '기출')
     feats = []
-    if units:
-        feats.append('정리노트 %d단원' % units)
-    if tips:
+    if lessons:
+        feats.append('회독 %d레슨' % lessons)
+    if terms:
+        feats.append('용어 도감 %d개' % len(terms))
+    if secs and 'data-tab="note"' in s:
+        feats.append('정리노트 %d단원 %d항목' % (units, secs))
+    if tips and 'data-tab="tips"' in s:
         feats.append('암기 팁')
-    if tl and has_time_tab:
+    if tl and 'data-tab="time"' in s:
         feats.append('연표')
+    if exam:
+        feats.append('기출 %d문항' % exam)
+    units = max(units, len([u for u in study if u['part'] != '0']))
     return {
         'count': len(bank),
         'types': {k: c.get(k, 0) for k in ('mcq', 'short', 'ox', 'essay')},

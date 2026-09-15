@@ -26,15 +26,23 @@
     if(!t){ t=document.createElement("div"); t.id="sdtToast"; document.body.appendChild(t); }
     t.textContent=m; t.className="on"; clearTimeout(t._t); t._t=setTimeout(function(){ t.className=""; }, 2600);
   }
-  /* 두 기록 합치기: 오답은 더 최근(ts) 것, 푼 기록은 더 많이 푼(n) 것, 추가 문제는 합집합 */
+  /* 두 기록 합치기: 오답은 더 최근(ts) 것, 푼 기록은 더 많이 푼(n) 것, 추가 문제는 합집합.
+     회독 기록(study): XP와 최고 점수는 큰 값, 완료 표시는 합집합, 용어별 [본 횟수, 누른 횟수]는 각각 큰 값 */
   function merge(a, b){
-    var o={wrong:{}, seen:{}, extra:[]}, ids={};
+    var o={wrong:{}, seen:{}, extra:[]}, ids={}, st=null;
     [a||{}, b||{}].forEach(function(d){
       var w=d.wrong||{}, s=d.seen||{}, k;
       for(k in w){ if(w.hasOwnProperty(k) && (!o.wrong[k] || (w[k].ts||0)>(o.wrong[k].ts||0))) o.wrong[k]=w[k]; }
       for(k in s){ if(s.hasOwnProperty(k) && (!o.seen[k] || (s[k].n||0)>(o.seen[k].n||0))) o.seen[k]=s[k]; }
       (d.extra||[]).forEach(function(q){ var id=q.id||(q.type+"|"+q.q); if(!ids[id]){ ids[id]=1; o.extra.push(q); } });
+      var y=d.study; if(!y) return;
+      if(!st) st={xp:0, best:0, read:y.read||1, done:{}, terms:{}};
+      st.xp=Math.max(st.xp, y.xp||0); st.best=Math.max(st.best, y.best||0);
+      var dn=y.done||{}, tm=y.terms||{};
+      for(k in dn){ if(dn.hasOwnProperty(k) && (!st.done[k] || dn[k]>st.done[k])) st.done[k]=dn[k]; }
+      for(k in tm){ if(tm.hasOwnProperty(k)){ var x=st.terms[k]||[0,0]; st.terms[k]=[Math.max(x[0], tm[k][0]||0), Math.max(x[1], tm[k][1]||0)]; } }
     });
+    if(st) o.study=st;
     return o;
   }
   function stores(uid){ return db.collection("users").doc(uid).collection("stores"); }
