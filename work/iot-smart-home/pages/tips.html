@@ -1,0 +1,74 @@
+<div class="whead" style="padding-top:22px"><div class="eyebrow">답안 팁</div><h1>시험 전 꼭 외울 것</h1><p>정확한 설명은 회독과 정리 슬라이드에, 여기는 시험장에서 바로 떠오르게 하는 목록이에요. 기출 40문항 분석에서 뽑았어요.</p></div>
+
+<div class="card" style="margin-top:14px">
+<h3 style="margin-top:0">1. 주문 하나로 큰 그림</h3>
+<div class="story">
+<div><b>센서가 느끼고</b><span>감지: 물리량을 전기 신호로 (PIR, 온습도, 조도, 자이로)</span></div>
+<div><b>네트워크가 나르고</b><span>전달: Wi-Fi, Zigbee, Z-Wave, BLE, Thread, RS-485(유선)</span></div>
+<div><b>허브와 플랫폼이 판단하고</b><span>판단: 엣지(발생 지점 가까이), 포그(엣지와 클라우드 사이), 클라우드(원격 서버)</span></div>
+<div><b>기기가 움직여요</b><span>실행: 액추에이터, 스마트 플러그, 스마트 스위치</span></div>
+</div>
+<p class="tipline">지능형 홈의 4대 가치: 편의, 안전, 쾌적, 절감. 스마트홈은 "명령해야 움직임", 지능형 홈은 "AI가 학습해서 먼저 해 줌".</p>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0">2. 무선 통신 숫자 카드</h3>
+<ul class="mnem">
+<li><b>IEEE 번호</b> 802.3 이더넷, 802.11 Wi-Fi, 802.15 WPAN, 802.15.1 블루투스, 802.15.4 Zigbee 와 Thread</li>
+<li><b>범위 순서</b> PAN 10m &lt; LAN 1~5km &lt; MAN 50km &lt; WAN 150km 이상 (WPAN &lt; WLAN &lt; WMAN &lt; WWAN)</li>
+<li><b>Wi-Fi</b> 2.4GHz, 5GHz(최신 6GHz). 802.11b 11Mbps, 802.11a 5GHz 54Mbps, 802.11ac 는 5GHz 만</li>
+<li><b>Zigbee</b> 2.4GHz 16채널 250kbps. 코디네이터(관리), 라우터(중계), 엔드 디바이스(수집)</li>
+<li><b>Z-Wave</b> 900MHz대(국내 920.9, 921.7, 923.1MHz), 232 유닛, Wi-Fi 간섭 적음</li>
+<li><b>Thread</b> IPv6 기반 저전력 메시, IEEE 802.15.4. VPN 아님</li>
+<li><b>Matter</b> CSA, IP 기반, 기기 등록(Provisioning)은 BLE, QR, NFC</li>
+<li><b>NFC</b> 13.56MHz, 10cm, P2P, 읽기와 쓰기, 카드 에뮬레이션</li>
+<li><b>UWB</b> 3.1~10.6GHz, 오차 수 cm</li>
+<li><b>LPWAN</b> 전용망(LoRa, Sigfox, 비면허 ISM), 셀룰러(LTE-M, NB-IoT, 3GPP). LoRa 변조는 CSS</li>
+</ul>
+<p class="tipline">Wi-Fi 와 Zigbee 는 둘 다 2.4GHz 라서 서로 간섭해요. 간섭이 나면 채널 조정. RS-485 는 무선이 아니라 유선이에요(월패드 연동).</p>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0">3. 헷갈리는 짝</h3>
+<table class="cmp">
+<tr><th>이거</th><th>저거</th><th>구분법</th></tr>
+<tr><td>엣지</td><td>포그, 클라우드</td><td>엣지는 발생 지점 바로 옆, 포그는 그 사이 로컬 계층, 클라우드는 먼 서버</td></tr>
+<tr><td>허브</td><td>게이트웨이</td><td>시험에서는 문장을 잘 읽기. 허브는 번역과 중계를 하지만 기기의 통신 규격 자체를 바꾸지는 못함</td></tr>
+<tr><td>스마트 플러그</td><td>스마트 스위치</td><td>플러그는 콘센트 전원 켜고 끄기, 타이머, 전력 모니터링(전력량계 제어는 못 함). 스위치는 조명을 바꾸지 않고 원격 제어</td></tr>
+<tr><td>PIR</td><td>mmWave 재실센서</td><td>PIR 은 움직일 때만 감지, mmWave 는 가만히 있는 사람의 미세한 움직임도 감지</td></tr>
+<tr><td>자이로스코프</td><td>가속도 센서</td><td>자이로는 회전(각속도), 가속도는 직선 방향 속도 변화</td></tr>
+<tr><td>배선용 차단기</td><td>누전차단기</td><td>배선용은 과부하와 단락, 누전차단기는 ZCT 로 새는 전류(누전) 감지</td></tr>
+<tr><td>기밀성</td><td>무결성, 가용성</td><td>기밀성은 엿보기 막기(암호화), 무결성은 바꿔치기 막기(해시), 가용성은 멈추지 않게(DDoS 대비, 백업)</td></tr>
+<tr><td>이진 분류</td><td>다중 클래스 분류, 회귀</td><td>답이 2개면 이진, 3개 이상이면 다중 클래스, 연속 숫자면 회귀</td></tr>
+<tr><td>NFC</td><td>RFID</td><td>NFC 는 13.56MHz 10cm 양방향(P2P, 카드 에뮬레이션), RFID 는 태그, 리더, 미들웨어 구성</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0">4. 목록으로 외우기</h3>
+<ul class="mnem">
+<li><b>IoT 활성화 요인</b> 표준화, 소형화, 저전력화, 저가격화 ("표소저저")</li>
+<li><b>머신러닝 학습</b> 지도, 준지도, 비지도, 강화 (연역적, 귀납적 학습은 오답)</li>
+<li><b>AI 포함관계</b> 인공지능 &gt; 기계학습 &gt; 인공신경망 &gt; 딥러닝. CNN(이미지), RNN(순차), 트랜스포머(문맥 병렬), GAN(딥페이크)</li>
+<li><b>AI 윤리기준 3대 원칙</b> 인간 존엄성, 사회의 공공성, 기술의 합목적성</li>
+<li><b>개인정보보호 6대 원칙</b> 참여성, 투명성, 책임성, 안전성, 공정성, 적법성</li>
+<li><b>IoT 보안 원칙</b> Security by Design, Privacy by Design, Secure by Default, 보안 패치 지속</li>
+<li><b>암호 알고리즘</b> ARIA, SEED, LEA(대칭키 암호), SHA-256(해시), ECDH(키 공유), ECDSA(전자서명)</li>
+<li><b>홈네트워크 설비(기술기준 제3조)</b> 주택, 통합된 주거서비스, 홈네트워크망, 장비, 사용기기</li>
+<li><b>단지 장비</b> 홈게이트웨이(세대망과 단지망 연결), 세대단말기, 단지네트워크장비(백본, 방화벽, 워크그룹스위치), 단지서버</li>
+<li><b>개인정보처리자</b> 공공기관, 법인, 단체, 개인 모두 포함</li>
+</ul>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0">5. 계산 한 줄</h3>
+<ul class="mnem">
+<li><b>전력</b> P = V x I. 200V x 0.1A = 20W (기출 33번 모양)</li>
+<li><b>전력량</b> Wh = W x 시간. 20W 를 5시간 쓰면 100Wh</li>
+<li><b>단위</b> 1A = 1000mA. 100mA 는 0.1A</li>
+<li><b>옴의 법칙</b> V = I x R</li>
+<li><b>최대 허용 전력</b> 220V x 16A = 3,520W (스마트 플러그 예)</li>
+<li><b>PoE</b> 802.3af 15.4W, 802.3at(PoE+) 30W</li>
+</ul>
+<p class="tipline">계산은 식을 먼저 쓰고, 단위를 맞춘 다음(mA 를 A 로), 숫자를 넣어요.</p>
+</div>

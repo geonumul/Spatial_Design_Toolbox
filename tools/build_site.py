@@ -1,0 +1,277 @@
+# -*- coding: utf-8 -*-
+"""과목 회독 사이트 빌드: work/<slug>/ -> subjects/<slug>/ (GitHub Pages 정적 사이트)
+
+사용: python tools/build_site.py <slug> [--skip wb,w3]   (덜 된 정리 슬라이드 파일은 --skip 으로 뺀다)
+
+입력 (work/<slug>/)
+  subject.json               과목 설정: 이름, 저장 키, 주차(weeks), 덱(decks), 회독 단계(passes), 모의고사 구성(mock)
+  lesson/<덱>_*.json         회독 레슨 (tools/checkers/lesson_check.py)
+  notes/slides_w*.json       정리 슬라이드. 기초 다지기는 slides_wb.json (tools/checkers/slide_check.py)
+  bank/*.json                문제은행 JSON 배열 (tools/checkers/bank_check.py)
+  pages/tips.html, exams.html  답안 팁, 기출 분석 (선택)
+  subjects/<slug>/img/<덱>/pNNN.jpg   tools/render_slides.py 가 만든 슬라이드 그림
+  subjects/<slug>/pdf/<덱>_강의안.pdf  tools/compose_pdf.py 가 만든 강의안 PDF (있으면 링크)
+출력
+  subjects/<slug>/index.html, data/meta.js, terms.js, bank.js, pages.js, lesson_<덱>.js, notes_w<주차>.js
+  저장소 루트 index.html 의 과목 카드 숫자
+화면 코드는 engine/ (모든 과목 공통), 로그인은 assets/sync.js.
+"""
+import datetime, hashlib, html, json, pathlib, re, sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+ENGINE = ROOT / "engine"
+BAD = ("—", "–", "·")
+TYPES = ("mcq", "ox", "short", "essay", "calc")
+DEF_PASSES = [{"n": 1, "t": "큰 그림", "d": ""}, {"n": 2, "t": "자세히", "d": ""}, {"n": 3, "t": "시험", "d": ""}]
+META_KEYS = ("name", "brand", "key", "eyebrow", "intro", "pathLabel", "examLabel", "examsDesc", "tipsDesc", "mockDesc", "bgLabel", "sentLabel", "mock")
+
+
+def js_assign(name, key, obj):
+    body = json.dumps(obj, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    if key is None:
+        return f"window.{name}={body};\n"
+    return f"window.{name}=window.{name}||{{}};window.{name}[{json.dumps(key)}]={body};\n"
+
+
+def write(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8", newline="\n")
+
+
+def load(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def tid(s):
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:40] or hashlib.md5(s.encode()).hexdigest()[:8]
+
+
+def main(slug, skip):
+    W, SITE = ROOT / "work" / slug, ROOT / "subjects" / slug
+    cfg = load(W / "subject.json")
+    ver = datetime.datetime.now().strftime("%Y%m%d%H%M")
+    weeks = cfg["weeks"]
+    wids = [w["id"] for w in weeks]
+    meta = {k: cfg[k] for k in META_KEYS if k in cfg}
+    meta.update(ver=ver, weeks=weeks, decks={}, units={}, prereq=cfg.get("prereq", {}), passes=cfg.get("passes") or DEF_PASSES, deckWeek={})
+    terms = {w: [] for w in wids}
+
+    def add_term(week, t):
+        if not isinstance(t, dict):
+            return
+        ko, en, say = (t.get("ko") or "").strip(), (t.get("en") or "").strip(), (t.get("say") or "").strip()
+        if not (ko or en) or not say:
+            return
+        key = (en or ko).lower()
+        for x in terms[week]:
+            if (x["en"] or x["ko"]).lower() == key:
+                if not x.get("more") and t.get("more"):
+                    x["more"] = t["more"].strip()
+                return
+        item = {"ko": ko, "en": en, "say": say}
+        if (t.get("more") or "").strip():
+            item["more"] = t["more"].strip()
+        terms[week].append(item)
+
+    # 1) 회독 레슨
+    for deck, d in cfg.get("decks", {}).items():
+        week = d["week"]
+        meta["deckWeek"][deck] = week
+        total = d.get("total") or len(list((SITE / "img" / deck).glob("p*.jpg")))
+        slides, gloss = {}, []
+        for f in sorted((W / "lesson").glob(f"{deck}_*.json")):
+            try:
+                dd = load(f)
+            except Exception as e:
+                print(f"  [건너뜀] {f.name}: {e}")
+                continue
+            for s in dd.get("slides", []):
+                old = slides.get(s["p"])
+                if old is None or len(json.dumps(s, ensure_ascii=False)) > len(json.dumps(old, ensure_ascii=False)):
+                    slides[s["p"]] = s
+            gloss += dd.get("glossary", [])
+        for g in gloss:
+            add_term(week, g)
+        ordered = [slides[p] for p in sorted(slides)]
+        frames = [0] * 6
+        for s in ordered:
+            for n in range(6):
+                if s.get(f"pass{n + 1}"):
+                    frames[n] += 1 + len(s[f"pass{n + 1}"])
+        for n in range(6):
+            if frames[n]:
+                frames[n] += 1
+        warm = sum(2 for s in ordered if s.get("terms"))
+        warm = warm + 1 if warm else 0   # 0회독 용어 먼저: 쪽마다 슬라이드 그림 + 용어 카드, 끝 장면
+        pdf = SITE / "pdf" / f"{deck}_강의안.pdf"
+        meta["decks"][deck] = {"title": d["title"], "total": total, "have": len(ordered), "frames": frames, "warm": warm,
+                               "pdf": f"pdf/{deck}_강의안.pdf" if pdf.exists() else ""}
+        out = SITE / "data" / f"lesson_{deck}.js"
+        if ordered:
+            write(out, js_assign("SDT_LESSONS", deck, {"deck": deck, "slides": ordered}))
+        elif out.exists():
+            out.unlink()
+        print(f"  레슨 {deck}: {len(ordered)}/{total}장, 장면 {frames}" + (", PDF 있음" if pdf.exists() else ""))
+
+    # 2) 정리 슬라이드, 기초 다지기
+    for f in sorted((W / "notes").glob("slides_w*.json")):
+        m = re.fullmatch(r"slides_w(\w+?)\.json", f.name)
+        if not m:
+            continue
+        out = SITE / "data" / f"notes_w{m.group(1)}.js"
+        if "w" + m.group(1) in skip:
+            print(f"  [건너뜀] {f.name}: --skip")
+            if out.exists():
+                out.unlink()
+            continue
+        try:
+            d = load(f)
+        except Exception as e:
+            print(f"  [건너뜀] {f.name}: {e}")
+            continue
+        week = str(d.get("week") or m.group(1))
+        if week not in terms:
+            print(f"  [건너뜀] {f.name}: 모르는 주차 {week}")
+            continue
+        for u in d.get("units", []):
+            for t in u.get("terms", []):
+                add_term(week, t)
+        meta["units"][week] = [{"id": u["id"], "title": u["title"], "goal": u.get("goal", ""), "n": len(u.get("slides", [])),
+                                "terms": [(t.get("ko") or t.get("en")) for t in u.get("terms", []) if isinstance(t, dict) and (t.get("ko") or t.get("en"))]}
+                               for u in d.get("units", [])]
+        write(out, js_assign("SDT_NOTES", week, d))
+        print(f"  정리 슬라이드 {week}: 단원 {len(d.get('units', []))}개")
+
+    # 3) 문제은행 + 용어 퀴즈
+    bank, seen = [], set()
+    for f in sorted((W / "bank").glob("*.json")):
+        try:
+            arr = load(f)
+        except Exception as e:
+            print(f"  [건너뜀] {f.name}: {e}")
+            continue
+        if not isinstance(arr, list):
+            print(f"  [건너뜀] {f.name}: 배열이 아님")
+            continue
+        for q in arr:
+            if not q.get("id"):
+                q["id"] = hashlib.md5((q["type"] + "|" + q["q"]).encode()).hexdigest()[:10]
+            q.setdefault("level", "basic")
+            if q["id"] in seen:
+                raise SystemExit(f"중복 id {q['id']} ({f.name})")
+            if q.get("part") not in wids:
+                print(f"  경고: {f.name} {q['id']} part={q.get('part')} 는 주차 목록에 없음")
+            seen.add(q["id"])
+            bank.append(q)
+    nterm = 0
+    for week, lst in terms.items():
+        if len(lst) < 4:
+            continue
+        n = len(lst)
+        full = lambda t: (t["ko"] or t["en"]) + (f"({t['en']})" if t["en"] and t["ko"] else "")
+        for i, t in enumerate(lst):
+            others = [lst[(i + k) % n] for k in (1, 2, 3)]
+            base = f"term-w{week}-{tid(t['en'] or t['ko'])}"
+            if base + "-a" in seen:
+                continue
+            says = [t["say"]] + [o["say"] for o in others]
+            names = [full(t)] + [full(o) for o in others]
+            if len(set(says)) == 4:
+                bank.append({"id": base + "-a", "type": "mcq", "part": week, "level": "basic", "unit": "용어",
+                             "q": f"**{full(t)}** 의 뜻으로 알맞은 것은?", "c": says, "a": 0, "e": f"{full(t)}: {t['say']}"})
+                nterm += 1
+            if len(set(names)) == 4:
+                bank.append({"id": base + "-b", "type": "mcq", "part": week, "level": "basic", "unit": "용어",
+                             "q": f"'{t['say']}' 을 뜻하는 용어는?", "c": names, "a": 0, "e": f"{t['say']} = {full(t)}"})
+                nterm += 1
+            seen.update({base + "-a", base + "-b"})
+    write(SITE / "data" / "bank.js", js_assign("SDT_BANK", None, bank))
+    write(SITE / "data" / "terms.js", js_assign("SDT_TERMS", None, terms))
+    write(SITE / "data" / "meta.js", js_assign("SDT_META", None, meta))
+    real = [q for q in bank if q.get("unit") != "용어"]
+    cnt = {t: sum(1 for q in real if q["type"] == t) for t in TYPES}
+    print(f"  문제 {len(real)}개 {cnt} (용어 퀴즈 {nterm}개), 용어 " + ", ".join(f"{w} {len(v)}" for w, v in terms.items()))
+
+    # 4) 정적 페이지
+    pages = {}
+    for name in ("tips", "exams"):
+        p = W / "pages" / f"{name}.html"
+        if p.exists():
+            pages[name] = p.read_text(encoding="utf-8")
+    write(SITE / "data" / "pages.js", js_assign("SDT_PAGES", None, pages))
+
+    # 5) 껍데기
+    nav = ['<a class="tab" href="../../index.html">과목</a>', '<a class="tab" data-nav="home" href="#/">홈</a>']
+    nav += [f'<a class="tab" data-nav="w{w["id"]}" href="#/week/{w["id"]}">{html.escape(w["short"])}</a>' for w in weeks]
+    nav += ['<a class="tab" data-nav="quiz" href="#/quiz">문제</a>',
+            '<a class="tab" data-nav="wrong" href="#/wrong">오답노트 <span id="wrongBadge" class="badge"></span></a>',
+            '<a class="tab" data-nav="note" href="#/notebook">필기 노트</a>']
+    if "exams" in pages:
+        nav.append('<a class="tab" data-nav="exams" href="#/exams">기출 분석</a>')
+    if "tips" in pages:
+        nav.append('<a class="tab" data-nav="tips" href="#/tips">답안 팁</a>')
+    nav.append('<a class="tab" data-nav="set" href="#/settings">설정</a>')
+    name = cfg["name"]
+    page = ((ENGINE / "index.html").read_text(encoding="utf-8")
+            .replace("__VER__", ver).replace("__TITLE__", html.escape(name + " 회독 스터디"))
+            .replace("__BRAND__", html.escape(cfg.get("brand") or name))
+            .replace("__DESC__", html.escape(name + ": 강의 회독, 정리 슬라이드, 용어 카드, 필기, 문제은행"))
+            .replace("__NAV__", "\n".join("      " + x for x in nav)))
+    write(SITE / "index.html", page)
+
+    # 6) 검사
+    for p in list((SITE / "data").glob("*.js")) + [SITE / "index.html"]:
+        t = p.read_text(encoding="utf-8")
+        bad = {c: t.count(c) for c in BAD if c in t}
+        if bad:
+            print(f"  경고: {p.name} 금지 문자 {bad}")
+
+    # 7) 홈 카드
+    update_home(slug, cfg, meta, real, cnt)
+    size = sum(f.stat().st_size for f in SITE.rglob("*") if f.is_file())
+    print(f"완료 subjects/{slug}  버전 {ver}, {size / 1e6:.1f} MB")
+
+
+def update_home(slug, cfg, meta, real, cnt):
+    idx = ROOT / "index.html"
+    h = idx.read_text(encoding="utf-8")
+    a = h.index("/*SUBJECTS_START*/") + len("/*SUBJECTS_START*/")
+    b = h.index("/*SUBJECTS_END*/")
+    subs = json.loads(h[a:b])
+    ent = next((x for x in subs if x.get("href") == f"subjects/{slug}/index.html"), None)
+    if not ent:
+        print("  경고: 홈 SUBJECTS 에 이 과목이 없음")
+        return
+    decks = meta["decks"].values()
+    have = sum(d["have"] for d in decks)
+    pass_total = sum(sum(1 for n in d["frames"] if n) for d in decks)
+    units_b = len(meta["units"].get("b", []))
+    units_o = sum(len(v) for k, v in meta["units"].items() if k != "b")
+    exam = sum(1 for q in real if str(q.get("src", "")).startswith("기출"))
+    feats = []
+    if have:
+        feats.append(f"강의 회독 {have}장")
+    if units_o:
+        feats.append(f"정리 슬라이드 {units_o}단원")
+    if units_b:
+        feats.append(f"기초 다지기 {units_b}단원")
+    if any(d.get("pdf") for d in decks):
+        feats.append("강의안 PDF")
+    if exam:
+        feats.append(f"기출 {exam}문항")
+    ent.update(count=len(real), types=cnt, features=feats, passTotal=pass_total, unitTotal=units_b + units_o,
+               key=cfg["key"], ready=bool(real or have), engine=2)
+    h = h[:a] + json.dumps(subs, ensure_ascii=False, indent=1) + h[b:]
+    idx.write_text(h, encoding="utf-8", newline="\n")
+
+
+if __name__ == "__main__":
+    args = sys.argv[1:]
+    if not args:
+        print(__doc__)
+        sys.exit(1)
+    sk = set()
+    if "--skip" in args:
+        sk = set(args[args.index("--skip") + 1].split(","))
+    main(args[0], sk)

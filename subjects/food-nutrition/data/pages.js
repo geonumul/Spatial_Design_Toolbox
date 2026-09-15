@@ -1,0 +1,1 @@
+window.SDT_PAGES={};
