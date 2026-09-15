@@ -86,6 +86,7 @@
     auth.signInWithPopup(prov).catch(function(e){
       var c=e&&e.code;
       if(c==="auth/popup-blocked" || c==="auth/operation-not-supported-in-this-environment") auth.signInWithRedirect(prov);
+      else if(c==="auth/unauthorized-domain") say("이 주소("+location.host+")에서는 로그인이 안 됩니다. https://geonumul.github.io/Spatial_Design_Toolbox/ 로 열어 주세요.");
       else if(c!=="auth/popup-closed-by-user" && c!=="auth/cancelled-popup-request") say("로그인하지 못했습니다 ("+c+")");
     });
   }
