@@ -93,8 +93,8 @@ def build(name, key):
     # 근현대 전용 예시 문구 정리
     s = s.replace('"part":"4","unit":"4-1 하이테크"', '"part":"1","unit":"1-1 단원명"')
     s = s.replace('"part":"4","unit":"4-2 게리"', '"part":"1","unit":"1-2 단원명"')
-    s = s.replace('{"id":"4","name":"4부 하이테크와 해체주의","short":"4부","scope":"기말"}',
-                  '{"id":"1","name":"1부 범위 이름","short":"1부","scope":"중간"}')
+    s = s.replace('{"id":"4","name":"4단원 하이테크와 해체주의","short":"4단원","scope":"기말"}',
+                  '{"id":"1","name":"1단원 강의 제목","short":"1단원","scope":"중간"}')
     s = s.replace('기말 범위를 추가하려면', '범위를 추가하려면')
     s = s.replace('새 범위(기말 등)의 문제를', '문제를')
     s = re.sub(r'   - 기말 예시\(내용 추가 예정\)[^\n]*\n[^\n]*\n', '', s)

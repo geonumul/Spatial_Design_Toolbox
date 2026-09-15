@@ -131,7 +131,7 @@ footer a{color:var(--primary);font-weight:600}
   <div class="hstats">
     <div><b id="sSubjects">0</b><span>과목</span></div>
     <div><b id="sTotal">0</b><span>전체 문항</span></div>
-    <div><b id="sWrong">0</b><span>미해결 오답</span></div>
+    <div><b id="sWrong">0</b><span id="sWrongLbl">미해결 오답</span></div>
   </div>
 </div>
 
@@ -139,7 +139,7 @@ footer a{color:var(--primary);font-weight:600}
 <section id="subjects">
   <div class="sechead">
     <h2>과목 선택</h2>
-    <p>들어가면 문제풀기, 오답노트, 정리노트, 암기 팁 탭이 있습니다.</p>
+    <p>들어가면 문제풀기, 오답노트, 정리노트, 암기 팁 탭이 있습니다. 매주 강의자료가 올라오는 대로 단원이 늘어납니다.</p>
   </div>
   <div class="subjects" id="subjectList"></div>
 </section>
@@ -150,17 +150,19 @@ footer a{color:var(--primary);font-weight:600}
     <p>시험 전날까지 이 순서를 반복하면 됩니다.</p>
   </div>
   <div class="steps">
-    <div class="step"><div class="n">1</div><b>정리노트로 훑기</b><p>쉬운 설명으로 큰 그림을 잡고, 원문으로 논술 문장을 익힙니다. "그 단원만 보기"로 한 단원씩 끊어 볼 수 있어요.</p></div>
-    <div class="step"><div class="n">2</div><b>문제 풀기</b><p>유형, 범위, 문항 수를 고르고 시작합니다. 객관식은 숫자키, O/X는 O와 X 키, 다음 문제는 Enter.</p></div>
+    <div class="step"><div class="n">1</div><b>정리노트로 훑기</b><p>단원을 펼쳐 쉬운 설명으로 큰 그림을 잡고, 원문으로 논술 문장을 익힙니다. "그 항목만 보기"로 한 항목씩 끊어 볼 수 있어요.</p></div>
+    <div class="step"><div class="n">2</div><b>문제 풀기</b><p>유형, 범위, 문항 수를 고르고 시작합니다. 시험 직전엔 "기출, 강조 문제" 모드로 핵심만. 객관식은 숫자키, 다음 문제는 Enter.</p></div>
     <div class="step"><div class="n">3</div><b>오답노트 다시 풀기</b><p>틀린 문제와 70% 미만 논술이 자동으로 쌓입니다. 다시 맞히면 해결 처리돼요.</p></div>
-    <div class="step"><div class="n">4</div><b>암기 팁으로 마무리</b><p>연도 말장난, 헷갈리는 짝, 답안 뼈대로 시험장에서 떠오르게 만듭니다.</p></div>
+    <div class="step"><div class="n">4</div><b>암기 팁으로 마무리</b><p>숫자 말장난, 헷갈리는 짝, 답안 뼈대로 시험장에서 떠오르게 만듭니다.</p></div>
   </div>
-  <div class="notice">기록은 이 브라우저에 과목별로 따로 저장됩니다. 다른 기기나 브라우저로 옮길 때는 과목 페이지 오답노트 탭의 <b>내보내기</b>, <b>가져오기</b>를 쓰세요.</div>
+  <div class="notice" id="notice"></div>
 </section>
 </main>
 
 <footer>Spatial Design Toolbox. 공간디자인 수업 문제은행 <a href="https://github.com/geonumul/Spatial_Design_Toolbox" target="_blank" rel="noopener">GitHub</a></footer>
 
+<script src="assets/firebase-config.js"></script>
+<script src="assets/sync.js"></script>
 <script>
 /* 과목 목록. count, types, units, features, ready 는 tools/sync_home.py 가 과목 파일에서 읽어 갱신한다.
    이름(name), 부제(sub), 설명(desc), 순서는 여기서 직접 고친다. key 는 과목 파일의 저장 키와 같아야 진행 기록이 보인다. */
@@ -189,7 +191,7 @@ var SUBJECTS = /*SUBJECTS_START*/[
  },
  {
   "no": "02",
-  "name": "실내디자인시공실무",
+  "name": "실내디자인시공과실무",
   "sub": "",
   "desc": "강의자료를 받는 대로 정리노트와 문제를 채울 예정입니다.",
   "href": "subjects/interior-construction/index.html",
@@ -207,11 +209,11 @@ var SUBJECTS = /*SUBJECTS_START*/[
  },
  {
   "no": "03",
-  "name": "식영이실",
+  "name": "식품영양의 이론과실제",
   "sub": "",
   "desc": "강의자료를 받는 대로 정리노트와 문제를 채울 예정입니다.",
-  "href": "subjects/sikyeong-isil/index.html",
-  "key": "sdt_sikyeong_v1",
+  "href": "subjects/food-nutrition/index.html",
+  "key": "sdt_food_v1",
   "count": 0,
   "types": {
    "mcq": 0,
@@ -265,10 +267,13 @@ var SUBJECTS = /*SUBJECTS_START*/[
 function $(s){ return document.querySelector(s); }
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
-/* ---------- 과목별 진행 기록 (과목 페이지의 localStorage 를 읽기만 한다) ---------- */
+/* ---------- 과목별 진행 기록 ----------
+   로그인 상태면 계정 기록(REMOTE, assets/sync.js 가 채움), 아니면 이 브라우저의 localStorage 를 읽기만 한다. */
+var REMOTE=null;
 function readProgress(key){
   var d={};
-  try{ d=JSON.parse(localStorage.getItem(key)||"{}")||{}; }catch(e){ d={}; }
+  if(REMOTE) d=REMOTE[key]||{};
+  else { try{ d=JSON.parse(localStorage.getItem(key)||"{}")||{}; }catch(e){ d={}; } }
   var seen=d.seen||{}, wrong=d.wrong||{}, n=0, ok=0, att=0, w=0, k;
   for(k in seen){ if(seen.hasOwnProperty(k)){ n++; ok+=seen[k].ok||0; att+=seen[k].n||0; } }
   for(k in wrong){ if(wrong.hasOwnProperty(k) && !wrong[k].resolved) w++; }
@@ -283,8 +288,7 @@ function renderSubjects(){
     total+=count; wrongAll+=p.wrong;
     var feats=s.features.length ? s.features.map(function(f){ return '<span>'+esc(f)+'</span>'; }).join("") : '<span class="off">정리노트 준비 중</span>';
     if(p.extra) feats+='<span>내가 추가한 문제 '+p.extra+'개</span>';
-    var t=s.types;
-    var line;
+    var t=s.types, line;
     if(p.seen){
       line=Math.min(p.seen,count)+' / '+count+'문항 풀이'+(p.acc!==null?', 정답률 '+p.acc+'%':'')+(p.wrong?', 오답 '+p.wrong+'개':'');
     } else line = ready ? '아직 푼 문제가 없습니다' : '강의자료 준비 중';
@@ -302,9 +306,14 @@ function renderSubjects(){
   $("#sSubjects").textContent=SUBJECTS.length;
   $("#sTotal").textContent=total;
   $("#sWrong").textContent=wrongAll;
+  $("#sWrongLbl").textContent=REMOTE?"내 미해결 오답":"미해결 오답";
   $("#hstat").textContent="과목 "+SUBJECTS.length+"개 / 문항 "+total+"개";
 }
+$("#notice").innerHTML = (window.SDT_FIREBASE
+  ? '오른쪽 위 <b>로그인</b>을 하면 오답노트와 진행 기록이 내 계정에 저장되어 다른 기기에서도 이어집니다. 로그인하지 않으면 이 브라우저에만 저장됩니다.'
+  : '기록은 이 브라우저에 과목별로 따로 저장됩니다. 다른 기기나 브라우저로 옮길 때는 과목 페이지 오답노트 탭의 <b>내보내기</b>, <b>가져오기</b>를 쓰세요.');
 renderSubjects();
+if(window.SDT) SDT.attachHome(function(map){ REMOTE=map; renderSubjects(); });
 /* 과목 페이지에서 뒤로 왔을 때 기록 다시 읽기 */
 window.addEventListener("pageshow", function(ev){ if(ev.persisted) renderSubjects(); });
 window.addEventListener("scroll", function(){ $("#hdr").classList.toggle("scrolled", window.scrollY>8); });

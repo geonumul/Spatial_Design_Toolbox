@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 각자 자기 기록만 읽고 쓴다. users/{uid}/stores/{과목키} = {data: 문자열, updatedAt}
+    match /users/{uid}/stores/{key} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['data', 'updatedAt'])
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 900000;
+    }
+  }
+}

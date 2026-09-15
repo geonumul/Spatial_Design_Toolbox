@@ -276,6 +276,30 @@ table.cmp td:first-child,table.cmp td:nth-child(2){font-weight:600;white-space:n
 #note.only > section.show,#note.only > h1.part.show{display:block}
 .onlybar{display:none;align-items:center;gap:10px;margin:0 0 10px;font-size:14px}
 #note.only .onlybar{display:flex}
+
+/* 단원 접기 */
+.tochd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+#toc .tochd .lbl{margin:0 auto 0 0;display:inline}
+.tocgrp{border-top:1px solid var(--line)}
+.tocpart{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 6px;font-size:14.5px;color:var(--ink);border-radius:10px;line-height:1.4}
+.tocpart:hover{background:var(--soft)}
+.tocpart b{color:var(--primary);flex:none}
+.tocpart .pn{margin-left:auto;font-size:12.5px;color:var(--sub);flex:none}
+.tocpart i,#note > h1.part.fold i{flex:none;width:8px;height:8px;border-right:2px solid var(--sub);border-bottom:2px solid var(--sub);transform:rotate(-45deg);margin:0 4px 0 2px;transition:transform .15s}
+.tocgrp.open .tocpart i,#note > h1.part.fold.open i{transform:rotate(45deg)}
+.tocitems{display:none;padding:0 0 12px 24px}
+.tocgrp.open .tocitems{display:block}
+#note > h1.part.fold{cursor:pointer;display:flex;align-items:center;gap:12px;margin-top:26px;user-select:none}
+#note > h1.part.fold.open{margin-top:56px}
+#note > h1.part.fold:hover{color:var(--primary)}
+#note > h1.part.fold .pn{margin-left:auto;font-size:13px;font-weight:600;color:var(--sub);letter-spacing:0;flex:none}
+#note > section.pclosed{display:none}
+#note.only > h1.part.fold{display:none}
+#note.only > h1.part.fold.show{display:flex}
+/* 기출, 강조 */
+.tag.src{background:#FFE8EC;color:#D2335C}
+.said{background:#FFF4E0;border-radius:14px;padding:12px 16px;margin:14px 0;color:#5A3A00;font-size:14.5px}
+.said::before{content:"수업 중 강조";display:block;font-weight:800;font-size:12.5px;color:#C2690F;margin-bottom:2px}
 </style>
 </head>
 <body>
@@ -322,6 +346,7 @@ table.cmp td:first-child,table.cmp td:nth-child(2){font-weight:600;white-space:n
     <button class="chip on" data-mode="all">모든 문제</button>
     <button class="chip" data-mode="wrong">오답만</button>
     <button class="chip" data-mode="unseen">아직 안 푼 문제</button>
+    <button class="chip" data-mode="src">기출, 강조 문제</button>
   </div>
   <div class="btnrow" style="margin-top:18px">
     <button class="btn primary" id="startBtn">시작하기</button>
@@ -344,7 +369,7 @@ table.cmp td:first-child,table.cmp td:nth-child(2){font-weight:600;white-space:n
   <h1 class="part" style="margin-top:0;border:0;padding:0;font-size:30px">오답노트</h1>
   <p class="lead" style="margin-top:-4px">틀린 문제, 70% 미만으로 쓴 논술 문항이 여기에 쌓입니다. 다시 풀어서 맞히면 자동으로 해결 처리됩니다.</p>
   <div class="sum" id="wsum"></div>
-  <div class="card" id="weakCard" style="display:none"><b>취약 단원</b><div class="weak" id="weak"></div></div>
+  <div class="card" id="weakCard" style="display:none"><b>취약 항목</b><div class="weak" id="weak"></div></div>
   <div class="row" style="margin-top:18px"><span class="cap">유형</span>
     <button class="chip on soft" data-wtype="all">전체</button>
     <button class="chip" data-wtype="mcq">객관식</button>
@@ -371,7 +396,7 @@ table.cmp td:first-child,table.cmp td:nth-child(2){font-weight:600;white-space:n
 </div></section>
 
 <section id="note" class="panel">
-<div class="notebar"><span class="muted" style="font-size:13.5px">보기</span><button class="chip on soft" data-nmode="both">쉬운 설명 + 원문</button><button class="chip" data-nmode="easyonly">쉬운 설명만</button><button class="chip" data-nmode="origonly">원문만</button><span class="muted" style="font-size:13.5px;margin-left:10px">목차 클릭</span><button class="chip on soft" data-tocmode="go">이동</button><button class="chip" data-tocmode="only">그 단원만 보기</button></div><div id="toc"><span class="lbl">목차</span><button class="tocbtn" data-go="s0">0. 과목 안내</button></div>
+<div class="notebar"><span class="muted" style="font-size:13.5px">보기</span><button class="chip on soft" data-nmode="both">쉬운 설명 + 원문</button><button class="chip" data-nmode="easyonly">쉬운 설명만</button><button class="chip" data-nmode="origonly">원문만</button><span class="muted" style="font-size:13.5px;margin-left:10px">목차 클릭</span><button class="chip on soft" data-tocmode="go">이동</button><button class="chip" data-tocmode="only">그 항목만 보기</button></div><div id="toc"><span class="lbl">목차</span><button class="tocbtn" data-go="s0">0. 과목 안내</button></div>
 <div class="onlybar"><button class="btn sm" id="onlyPrev">이전</button><button class="btn sm" id="onlyNext">다음</button><b id="onlyName"></b><button class="btn sm" id="showAllBtn" style="margin-left:auto">전체 보기</button></div>
 <section id="s0">
 <h2>0. 과목 안내</h2>
@@ -408,16 +433,19 @@ table.cmp td:first-child,table.cmp td:nth-child(2){font-weight:600;white-space:n
 <button class="top" id="topBtn">맨 위로</button>
 <div class="toast" id="toast"></div>
 
+<script src="../../assets/firebase-config.js"></script>
+<script src="../../assets/sync.js"></script>
 <script>
 /* =====================================================================
    [문제 데이터 추가 가이드]
-   - PARTS : 범위(부) 목록. 범위를 추가하려면 {"id":"1","name":"1부 범위 이름","short":"1부","scope":"중간"} 형태로 추가.
+   - PARTS : 범위(부) 목록. 범위를 추가하려면 {"id":"1","name":"1단원 강의 제목","short":"1단원","scope":"중간"} 형태로 추가.
    - BANK  : 문제 배열. 항목 형식
        객관식  {"type":"mcq",  "part":"1","unit":"1-1 단원명","q":"질문","c":["보기1","보기2","보기3","보기4"],"a":정답인덱스(0부터),"e":"해설"}
        주관식  {"type":"short","part":"1","unit":"1-1 단원명","q":"질문","a":["정답","허용되는 다른 표기"],"e":"해설"}
        O/X     {"type":"ox",   "part":"1","unit":"1-1 단원명","q":"진술문","a":true 또는 false,"e":"해설"}
        논술형  {"type":"essay","part":"1","unit":"1-2 단원명","q":"질문","points":["답안에 들어가야 할 핵심 항목",...]}
      id는 비워두면 자동 생성됩니다.
+     src 는 선택. "기출"(기출문제에서 옴) 또는 "강조"(수업 녹음에서 교수가 강조). 모드 "기출, 강조 문제"로 모아 풀 수 있습니다.
    ===================================================================== */
 var PARTS = [];
 var BANK = [];
@@ -433,16 +461,18 @@ function hash(s){ var h=0; for(var i=0;i<s.length;i++){ h=((h<<5)-h+s.charCodeAt
 function norm(s){ return String(s||"").toLowerCase().replace(/[\s\.\,\(\)\[\]·・\-–—~'"’”`:;!?/\\]/g,"").replace(/년|명|미터|m$/g,""); }
 var TYPE_NAME = {mcq:"객관식", short:"주관식", ox:"O/X", essay:"논술형"};
 var ESSAY_PASS = 0.7;
-function partName(id){ for(var i=0;i<PARTS.length;i++) if(PARTS[i].id===id) return PARTS[i].short||PARTS[i].name; return id+"부"; }
+function partName(id){ for(var i=0;i<PARTS.length;i++) if(PARTS[i].id===id) return PARTS[i].short||PARTS[i].name; return id+"단원"; }
+function srcTag(q){ return q.src ? '<span class="tag src">'+esc(q.src)+'</span>' : ""; }
 function toast(m){ var t=$("#toast"); t.textContent=m; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove("on"); },1800); }
 
 /* ---------- 저장소 ---------- */
 var KEY="sdt_iot_v1";
+var BASE_KEY=KEY;   // 과목 고유 키. 로그인하면 KEY 가 BASE_KEY+"@"+uid 로 바뀐다(assets/sync.js)
 var store = (function(){ try{ return JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ return {}; } })();
 store.wrong = store.wrong || {};     // id -> {count, lastAnswer, missing, resolved, ts}
 store.seen  = store.seen  || {};     // id -> {n, ok}
 store.extra = store.extra || [];     // 사용자가 붙여넣은 추가 문제
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} if(window.SDT) SDT.dirty(); }
 
 /* ---------- 문제 풀 준비 ---------- */
 function allBank(){ return BANK.concat(store.extra); }
@@ -452,7 +482,7 @@ ensureIds(store.extra);
 function byId(id){ var l=allBank(); for(var i=0;i<l.length;i++) if(l[i].id===id) return l[i]; return null; }
 // 데이터에만 있고 PARTS에 없는 part 자동 등록
 function registerParts(){ var known={}; PARTS.forEach(function(p){ known[p.id]=1; });
-  allBank().forEach(function(q){ if(!known[q.part]){ PARTS.push({id:q.part,name:q.part+"부",short:q.part+"부",scope:"추가"}); known[q.part]=1; } }); }
+  allBank().forEach(function(q){ if(!known[q.part]){ PARTS.push({id:q.part,name:q.part+"단원",short:q.part+"단원",scope:"추가"}); known[q.part]=1; } }); }
 registerParts();
 
 /* ---------- 상태 ---------- */
@@ -470,15 +500,49 @@ var tocMode="go";
 function showOnly(id){
   var note=$("#note"); note.classList.add("only");
   $$("#note > section, #note > h1.part").forEach(function(el){ el.classList.remove("show"); });
-  var el=document.getElementById(id); if(!el) return; el.classList.add("show");
+  var el=document.getElementById(id); if(!el) return; el.classList.add("show"); openPartOf(id);
   var p=el.previousElementSibling; while(p && !(p.tagName==="H1" && p.classList.contains("part"))) p=p.previousElementSibling; if(p) p.classList.add("show");
   $$(".tocbtn").forEach(function(x){ x.classList.toggle("on", x.dataset.go===id); });
   $("#onlyName").textContent = el.querySelector("h2") ? el.querySelector("h2").textContent : "";
 }
 function showAll(){ $("#note").classList.remove("only"); $$(".tocbtn").forEach(function(x){ x.classList.remove("on"); }); }
+/* 목차와 본문을 단원(h1.part)별로 접고 펼친다. #note 안 h1.part 와 section 의 순서, #toc 의 버튼만 읽으므로
+   새 단원은 지금처럼 h1.part, section, 목차 버튼만 추가하면 자동으로 묶인다. 단원 앞의 섹션(s0)은 묶지 않는다. */
+var noteParts=[];   // [{h:h1.part 요소, secs:[섹션 id]}]
+(function(){
+  var cur=null, loose=[], btn={};
+  $$("#note > h1.part, #note > section").forEach(function(el){
+    if(el.tagName==="H1"){ cur={h:el, secs:[]}; noteParts.push(cur); }
+    else if(cur) cur.secs.push(el.id); else loose.push(el.id);
+  });
+  $$("#toc .tocbtn").forEach(function(b){ btn[b.dataset.go]=b.outerHTML; });
+  var h='<div class="tochd"><span class="lbl">목차</span>'
+    +(noteParts.length>1?'<button class="btn sm" data-fold="1">모두 펼치기</button><button class="btn sm" data-fold="0">모두 접기</button>':'')+'</div>';
+  loose.forEach(function(id){ if(btn[id]) h+=btn[id]; });
+  noteParts.forEach(function(p,i){
+    var t=p.h.textContent, k=t.indexOf(". "), lbl=k>0?t.slice(0,k):t, name=k>0?t.slice(k+2):"";
+    h+='<div class="tocgrp" data-grp="'+i+'"><button class="tocpart" data-part="'+i+'"><i></i><b>'+esc(lbl)+'</b><span>'+esc(name)+'</span><span class="pn">'+p.secs.length+'개</span></button><div class="tocitems">';
+    p.secs.forEach(function(id){ if(btn[id]) h+=btn[id]; });
+    h+='</div></div>';
+    p.h.classList.add("fold");
+    p.h.innerHTML='<i></i><span>'+esc(t)+'</span><span class="pn">'+p.secs.length+'개 항목</span>';
+  });
+  $("#toc").innerHTML=h;
+})();
+function setPart(i, open){
+  var p=noteParts[i]; if(!p) return;
+  p.h.classList.toggle("open", open);
+  var g=$('.tocgrp[data-grp="'+i+'"]'); if(g) g.classList.toggle("open", open);
+  p.secs.forEach(function(id){ var el=document.getElementById(id); if(el) el.classList.toggle("pclosed", !open); });
+}
+function openPartOf(id){ for(var i=0;i<noteParts.length;i++){ if(noteParts[i].secs.indexOf(id)>=0){ setPart(i,true); return; } } }
+noteParts.forEach(function(p,i){ setPart(i, noteParts.length===1); });
+noteParts.forEach(function(p,i){ p.h.addEventListener("click", function(){ setPart(i, !p.h.classList.contains("open")); }); });
+$$(".tocpart").forEach(function(b){ b.addEventListener("click", function(){ var i=parseInt(b.dataset.part,10); setPart(i, !noteParts[i].h.classList.contains("open")); }); });
+$$("[data-fold]").forEach(function(b){ b.addEventListener("click", function(){ noteParts.forEach(function(p,i){ setPart(i, b.dataset.fold==="1"); }); }); });
 $$(".tocbtn").forEach(function(b){ b.addEventListener("click", function(){
   if(tocMode==="only"){ showOnly(b.dataset.go); window.scrollTo({top:$("#toc").getBoundingClientRect().top+window.pageYOffset-80, behavior:"smooth"}); return; }
-  var el=document.getElementById(b.dataset.go); if(!el) return;
+  openPartOf(b.dataset.go); var el=document.getElementById(b.dataset.go); if(!el) return;
   window.scrollTo({top: el.getBoundingClientRect().top+window.pageYOffset-80, behavior:"smooth"}); }); });
 $$("[data-tocmode]").forEach(function(b){ b.addEventListener("click", function(){
   $$("[data-tocmode]").forEach(function(x){ x.classList.remove("on","soft"); }); b.classList.add("on","soft"); tocMode=b.dataset.tocmode;
@@ -520,6 +584,7 @@ function pool(){
     if(!inScope(q)) return false;
     if(st.mode==="wrong"){ var w=store.wrong[q.id]; return !!(w && !w.resolved); }
     if(st.mode==="unseen"){ return !store.seen[q.id]; }
+    if(st.mode==="src"){ return !!q.src; }
     return true;
   });
 }
@@ -569,7 +634,7 @@ function next(){
 }
 function head(q){
   var pct=Math.round((st.pos-1)/st.deck.length*100);
-  return '<div class="qmeta"><span><span class="tag '+q.type+'">'+TYPE_NAME[q.type]+'</span>'+esc(partName(q.part))+', '+esc(q.unit||"")+'</span><span>'+st.pos+' / '+st.deck.length+'</span></div>'
+  return '<div class="qmeta"><span><span class="tag '+q.type+'">'+TYPE_NAME[q.type]+'</span>'+srcTag(q)+esc(partName(q.part))+', '+esc(q.unit||"")+'</span><span>'+st.pos+' / '+st.deck.length+'</span></div>'
        + '<div class="progress"><i style="width:'+pct+'%"></i></div>';
 }
 function nextBtn(id){ return '<button class="btn primary" id="'+id+'">다음 문제</button>'; }
@@ -721,7 +786,7 @@ function renderWrong(){
   $("#wsum").innerHTML='<div class="box"><div class="n">'+open.length+'</div><div class="l">미해결 오답</div></div>'
     +'<div class="box"><div class="n">'+c.mcq+'</div><div class="l">객관식</div></div><div class="box"><div class="n">'+c.short+'</div><div class="l">주관식</div></div>'
     +'<div class="box"><div class="n">'+c.ox+'</div><div class="l">O/X</div></div><div class="box"><div class="n">'+c.essay+'</div><div class="l">논술형</div></div>';
-  // 취약 단원
+  // 취약 항목
   var units={}; open.forEach(function(x){ var u=x.q.unit||partName(x.q.part); units[u]=(units[u]||0)+x.w.count; });
   var uk=Object.keys(units).sort(function(a,b){ return units[b]-units[a]; }).slice(0,6);
   if(uk.length){ var mx=units[uk[0]]; $("#weakCard").style.display="block";
@@ -731,7 +796,7 @@ function renderWrong(){
   var list=items.filter(function(x){ return (wf.type==="all"||x.q.type===wf.type) && (wf.resolved||!x.w.resolved); });
   if(!list.length){ $("#wlist").innerHTML='<div class="empty"><b>'+(items.length?"조건에 맞는 오답이 없습니다":"아직 오답이 없습니다")+'</b>문제를 풀면 틀린 문항이 여기에 쌓입니다.</div>'; return; }
   $("#wlist").innerHTML=list.map(function(x){ var q=x.q, w=x.w, h='<div class="witem'+(w.resolved?' resolved':'')+'" data-id="'+q.id+'">';
-    h+='<span class="tag '+q.type+'">'+TYPE_NAME[q.type]+'</span><span class="muted" style="font-size:12.5px">'+esc(partName(q.part))+', '+esc(q.unit||"")+'</span>';
+    h+='<span class="tag '+q.type+'">'+TYPE_NAME[q.type]+'</span>'+srcTag(q)+'<span class="muted" style="font-size:12.5px">'+esc(partName(q.part))+', '+esc(q.unit||"")+'</span>';
     h+='<div class="wq">'+esc(q.q)+'</div>';
     if(q.type==="essay"){
       h+='<div class="wline"><b>내 답안</b><span class="mine">'+esc((w.lastAnswer||"").slice(0,200))+((w.lastAnswer||"").length>200?"…":"")+'</span></div>';
@@ -825,6 +890,14 @@ function renderTimeline(){
 $$("[data-nmode]").forEach(function(b){ b.addEventListener("click", function(){
   $$("[data-nmode]").forEach(function(x){ x.classList.remove("on","soft"); }); b.classList.add("on","soft");
   $("#note").classList.remove("easyonly","origonly"); if(b.dataset.nmode!=="both") $("#note").classList.add(b.dataset.nmode); }); });
+
+/* ---------- 계정 동기화 (assets/sync.js 가 있고 로그인했을 때만 동작) ---------- */
+function applyStore(d, key){
+  KEY=key; store=d||{}; store.wrong=store.wrong||{}; store.seen=store.seen||{}; store.extra=store.extra||[];
+  ensureIds(store.extra); st.scope="all"; buildScopeChips(); updateSetupStat();
+  if($("#wrong").classList.contains("on")) renderWrong();
+}
+if(window.SDT) SDT.attach({ key:BASE_KEY, get:function(){ return store; }, set:applyStore });
 </script>
 </body>
 </html>
