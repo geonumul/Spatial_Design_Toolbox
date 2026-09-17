@@ -63,7 +63,7 @@ const store = {};
 function initStore(o) {
   Object.keys(store).forEach(k => { delete store[k]; });
   Object.assign(store, o || {});
-  ['wrong', 'seen', 'lesson', 'units', 'terms', 'pref', 'mockDone'].forEach(k => { store[k] = store[k] || {}; });
+  ['wrong', 'seen', 'lesson', 'units', 'terms', 'pref', 'mockDone', 'notesRead'].forEach(k => { store[k] = store[k] || {}; });
   store.extra = store.extra || [];
   store.notebook = store.notebook || { free: 1 };
   if (store.pref.cumulative == null) store.pref.cumulative = false;
@@ -83,7 +83,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { sav
 
 /* ---------- 동기화 (설정 페이지에서 켬) ---------- */
 let syncReady = false, syncT = null;
-const progressData = () => ({ wrong: store.wrong, seen: store.seen, lesson: store.lesson, units: store.units, terms: store.terms, notebook: store.notebook, mockDone: store.mockDone, days: store.days || {}, pref: store.pref, last: store.last || null });
+const progressData = () => ({ wrong: store.wrong, seen: store.seen, lesson: store.lesson, units: store.units, terms: store.terms, notebook: store.notebook, mockDone: store.mockDone, notesRead: store.notesRead, days: store.days || {}, pref: store.pref, last: store.last || null });
 function syncPushSoon() { const I = INK(); if (!syncReady || !I || !I.Sync.enabled()) return; clearTimeout(syncT); syncT = setTimeout(syncPushNow, 2500); }
 function syncPushNow() { const I = INK(); if (!syncReady || !I || !I.Sync.enabled()) return; clearTimeout(syncT); I.Sync.push('progress', { updated: Date.now(), data: progressData() }); }
 function mergeProgress(d) {
@@ -100,6 +100,7 @@ function mergeProgress(d) {
   Object.keys(d.terms || {}).forEach(k => { const v = d.terms[k] || {}, l = store.terms[k] || {}; store.terms[k] = { seen: Math.max(v.seen || 0, l.seen || 0), known: !!(v.known || l.known), box: Math.max(v.box || 0, l.box || 0), due: (v.due || '') > (l.due || '') ? v.due : l.due }; });
   if (d.notebook) store.notebook.free = Math.max(store.notebook.free || 1, d.notebook.free || 1);
   Object.keys(d.mockDone || {}).forEach(k => { if (d.mockDone[k]) store.mockDone[k] = true; });
+  Object.keys(d.notesRead || {}).forEach(k => { const v = d.notesRead[k], l = store.notesRead[k]; if (v && (!l || v < l)) store.notesRead[k] = v; });
   Object.keys(d.days || {}).forEach(k => { store.days = store.days || {}; store.days[k] = 1; });
   if (d.pref) Object.keys(d.pref).forEach(k => { if (store.pref[k] == null) store.pref[k] = d.pref[k]; });
   if (!store.last && d.last) store.last = d.last;
@@ -115,7 +116,7 @@ async function syncPull(rerender) {
   syncPushNow();
 }
 /* 로그인 상태가 바뀌면 그 사람 기록으로 바꿔 끼운다 (assets/sync.js 가 부름) */
-function hasProgress(o) { return !!(o && ['seen', 'wrong', 'lesson', 'units'].some(k => o[k] && Object.keys(o[k]).length)); }
+function hasProgress(o) { return !!(o && ['seen', 'wrong', 'lesson', 'units', 'notesRead'].some(k => o[k] && Object.keys(o[k]).length)); }
 function onAuth(u) {
   const nk = u ? KEY + '@' + u.uid : KEY;
   const I = INK(); if (I && I.setUser) I.setUser(u ? u.uid : '');
@@ -224,6 +225,8 @@ const routes = [
   [/^#\/settings$/, pageSettings],
   [/^#\/exams$/, () => pageStatic('exams')],
   [/^#\/tips$/, () => pageStatic('tips')],
+  [/^#\/note(?:\/([\w-]+))?$/, pageNote],
+  [/^#\/time$/, pageTime],
 ];
 let cleanup = null, qInk = null;
 function route() {
@@ -256,6 +259,8 @@ function setNav(h) {
   else if (/^#\/settings/.test(h)) key = 'set';
   else if (/^#\/exams/.test(h)) key = 'exams';
   else if (/^#\/tips/.test(h)) key = 'tips';
+  else if (/^#\/note(\/|$)/.test(h)) key = 'pnote';
+  else if (/^#\/time$/.test(h)) key = 'ptime';
   $$('#nav .tab').forEach(t => t.classList.toggle('on', t.dataset.nav === key));
   const on = $('#nav .tab.on'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
@@ -305,6 +310,7 @@ function weekSteps(week) {
   if (d && d.warm) steps.push({ t: '0회독: 용어 먼저', d: '이번 강의에 나오는 용어를 슬라이드 순서대로 미리 한 번씩 봐요. 외우려 하지 말고 눈에 익히기만 해요.', done: lessonProg(w.deck, 0).done, href: '#/lesson/' + w.deck + '/0', meta: '약 ' + mins(d.warm) + '분', prog: lessonProg(w.deck, 0) });
   passStep(1);
   if (units.length) steps.push({ t: '정리 슬라이드: 단원 1부터 ' + units.length + '까지', d: '강의를 주제별로 나눈 요약이에요. 단원마다 내용이 달라요. 차례로 한 번씩 봐요.', done: units.every(u => unitDone(u.id)), href: '#/unit/' + nextUnit(units).id, meta: units.filter(u => unitDone(u.id)).length + ' / ' + units.length + ' 단원' });
+  else noteSecsOf(week).forEach(id => steps.push({ t: '정리노트 읽기: ' + noteTitle(id), d: '쉬운 설명으로 감을 잡고 원문으로 확인해요. 끝까지 읽거나 "다 읽었어요" 를 누르면 표시돼요.', done: noteRead(id), href: '#/note/' + id, meta: noteRead(id) ? '읽음' : '' }));
   const qstep = (level, t, desc) => { const s = weekQuizStat(week, level); if (!s.total) return; const goal = Math.min(20, s.total); steps.push({ t, d: desc, done: s.seen >= goal, href: '#/quiz?week=' + week + '&level=' + level + '&mode=unseen&n=20&start=1', meta: s.seen + ' / ' + goal + '문제' }); };
   qstep('basic', '기본 문제 20개', '시험과 같은 난이도예요. 틀려도 괜찮아요. 오답노트에 쌓여요.');
   const examPass = (META.passes.find(x => /기출/.test(x.t)) || {}).n;
@@ -356,14 +362,17 @@ function pageHome() {
   });
   h += '</div>';
   h += '<h2 class="sec">문제 진행</h2><div class="card"><div class="plangrid">' + planGrid() + '</div></div>';
+  const nAll = Object.keys(META.noteTitles || {});
   h += '<h2 class="sec">도구</h2><div class="toolrow">'
+    + (hasLazy('note') ? '<a class="tool" href="#/note"><b>정리노트</b><span>쉬운 설명과 원문, 읽음 ' + nAll.filter(noteRead).length + ' / ' + nAll.length + '</span></a>' : '')
+    + (hasLazy('time') ? '<a class="tool" href="#/time"><b>연표</b><span>양식 흐름도와 사건별 연표</span></a>' : '')
     + '<a class="tool" href="#/notebook"><b>필기 노트</b><span>빈 노트, 슬라이드 위에 손글씨</span></a>'
     + '<a class="tool" href="#/terms/all"><b>용어 카드</b><span>전 주차 용어 ' + Object.keys(TERM).length + '개' + (dueAll ? ', 오늘 복습 ' + dueAll + '개' : '') + '</span></a>'
     + '<a class="tool" href="#/mock"><b>모의고사</b><span>시험지처럼 섞어서</span></a>'
     + '<a class="tool" href="#/wrong"><b>오답노트</b><span>틀린 문제만 다시</span></a>'
     + (PAGES.exams ? '<a class="tool" href="#/exams"><b>기출 분석</b><span>' + esc(META.examsDesc || '시험 모양과 자주 나온 주제') + '</span></a>' : '')
     + (PAGES.tips ? '<a class="tool" href="#/tips"><b>답안 팁</b><span>' + esc(META.tipsDesc || '외우는 요령, 답안 쓰는 틀') + '</span></a>' : '')
-    + '<a class="tool" href="#/settings"><b>설정</b><span>로그인, 기록 백업</span></a>'
+    + '<a class="tool" href="#/settings"><b>설정</b><span>로그인, 보기 설정</span></a>'
     + '<a class="tool" href="../../index.html"><b>다른 과목</b><span>과목 선택 화면으로</span></a></div>';
   APP().innerHTML = h;
   renderMath(APP());
@@ -420,14 +429,19 @@ function pageWeek(week) {
         + (d.have < d.total ? '<span class="muted" style="font-size:13.5px">지금 ' + d.have + ' / ' + d.total + '장까지 준비됨. 나머지는 만드는 중</span>' : '') + '</div>';
     } else h += '<div class="soon">회독 슬라이드를 만드는 중이에요. 준비되면 여기에 나타나요.</div>';
   }
-  const units = META.units[week] || [];
-  if (!w.exam || units.length) h += '<h2 class="sec">' + (week === 'b' ? '기초 단원' : '정리 슬라이드') + ' <small>' + (week === 'b' ? '차례로 보면 돼요' : '주제별 요약, 단원마다 내용이 달라요') + '</small></h2>';
+  const units = META.units[week] || [], nsec = units.length ? [] : noteSecsOf(week);
+  if (nsec.length) h += '<h2 class="sec">정리노트 <small>항목을 누르면 그 부분을 읽어요</small></h2>';
+  else if (!w.exam || units.length) h += '<h2 class="sec">' + (week === 'b' ? '기초 단원' : '정리 슬라이드') + ' <small>' + (week === 'b' ? '차례로 보면 돼요' : '주제별 요약, 단원마다 내용이 달라요') + '</small></h2>';
   if (units.length) {
     h += '<div class="unitgrid">' + units.map((u, i) => {
       const r = store.units[u.id] || {};
       return '<a class="ucard' + (r.done ? ' done' : '') + '" href="#/unit/' + u.id + '"><span class="uid">단원 ' + (i + 1) + (r.done ? ', 다 봤어요' : '') + '</span><span class="ut">' + fmt(u.title, false) + '</span><span class="ug">' + fmt(u.goal, false) + '</span>'
         + '<span class="uterms">' + u.terms.slice(0, 4).map(t => '<span>' + esc(t) + '</span>').join('') + '</span><span class="ustate"><span>' + u.n + '장</span><span>' + (!r.done && r.i ? (r.i + 1) + '장까지 봄' : '') + '</span></span></a>';
     }).join('') + '</div>';
+  } else if (nsec.length) {
+    h += '<div class="unitgrid">' + nsec.map((id, i) => '<a class="ucard' + (noteRead(id) ? ' done' : '') + '" href="#/note/' + esc(id) + '"><span class="uid">항목 ' + (i + 1) + (noteRead(id) ? ', 읽었어요' : '') + '</span><span class="ut">' + esc(noteTitle(id)) + '</span></a>').join('') + '</div>'
+      + '<div class="termbar" style="margin-top:12px"><div><b>정리노트 전체</b><div class="muted">쉬운 설명만, 원문만 골라 보기, 목차에서 한 항목만 보기</div></div><div class="btnrow" style="margin:0"><a class="btn" href="#/note">정리노트 열기</a>'
+      + (hasLazy('time') ? '<a class="btn" href="#/time">연표</a>' : '') + '</div></div>';
   } else if (!w.exam) h += '<div class="soon">만드는 중이에요.</div>';
   const wt = termsOfWeek(week), known = wt.filter(t => (store.terms[termKey(t)] || {}).known).length;
   if (wt.length) h += '<div class="termbar"><div><b>용어 카드</b><div class="muted">이 주차 용어 ' + wt.length + '개, 외운 것 ' + known + '개' + (wt.filter(termDue).length ? ', 오늘 복습할 것 ' + wt.filter(termDue).length + '개' : '') + '</div></div><div class="btnrow" style="margin:0"><a class="btn" href="#/terms/' + week + '">카드 넘기기</a><a class="btn" href="#/quiz?week=' + week + '&unit=' + encodeURIComponent('용어') + '&start=1">용어 퀴즈</a></div></div>';
@@ -588,6 +602,7 @@ function pNext() {
 function pPrev() {
   if (!P) return;
   closePop();
+  if (P.step > 0 && !P.showAll) { P.step--; pApply(true); schedule(); return; }
   if (P.i > 0) pShow(P.i - 1, 'prev');
 }
 function schedule() {
@@ -999,9 +1014,6 @@ async function pageSettings() {
   // 기록 정리
   h += '<div class="card stack"><b style="font-size:18px">기록 정리</b><p class="muted" style="margin:0">시험 전에 처음부터 다시 해 보고 싶을 때 골라서 지워요. 지운 기록은 되돌릴 수 없어요.</p>'
     + '<div class="row"><button class="btn sm" data-reset="seen" type="button">정답률 기록</button><button class="btn sm" data-reset="lesson" type="button">회독, 단원 진도</button><button class="btn sm" data-reset="terms" type="button">외운 용어 표시</button><button class="btn sm danger" data-reset="wrong" type="button">오답노트</button></div></div>';
-  h += '<div class="card stack"><b style="font-size:18px">백업 파일</b><p class="muted" style="margin:0">로그인하지 않고 기기를 옮길 때 쓰는 방법이에요. 필기도 함께 담겨요.</p>'
-    + '<div class="row"><button class="btn" id="expAll" type="button">기록 파일로 저장</button><button class="btn" id="impAll" type="button">기록 파일 불러오기</button><input type="file" id="impFile" accept=".json,application/json" hidden></div>'
-    + '<p class="muted num" style="margin:0;font-size:14px">푼 문제 ' + Object.keys(store.seen).length + '개, 필기한 쪽 ' + inkKeys.length + '개</p></div>';
   h += '<div class="card stack"><b style="font-size:18px">필기</b><div class="row"><button class="chip' + (I && I.tool.fingerNav ? ' on' : '') + '" id="fingerChip" type="button">' + (I && I.tool.fingerNav ? '손가락은 넘기기, 펜만 필기' : '손가락으로도 필기') + '</button></div><p class="muted" style="margin:0;font-size:14px">애플펜슬을 한 번 쓰면 자동으로 "펜만 필기"로 바뀌어요.</p></div>';
   APP().innerHTML = h;
   const setPref = (k, v) => { store.pref[k] = v; saveNow(); syncPushSoon(); applyPref(); pageSettings(); };
@@ -1028,13 +1040,13 @@ async function pageSettings() {
     msg('기록과 필기 ' + n + '쪽을 맞췄어요');
   });
   $('#fingerChip').addEventListener('click', () => { if (!I) return; I.tool.fingerNav = !I.tool.fingerNav; if (I.saveTool) I.saveTool(); pageSettings(); });
-  $('#expAll').addEventListener('click', async () => {
+  $('#expAll') && $('#expAll').addEventListener('click', async () => {
     const data = JSON.stringify({ app: KEY, at: new Date().toISOString(), store: progressData(), extra: store.extra, ink: I ? await I.all() : {} });
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = (META.name || '공부') + '_기록_' + new Date().toISOString().slice(0, 10) + '.json';
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); toast('기록 파일을 저장했어요');
   });
-  $('#impAll').addEventListener('click', () => $('#impFile').click());
-  $('#impFile').addEventListener('change', function () {
+  $('#impAll') && $('#impAll').addEventListener('click', () => $('#impFile').click());
+  $('#impFile') && $('#impFile').addEventListener('change', function () {
     const f = this.files[0]; if (!f) return; const r = new FileReader();
     r.onload = async () => {
       try {
@@ -1116,6 +1128,7 @@ function updateStat() {
   const el = $('#setupStat'); if (el) el.textContent = m;
 }
 function startDeck(list, keepOrder, mockLabel) {
+  if (window.SDTPet && !window.SDTPet.canStart(list)) return;
   st.mock = mockLabel || null;
   st.deck = keepOrder ? list.slice() : shuffle(list.slice());
   if (st.n > 0 && !keepOrder) st.deck = st.deck.slice(0, st.n);
@@ -1124,6 +1137,7 @@ function startDeck(list, keepOrder, mockLabel) {
   qNext();
 }
 function record(q, ok, mine, missing) {
+  const petReview = !!(store.wrong[q.id] && !store.wrong[q.id].resolved);
   const s = store.seen[q.id] || { n: 0, ok: 0 }; s.n++; if (ok) s.ok++; store.seen[q.id] = s;
   const bt = st.session.byType[q.type] || (st.session.byType[q.type] = { n: 0, ok: 0 }); bt.n++; if (ok) bt.ok++;
   if (ok) { st.session.right++; if (store.wrong[q.id]) { store.wrong[q.id].resolved = true; store.wrong[q.id].ts = Date.now(); } }
@@ -1133,12 +1147,14 @@ function record(q, ok, mine, missing) {
   }
   store.last = { href: '#/quiz?week=' + q.part + '&level=' + q.level + '&mode=unseen&start=1', label: weekName(q.part) + ' ' + (LEVEL_NAME[q.level] || '') + ' 문제' };
   save(); updateBadges(); updateStat();
+  if (window.SDTPet) window.SDTPet.onAnswer(q, ok, { review: petReview });
 }
 function unrecord(q, wasOk) {
   const s = store.seen[q.id]; if (s) { s.n--; if (wasOk) s.ok--; if (s.n <= 0) delete store.seen[q.id]; }
   const bt = st.session.byType[q.type]; if (bt) { bt.n--; if (wasOk) bt.ok--; }
   if (!wasOk) { st.session.wrongIds.pop(); const w = store.wrong[q.id]; if (w) { w.count--; if (w.count <= 0) delete store.wrong[q.id]; } }
   else st.session.right--;
+  if (window.SDTPet) window.SDTPet.onUndo(q, wasOk);
 }
 function stageEl() { return $('#qstage'); }
 function qNext() {
@@ -1292,6 +1308,7 @@ function rEssay(q) {
   keyHandler(null);
 }
 function qResult() {
+  if (window.SDTPet) window.SDTPet.onSetEnd(st.session);
   const ss = st.session, pct = ss.total ? Math.round(ss.right / ss.total * 100) : 0;
   if (st.mock) { store.mockDone[st.scope] = true; save(); }
   let h = '<div class="card result"><div class="muted" style="font-weight:450">' + (st.mock ? '모의고사 결과' : '이번 세트 결과') + '</div><div class="big num">' + pct + '<small>%</small></div><p>' + ss.total + '문항 중 ' + ss.right + '문항 통과' + (ss.essayN ? ', 서술 평균 포함률 ' + Math.round(ss.essaySum / ss.essayN * 100) + '%' : '') + '</p><div class="bytype">'
@@ -1352,7 +1369,7 @@ function pageWrong() {
     + '<div class="sum" id="wsum" style="margin-top:14px"></div><div class="card" id="weakCard" style="display:none"><b>자주 틀리는 단원</b><div class="weak" id="weak"></div></div>'
     + '<div class="row" style="margin-top:16px"><span class="cap">유형</span>' + [['all', '전체'], ['calc', '계산'], ['essay', '서술'], ['mcq', '객관식'], ['short', '주관식'], ['ox', 'O/X']].map(o => '<button class="chip' + (wf.type === o[0] ? ' on' : '') + '" data-wtype="' + o[0] + '" type="button">' + o[1] + '</button>').join('')
     + '<button class="chip' + (wf.resolved ? ' on' : '') + '" id="showResolved" type="button">해결된 것도 보기</button></div>'
-    + '<div class="btnrow" style="margin-bottom:16px"><button class="btn primary" id="retryWrong" type="button">오답만 다시 풀기</button><a class="btn" href="#/settings">백업, 기기 맞추기</a><button class="btn danger" id="clearWrong" type="button">오답 전부 비우기</button></div>'
+    + '<div class="btnrow" style="margin-bottom:16px"><button class="btn primary" id="retryWrong" type="button">오답만 다시 풀기</button><button class="btn danger" id="clearWrong" type="button">오답 전부 비우기</button></div>'
     + '<div id="wlist" class="stack"></div><div id="qstage"></div>';
   $$('[data-wtype]').forEach(b => b.addEventListener('click', () => { wf.type = b.dataset.wtype; pageWrong(); }));
   $('#showResolved').addEventListener('click', () => { wf.resolved = !wf.resolved; pageWrong(); });
@@ -1412,6 +1429,227 @@ function pageStatic(name) {
   countTerms(APP());
 }
 
+/* ---------- 정리노트, 연표 (meta.lazyPages 에 있을 때만. data/page_<이름>.js 를 그 화면을 열 때 읽는다) ---------- */
+function hasLazy(name) { return (META.lazyPages || []).indexOf(name) >= 0; }
+function noteSecsOf(week) { return hasLazy('note') ? ((META.noteSections || {})[week] || []) : []; }
+function noteTitle(id) { return (META.noteTitles || {})[id] || id; }
+function noteRead(id) { return !!(store.notesRead && store.notesRead[id]); }
+async function lazyPage(name) {
+  if ((window.SDT_PAGES_LAZY || {})[name] == null) { try { await loadScript('data/page_' + name + '.js'); } catch (e) { /* 아래에서 준비 중 안내 */ } }
+  return (window.SDT_PAGES_LAZY || {})[name];
+}
+const lazyMissing = () => '<div class="empty"><b>아직 준비되지 않았어요</b><a class="btn" href="#/">홈으로</a></div>';
+let noteRoot = null;   // 그림이 든 큰 페이지라 한 번 만든 화면을 다시 붙여 쓴다
+const noteSecs = root => Array.from(root.children).filter(el => el.tagName === 'SECTION' && el.id);
+const noteSec = (root, id) => noteSecs(root).find(s => s.id === id) || null;
+const hdrH = () => { const hd = $('#hdr'); return hd ? hd.offsetHeight : 0; };
+let noteIgnoreScroll = 0;
+function noteScrollTo(el) {
+  if (!el) return;
+  noteIgnoreScroll = Date.now() + 900;
+  window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.pageYOffset - hdrH() - 12), behavior: 'auto' });
+}
+function markNoteRead(id) {
+  if (!id || noteRead(id)) return;
+  store.notesRead[id] = Date.now();
+  save();
+  if (noteRoot) noteSync(noteRoot);
+  toast(noteTitle(id) + ', 다 읽었어요');
+  window.dispatchEvent(new CustomEvent('sdt:read', { detail: { id: id } }));
+}
+function buildNote(html) {
+  const box = document.createElement('div');
+  box.innerHTML = html;
+  const root = box.querySelector('section#note') || box;
+  root.id = 'note';
+  root.classList.remove('panel');
+  $$('.notebar, .onlybar', root).forEach(el => el.remove());
+  const oldToc = root.querySelector('#toc'); if (oldToc) oldToc.remove();
+  let toc = '';
+  Array.from(root.children).forEach(el => {
+    if (el.tagName === 'H1' && el.classList.contains('part')) toc += '<span class="tocpart">' + esc(el.textContent) + '</span>';
+    else if (el.tagName === 'SECTION' && el.id) {
+      const h2 = el.querySelector('h2');
+      toc += '<button class="tocbtn" type="button" data-go="' + esc(el.id) + '">' + esc(h2 ? h2.textContent : noteTitle(el.id)) + '</button>';
+      const rb = document.createElement('div');
+      rb.className = 'readbar';
+      rb.innerHTML = '<button class="btn sm readbtn" type="button" data-read="' + esc(el.id) + '">다 읽었어요</button><button class="btn sm onlynext" type="button" data-only="next">다음 항목</button>';
+      el.appendChild(rb);
+    }
+  });
+  const chip = (attr, val, label) => '<button class="chip" type="button" ' + attr + '="' + val + '">' + label + '</button>';
+  const head = document.createElement('div');
+  head.className = 'notehead';
+  head.innerHTML = '<div class="whead"><div class="eyebrow">' + esc(META.name || '') + '</div><h1>정리노트</h1><p>쉬운 설명으로 감을 잡고, 원문으로 시험에 쓸 문장을 확인해요. 항목 끝까지 읽거나 "다 읽었어요" 를 누르면 읽음으로 표시돼요.</p></div>'
+    + '<div class="notebar"><span class="nlbl">보기</span>' + chip('data-nmode', 'both', '쉬운 설명 + 원문') + chip('data-nmode', 'easy', '쉬운 설명만') + chip('data-nmode', 'orig', '원문만')
+    + '<span class="nlbl">목차 누르면</span>' + chip('data-tocmode', 'go', '그 자리로 이동') + chip('data-tocmode', 'only', '그 항목만 보기') + '<span class="nprog num"></span></div>'
+    + '<nav id="toc" aria-label="정리노트 목차"><span class="lbl">목차</span>' + toc + '</nav>'
+    + '<div class="onlybar"><button class="btn sm" type="button" data-only="prev">이전</button><b class="onlyname"></b><button class="btn sm" type="button" data-only="next">다음</button><button class="btn sm" type="button" data-only="all">전체 보기</button></div>';
+  root.insertBefore(head, root.firstChild);
+  root.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b || !root.contains(b)) return;
+    if (b.dataset.nmode) { store.pref.noteView = b.dataset.nmode; save(); noteSync(root); }
+    else if (b.dataset.tocmode) {
+      store.pref.noteToc = b.dataset.tocmode; save();
+      if (b.dataset.tocmode === 'go') noteShowAll(root);
+      else { const h = hdrH(); const cur = noteSecs(root).find(s => s.getBoundingClientRect().bottom > h + 40) || noteSecs(root)[0]; if (cur) noteShowOnly(root, cur.id, true); }
+      noteSync(root);
+    } else if (b.dataset.go) {
+      const id = b.dataset.go;
+      if (store.pref.noteToc === 'only') { noteShowOnly(root, id, true); noteScrollTo(root.querySelector('.onlybar')); }
+      else { noteShowAll(root); noteScrollTo(noteSec(root, id)); noteSetHash(id); }
+    } else if (b.dataset.only) {
+      if (b.dataset.only === 'all') { noteShowAll(root); noteSetHash(''); return; }
+      const secs = noteSecs(root), i = secs.findIndex(s => s.id === (root.dataset.cur || '')), own = b.closest('section');
+      const from = root.classList.contains('only') || !own ? i : secs.indexOf(own);
+      const n = from + (b.dataset.only === 'next' ? 1 : -1);
+      if (n < 0 || n >= secs.length) return;
+      if (root.classList.contains('only')) { noteShowOnly(root, secs[n].id, true); noteScrollTo(root.querySelector('.onlybar')); }
+      else { noteScrollTo(secs[n]); noteSetHash(secs[n].id); }
+    } else if (b.dataset.read) markNoteRead(b.dataset.read);
+  });
+  return root;
+}
+function noteSetHash(id) {
+  const h = '#/note' + (id ? '/' + id : '');
+  if (location.hash !== h && history.replaceState) history.replaceState(null, '', h);
+  if (id) { store.last = { href: h, label: '정리노트 ' + noteTitle(id).slice(0, 20) }; save(); }
+}
+function noteShowAll(root) {
+  root.classList.remove('only');
+  delete root.dataset.cur;
+  Array.from(root.children).forEach(el => el.classList.remove('show'));
+  $$('.tocbtn', root).forEach(x => x.classList.remove('on'));
+  $$('[data-only]', root).forEach(x => { x.disabled = false; });
+}
+function noteShowOnly(root, id, setHash) {
+  const el = noteSec(root, id); if (!el) return;
+  root.classList.add('only');
+  root.dataset.cur = id;
+  Array.from(root.children).forEach(c => c.classList.remove('show'));
+  el.classList.add('show');
+  let p = el.previousElementSibling;
+  while (p && !(p.tagName === 'H1' && p.classList.contains('part'))) p = p.previousElementSibling;
+  if (p) p.classList.add('show');
+  $$('.tocbtn', root).forEach(x => x.classList.toggle('on', x.dataset.go === id));
+  const h2 = el.querySelector('h2'), nm = root.querySelector('.onlyname');
+  if (nm) nm.textContent = h2 ? h2.textContent : noteTitle(id);
+  const secs = noteSecs(root), i = secs.indexOf(el);
+  $$('.onlybar [data-only="prev"]', root).forEach(x => { x.disabled = i <= 0; });
+  $$('[data-only="next"]', root).forEach(x => { x.disabled = i >= secs.length - 1; });
+  if (setHash) noteSetHash(id);
+}
+function noteSync(root) {
+  const v = store.pref.noteView || 'both', tm = store.pref.noteToc || 'go';
+  root.classList.toggle('easyonly', v === 'easy');
+  root.classList.toggle('origonly', v === 'orig');
+  $$('[data-nmode]', root).forEach(b => b.classList.toggle('on', b.dataset.nmode === v));
+  $$('[data-tocmode]', root).forEach(b => b.classList.toggle('on', b.dataset.tocmode === tm));
+  $$('.tocbtn', root).forEach(b => b.classList.toggle('read', noteRead(b.dataset.go)));
+  $$('[data-read]', root).forEach(b => { const r = noteRead(b.dataset.read); b.classList.toggle('done', r); b.textContent = r ? '읽음으로 표시됨' : '다 읽었어요'; });
+  const ids = noteSecs(root).map(s => s.id), pg = root.querySelector('.nprog');
+  if (pg) pg.textContent = '읽음 ' + ids.filter(noteRead).length + ' / ' + ids.length;
+}
+async function pageNote(sid) {
+  if (!noteRoot) APP().innerHTML = '<div class="empty"><b>정리노트 불러오는 중</b>그림이 많아서 조금 걸려요.</div>';
+  const html = noteRoot ? '' : await lazyPage('note');
+  if (!/^#\/note(\/|$)/.test(location.hash || '')) return;
+  if (!noteRoot) {
+    if (html == null) { APP().innerHTML = lazyMissing(); return; }
+    noteRoot = buildNote(html);
+  }
+  const root = noteRoot;
+  APP().innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'wrap notewrap';
+  wrap.appendChild(root);
+  APP().appendChild(wrap);
+  noteSync(root);
+  const target = sid ? noteSec(root, sid) : null;
+  if (target && store.pref.noteToc === 'only') { noteShowOnly(root, sid, true); noteIgnoreScroll = Date.now() + 900; }
+  else {
+    noteShowAll(root);
+    if (target) {
+      noteSetHash(sid);
+      requestAnimationFrame(() => noteScrollTo(target));
+      const y0 = { v: -1 };
+      setTimeout(() => { y0.v = window.pageYOffset; }, 60);
+      setTimeout(() => { if (root.isConnected && Math.abs(window.pageYOffset - y0.v) < 2) noteScrollTo(target); }, 450);   // 위쪽 그림이 늦게 뜨면 한 번 더 맞춘다
+    } else noteIgnoreScroll = Date.now() + 600;
+  }
+  /* 항목 끝(읽음 막대)이 화면 아래쪽에 들어오면 읽음 */
+  let tick = null;
+  const check = () => {
+    tick = null;
+    if (Date.now() < noteIgnoreScroll || !root.isConnected) return;
+    const vh = window.innerHeight || 0;
+    $$('.readbar', root).forEach(rb => {
+      const id = rb.querySelector('[data-read]').dataset.read;
+      if (noteRead(id)) return;
+      const r = rb.getBoundingClientRect();
+      if (r.height > 0 && r.top >= vh * 0.25 && r.bottom <= vh) markNoteRead(id);
+    });
+  };
+  const onScroll = () => { if (!tick) tick = setTimeout(check, 180); };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  if (cleanup) cleanup();
+  cleanup = () => { window.removeEventListener('scroll', onScroll); clearTimeout(tick); };
+}
+async function pageTime() {
+  if (!(window.SDT_PAGES_LAZY || {}).time) APP().innerHTML = '<div class="empty"><b>연표 불러오는 중</b>잠시만요.</div>';
+  const html = await lazyPage('time');
+  if ((location.hash || '') !== '#/time') return;
+  if (html == null) { APP().innerHTML = lazyMissing(); return; }
+  APP().innerHTML = '<div class="wrap timewrap">' + html + '</div>';
+  const sec = $('#time'); if (sec) sec.classList.remove('panel');
+  initTime(APP());
+}
+function initTime(root) {
+  const dn = root.querySelector('#timeData'); if (!dn) return;
+  let D; try { D = JSON.parse(dn.textContent); } catch (e) { return; }
+  const TL = D.timeline || [], FLOW = D.flow || [], KEYS = D.keyYears || {}, CATS = D.cats || [];
+  const A = (D.range || [1850, 1940])[0], B = (D.range || [1850, 1940])[1], W = (B - A) || 1;
+  const bare = s => String(s || '').replace(/\s/g, '');
+  const ccls = c => { const i = CATS.map(bare).indexOf(bare(c)); return 'tc' + (i < 0 ? 'x' : i % 10); };
+  const flow = root.querySelector('#flow');
+  if (flow) {
+    let h = '<div class="axis">';
+    for (let y = A; y <= B; y += 10) h += '<span style="left:' + ((y - A) / W * 100) + '%">' + y + '</span>';
+    h += '</div>';
+    FLOW.forEach(f => {
+      const l = (f.s - A) / W * 100, w = (f.e - f.s) / W * 100, pl = (f.p[0] - A) / W * 100, pw = (f.p[1] - f.p[0]) / W * 100;
+      h += '<div class="frow ' + ccls(f.c) + '"><div class="fl">' + esc(f.n) + '</div><div class="ft"><div class="bar" style="left:' + l + '%;width:' + w + '%"></div><div class="bar peak" style="left:' + pl + '%;width:' + Math.max(pw, 1.2) + '%"></div>'
+        + '<span class="yl num" style="right:' + (100 - l) + '%;margin-right:6px">' + f.s + '</span><span class="yl num" style="left:' + (l + w) + '%;margin-left:6px">' + f.e + '</span></div></div>';
+    });
+    flow.innerHTML = h;
+  }
+  const tf = { cat: 'all', key: false };
+  const render = () => {
+    const tl = root.querySelector('#tl'); if (!tl) return;
+    let h = '', era = null;
+    TL.forEach(e => {
+      const yk = (String(e.y).match(/\d{4}/) || [''])[0], key = KEYS[yk];
+      const vis = (tf.cat === 'all' || (e.cats || []).indexOf(tf.cat) >= 0) && (!tf.key || key);
+      if (e.era !== era) { era = e.era; h += '<div class="era" data-era>' + esc(era) + '</div>'; }
+      h += '<div class="tev' + (key ? ' key' : '') + (vis ? '' : ' hide') + '"><div class="yr num">' + esc(e.y) + '</div><div class="dot"></div><div class="tc"><ul>'
+        + (e.items || []).map(it => '<li>' + esc(it) + '</li>').join('') + '</ul>' + (e.who ? '<div class="who">' + esc(e.who) + '</div>' : '') + '<div class="cats">'
+        + (e.cats || []).map(c => '<span class="' + ccls(c) + '">' + esc(c) + '</span>').join('') + (key ? '<span class="keylbl">기준점, ' + esc(key) + '</span>' : '') + '</div></div></div>';
+    });
+    tl.innerHTML = h;
+    $$('.era', tl).forEach(el => { let n = el.nextElementSibling, any = false; while (n && !n.hasAttribute('data-era')) { if (!n.classList.contains('hide')) any = true; n = n.nextElementSibling; } el.hidden = !any; });
+  };
+  const cats = root.querySelector('#tcats');
+  if (cats) {
+    cats.innerHTML = '<button class="chip on" type="button" data-tcat="all">전체</button>' + CATS.map(c => '<button class="chip cat ' + ccls(c) + '" type="button" data-tcat="' + esc(c) + '"><i></i>' + esc(c) + '</button>').join('');
+    cats.addEventListener('click', e => { const b = e.target.closest('[data-tcat]'); if (!b) return; $$('[data-tcat]', cats).forEach(x => x.classList.toggle('on', x === b)); tf.cat = b.dataset.tcat; render(); });
+  }
+  const ok = root.querySelector('#onlyKey');
+  if (ok) { ok.setAttribute('role', 'button'); ok.tabIndex = 0; ok.addEventListener('click', () => { tf.key = !tf.key; ok.classList.toggle('on', tf.key); render(); }); }
+  const dt = root.querySelector('details.adv table');
+  if (dt && !dt.parentElement.classList.contains('tblwrap')) { const wr = document.createElement('div'); wr.className = 'tblwrap'; dt.parentElement.insertBefore(wr, dt); wr.appendChild(dt); }
+  render();
+}
+
 /* ---------- 시작 ---------- */
 $('#topBtn').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 window.addEventListener('scroll', () => { $('#hdr').classList.toggle('scrolled', window.scrollY > 8); }, { passive: true });
@@ -1419,6 +1657,7 @@ window.addEventListener('hashchange', route);
 applyPref();
 /* 메뉴 줄: 마우스 휠을 옆으로 스크롤로 */
 (function () { const nv = document.getElementById('nav'); if (!nv) return; nv.addEventListener('wheel', e => { if (nv.scrollWidth > nv.clientWidth + 2 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) { nv.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false }); })();
+window.SDTApp = { get store() { return store; }, save, toast, startDeck, BANK, BY_ID, weekName, META };
 route();
 if (window.SDT) window.SDT.onAuth(onAuth); else syncReady = true;
 })();

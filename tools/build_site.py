@@ -10,10 +10,12 @@
   notes/slides_w*.json       정리 슬라이드. 기초 다지기는 slides_wb.json (tools/checkers/slide_check.py)
   bank/*.json                문제은행 JSON 배열 (tools/checkers/bank_check.py)
   pages/tips.html, exams.html  답안 팁, 기출 분석 (선택)
+  pages/note.html, time.html   정리노트, 연표 (선택, 큰 페이지라 data/page_<이름>.js 로 따로 두고 열 때 읽음.
+                               정리노트 항목과 주차 짝은 subject.json 의 noteSections)
   subjects/<slug>/img/<덱>/pNNN.jpg   tools/render_slides.py 가 만든 슬라이드 그림
   subjects/<slug>/pdf/<덱>_강의안.pdf  tools/compose_pdf.py 가 만든 강의안 PDF (있으면 링크)
 출력
-  subjects/<slug>/index.html, data/meta.js, terms.js, bank.js, pages.js, lesson_<덱>.js, notes_w<주차>.js
+  subjects/<slug>/index.html, data/meta.js, terms.js, bank.js, pages.js, page_note.js, page_time.js, lesson_<덱>.js, notes_w<주차>.js
   저장소 루트 index.html 의 과목 카드 숫자
 화면 코드는 engine/ (모든 과목 공통), 로그인은 assets/sync.js.
 """
@@ -37,7 +39,8 @@ LOGOS = {
 }
 DEFAULT_LOGO = _logo('<path d="M4 5.5h6.5a2 2 0 012 2V20a2 2 0 00-2-2H4z"/><path d="M20 5.5h-5.5a2 2 0 00-2 2V20a2 2 0 012-2H20z"/>')
 
-META_KEYS = ("name", "brand", "key", "eyebrow", "intro", "pathLabel", "examLabel", "examsDesc", "tipsDesc", "mockDesc", "bgLabel", "sentLabel", "mock")
+LAZY_PAGES = {"note": "정리노트", "time": "연표"}   # pages/<이름>.html -> data/page_<이름>.js, 메뉴 이름
+META_KEYS = ("name", "brand", "key", "eyebrow", "intro", "pathLabel", "examLabel", "examsDesc", "tipsDesc", "mockDesc", "bgLabel", "sentLabel", "mock", "pet")
 
 
 def js_assign(name, key, obj):
@@ -213,10 +216,34 @@ def main(slug, skip, home=True):
         if p.exists():
             pages[name] = p.read_text(encoding="utf-8")
     write(SITE / "data" / "pages.js", js_assign("SDT_PAGES", None, pages))
+    # 4-1) 큰 정적 페이지 (정리노트, 연표): 그 화면을 열 때만 읽는다
+    lazy = []
+    for name in LAZY_PAGES:
+        p, out = W / "pages" / f"{name}.html", SITE / "data" / f"page_{name}.js"
+        if p.exists():
+            text = p.read_text(encoding="utf-8")
+            write(out, js_assign("SDT_PAGES_LAZY", name, text))
+            lazy.append(name)
+            if name == "note":
+                titles = {m.group(1): html.unescape(re.sub(r"<[^>]+>", "", m.group(2))).strip()
+                          for m in re.finditer(r'<section id="(s\d+)">\s*<h2>(.*?)</h2>', text, re.S)}
+                meta["noteTitles"] = titles
+                meta["noteSections"] = {w: [s for s in lst if s in titles] for w, lst in (cfg.get("noteSections") or {}).items()}
+                print(f"  정리노트: 항목 {len(titles)}개, {len(text) / 1e6:.1f} MB")
+            else:
+                print(f"  {name} 페이지: {len(text) / 1e3:.0f} KB")
+        elif out.exists():
+            out.unlink()
+    if lazy:
+        meta["lazyPages"] = lazy
+    write(SITE / "data" / "meta.js", js_assign("SDT_META", None, meta))
 
     # 5) 껍데기
     nav = ['<a class="tab" data-nav="home" href="#/">홈</a>']
-    nav += [f'<a class="tab" data-nav="w{w["id"]}" href="#/week/{w["id"]}">{html.escape(w["short"])}</a>' for w in weeks]
+    for name, label in LAZY_PAGES.items():
+        if name in lazy:
+            nav.append(f'<a class="tab" data-nav="p{name}" href="#/{name}">{label}</a>')
+    nav +=[f'<a class="tab" data-nav="w{w["id"]}" href="#/week/{w["id"]}">{html.escape(w["short"])}</a>' for w in weeks]
     nav += ['<a class="tab" data-nav="quiz" href="#/quiz">문제</a>',
             '<a class="tab" data-nav="wrong" href="#/wrong">오답노트 <span id="wrongBadge" class="badge"></span></a>',
             '<a class="tab" data-nav="note" href="#/notebook">필기 노트</a>']

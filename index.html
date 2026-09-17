@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TSG</title>
-<meta name="description" content="공간디자인 수업 과목별 정리노트, 암기 팁, 문제은행">
+<meta name="description" content="같이 듣는 수업을 같이 준비하는 스터디 사이트">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 :root{
@@ -113,7 +113,10 @@ footer a{color:var(--primary);font-weight:400}
   .subj{padding:20px 18px 16px;border-radius:6px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+.pet-note{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:92vw;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.15);font-size:14px}
+.pill{border:0;cursor:pointer;font-family:inherit}
 </style>
+<link rel="stylesheet" href="assets/pet/pet.css">
 </head>
 <body>
 <header id="hdr"><div class="hwrap">
@@ -121,6 +124,7 @@ footer a{color:var(--primary);font-weight:400}
 <nav>
 <a class="tab" href="#subjects">과목</a>
 <a class="tab" href="#howto">사용법</a>
+<a class="tab" href="pet/index.html">내 펫</a>
 <a class="tab" href="https://github.com/geonumul/Toolbox_Group_Study" target="_blank" rel="noopener">GitHub</a>
 </nav>
 <div class="hright" id="hstat"></div>
@@ -129,39 +133,39 @@ footer a{color:var(--primary);font-weight:400}
 <div class="hero">
   <video class="bgv" id="heroVideo" autoplay muted loop playsinline preload="metadata" poster="assets/media/hero.jpg" aria-hidden="true"><source src="assets/media/hero.mp4" type="video/mp4"></video>
   <button class="vtoggle" id="vtoggle" type="button" aria-label="배경 영상 멈춤">II</button>
-  <p class="eyebrow">수업별 회독 스터디</p>
-  <h1>과목을 고르고,<br>정리부터 시험까지 한 번에</h1>
-  <p>과목에 들어가면 길잡이가 지금 할 일을 하나씩 알려 줘요.<br>회독으로 여러 번 읽고, 문제로 확인하고, 틀린 건 오답노트에 쌓여요.</p>
+  <p class="eyebrow">Toolbox Group Study</p>
+  <h1>시험 전날 밤새지 않게<br>매주 조금씩 쌓아 둡니다</h1>
+  <p>과목에 들어가면 오늘 할 일부터 보여 드려요.<br>틀린 문제는 오답노트에 알아서 모입니다.</p>
   <div class="cta">
-    <a class="pill white" href="#howto">사용법 보기</a>
-    <a class="pill solid" href="#subjects">과목 고르기</a>
+    <a class="pill white" href="#howto">사용법</a>
+    <a class="pill solid" href="#subjects">과목 보기</a><button class="pill white" type="button" data-petlaunch>내 펫 화면에 띄우기</button>
   </div>
   <div class="hstats">
     <div><b id="sSubjects">0</b><span>과목</span></div>
     <div><b id="sTotal">0</b><span>전체 문항</span></div>
-    <div><b id="sWrong">0</b><span id="sWrongLbl">미해결 오답</span></div>
+    <div><b id="sWrong">0</b><span id="sWrongLbl">남은 오답</span></div>
   </div>
 </div>
 
 <main>
 <section id="subjects">
   <div class="sechead">
-    <h2>과목 선택</h2>
-    <p>들어가면 문제풀기, 오답노트, 정리노트, 암기 팁 탭이 있습니다. 매주 강의자료가 올라오는 대로 단원이 늘어납니다.</p>
+    <h2>과목</h2>
+    <p>강의자료가 올라오는 주마다 단원을 하나씩 채웁니다.</p>
   </div>
   <div class="subjects" id="subjectList"></div>
 </section>
 
 <section id="howto">
   <div class="sechead">
-    <h2>이렇게 쓰세요</h2>
-    <p>시험 전날까지 이 순서를 반복하면 됩니다.</p>
+    <h2>이렇게 공부해요</h2>
+    <p>시험 전날까지 네 단계를 돌리면 됩니다.</p>
   </div>
   <div class="steps">
-    <div class="step"><div class="n">1</div><b>정리노트로 훑기</b><p>단원을 펼쳐 쉬운 설명으로 큰 그림을 잡고, 원문으로 논술 문장을 익힙니다. "그 항목만 보기"로 한 항목씩 끊어 볼 수 있어요.</p></div>
-    <div class="step"><div class="n">2</div><b>문제 풀기</b><p>유형, 범위, 문항 수를 고르고 시작합니다. 시험 직전엔 "기출, 강조 문제" 모드로 핵심만. 객관식은 숫자키, 다음 문제는 Enter.</p></div>
-    <div class="step"><div class="n">3</div><b>오답노트 다시 풀기</b><p>틀린 문제와 70% 미만 논술이 자동으로 쌓입니다. 다시 맞히면 해결 처리돼요.</p></div>
-    <div class="step"><div class="n">4</div><b>암기 팁으로 마무리</b><p>숫자 말장난, 헷갈리는 짝, 답안 뼈대로 시험장에서 떠오르게 만듭니다.</p></div>
+    <div class="step"><div class="n">1</div><b>먼저 읽기</b><p>쉬운 설명으로 흐름부터 잡아요. 답안에 쓸 문장은 원문으로 익힙니다.</p></div>
+    <div class="step"><div class="n">2</div><b>문제 풀기</b><p>범위와 문항 수만 고르면 바로 시작해요. 시험 직전에는 기출과 강조 문제만 모아 풉니다.</p></div>
+    <div class="step"><div class="n">3</div><b>틀린 것만 다시</b><p>틀린 문제와 70%를 못 넘긴 서술이 여기 모여요. 다시 맞히면 목록에서 빠집니다.</p></div>
+    <div class="step"><div class="n">4</div><b>시험 직전엔 암기 팁</b><p>시험장에서 연도가 안 떠오를 때를 대비해 말장난과 답안 뼈대를 챙겨 뒀어요.</p></div>
   </div>
   <div class="notice" id="notice"></div>
 </section>
@@ -171,6 +175,7 @@ footer a{color:var(--primary);font-weight:400}
 
 <script src="assets/firebase-config.js"></script>
 <script src="assets/sync.js"></script>
+<script src="assets/pet/pet.js" defer></script>
 <script>
 /* 과목 목록. count, types, units, features, ready 는 tools/sync_home.py 가 과목 파일에서 읽어 갱신한다.
    이름(name), 부제(sub), 설명(desc), 순서는 여기서 직접 고친다. key 는 과목 파일의 저장 키와 같아야 진행 기록이 보인다. */
@@ -206,7 +211,7 @@ var SUBJECTS = /*SUBJECTS_START*/[
   "no": "02",
   "name": "근현대 공간디자인",
   "sub": "근대건축 디자인사",
-  "desc": "미술공예운동, 아르누보와 아르데코, 시카고 학파, 빈 분리파까지. 중간고사 범위 정리노트와 연표가 들어 있습니다.",
+  "desc": "중간고사 범위 세 단원을 정리노트와 연표로 묶었어요. 틀리면 펫 하트가 줄어드니 조심해요.",
   "href": "subjects/modern-space-design/index.html",
   "key": "archhist_v2",
   "count": 457,
@@ -228,7 +233,7 @@ var SUBJECTS = /*SUBJECTS_START*/[
   "no": "03",
   "name": "실내디자인시공과실무",
   "sub": "",
-  "desc": "강의자료를 받는 대로 정리노트와 문제를 채울 예정입니다.",
+  "desc": "강의자료가 올라오면 단원을 채웁니다.",
   "href": "subjects/interior-construction/index.html",
   "key": "sdt_interior_v1",
   "count": 0,
@@ -250,7 +255,7 @@ var SUBJECTS = /*SUBJECTS_START*/[
   "no": "04",
   "name": "IoT 스마트홈",
   "sub": "",
-  "desc": "강의자료를 받는 대로 정리노트와 문제를 채울 예정입니다.",
+  "desc": "전자와 통신을 처음 배워도 따라오게 기초부터 시작해요. 지능형홈관리사 기출도 들어 있어요.",
   "href": "subjects/iot-smart-home/index.html",
   "key": "sdt_iot_v1",
   "count": 783,
@@ -274,7 +279,7 @@ var SUBJECTS = /*SUBJECTS_START*/[
   "no": "05",
   "name": "친환경건축",
   "sub": "",
-  "desc": "1단원 친환경건축의 개념 및 정의부터. 매주 강의자료가 올라오는 대로 단원이 추가됩니다.",
+  "desc": "1단원 친환경건축의 개념과 정의가 들어 있어요. 강의자료가 올라오면 단원을 채웁니다.",
   "href": "subjects/eco-architecture/index.html",
   "key": "sdt_eco_v1",
   "count": 472,
@@ -355,8 +360,8 @@ function renderSubjects(){
   $("#hstat").textContent="과목 "+SUBJECTS.length+"개 / 문항 "+total+"개";
 }
 $("#notice").innerHTML = (window.SDT_FIREBASE
-  ? '오른쪽 위 <b>로그인</b>을 하면 공부 기록, 오답노트, 필기가 내 계정에 저장되어 다른 기기에서도 이어집니다. 로그인하지 않으면 이 브라우저에만 저장됩니다.'
-  : '기록은 이 브라우저에 과목별로 따로 저장됩니다. 다른 기기로 옮길 때는 과목 페이지 설정의 <b>기록 파일로 저장</b>, <b>불러오기</b>를 쓰세요.');
+  ? '휴대폰과 노트북을 오가며 공부한다면 오른쪽 위에서 <b>로그인</b>하세요. 로그인하지 않으면 지금 쓰는 브라우저에만 기록이 남습니다.'
+  : '기록은 지금 쓰는 브라우저에만 남습니다.');
 renderSubjects();
 if(window.SDT){
   SDT.onAuth(function(u){

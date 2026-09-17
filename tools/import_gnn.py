@@ -33,7 +33,10 @@ def main():
     page = (SRC / "index.html").read_text(encoding="utf-8")
     # 과목 목록(허브)으로 돌아가는 탭
     page = page.replace('<a class="brand" href="#/"',
-                        '<a class="hubback" href="../../index.html" aria-label="전체 과목으로">전체 과목</a>\n    <a class="brand" href="#/"', 1)
+                        '<a class="hubback" href="../../index.html#subjects" aria-label="전체 과목으로">전체 과목</a>\n    <a class="brand" href="#/"', 1)
+    # 사이트 공통 펫 (로그인은 허브의 assets/sync.js)
+    page = page.replace('</head>', '<link rel="stylesheet" href="../../assets/pet/pet.css">\n</head>', 1)
+    page = page.replace('</body>', '<script src="../../assets/firebase-config.js"></script>\n<script src="../../assets/sync.js"></script>\n<script src="../../assets/pet/pet.js" defer></script>\n</body>', 1)
     (DST / "index.html").write_text(page, encoding="utf-8")
     # Colab 링크가 이 저장소(github.io 로 쓰는 곳)의 노트북을 열게
     mj = DST / "data" / "meta.js"
