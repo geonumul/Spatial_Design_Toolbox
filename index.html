@@ -115,6 +115,7 @@ footer a{color:var(--primary);font-weight:400}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 .pet-note{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:92vw;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.15);font-size:14px}
 .pill{border:0;cursor:pointer;font-family:inherit}
+#subjects,#howto{scroll-margin-top:72px}
 </style>
 <link rel="stylesheet" href="assets/pet/pet.css">
 </head>
@@ -363,6 +364,13 @@ $("#notice").innerHTML = (window.SDT_FIREBASE
   ? '휴대폰과 노트북을 오가며 공부한다면 오른쪽 위에서 <b>로그인</b>하세요. 로그인하지 않으면 지금 쓰는 브라우저에만 기록이 남습니다.'
   : '기록은 지금 쓰는 브라우저에만 남습니다.');
 renderSubjects();
+/* 과목 페이지의 "전체 과목" 으로 오면 영상 말고 과목 목록부터 보이게 (카드를 그린 뒤, 부드러운 스크롤 없이 바로) */
+(function(){
+  if(location.hash !== "#subjects") return;
+  var go = function(){ var el = document.getElementById("subjects"); if(!el) return; var y = el.getBoundingClientRect().top + window.pageYOffset - 64; document.documentElement.style.scrollBehavior = "auto"; window.scrollTo(0, y); setTimeout(function(){ document.documentElement.style.scrollBehavior = ""; }, 50); };
+  go(); window.addEventListener("load", go); setTimeout(go, 400);
+  if("scrollRestoration" in history) history.scrollRestoration = "manual";
+})();
 if(window.SDT){
   SDT.onAuth(function(u){
     if(!u){ REMOTE=null; renderSubjects(); return; }
