@@ -25,6 +25,18 @@ ENGINE = ROOT / "engine"
 BAD = ("—", "–", "·")
 TYPES = ("mcq", "ox", "short", "essay", "calc")
 DEF_PASSES = [{"n": 1, "t": "큰 그림", "d": ""}, {"n": 2, "t": "자세히", "d": ""}, {"n": 3, "t": "시험", "d": ""}]
+# 과목별 가는 선 로고 (24x24, currentColor)
+def _logo(inner):
+    return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>'
+LOGOS = {
+    "iot-smart-home": _logo('<path d="M3.5 11.2L12 4.5l8.5 6.7"/><path d="M6 9.6V19.5h12V9.6"/><path d="M9.3 14.6a3.8 3.8 0 015.4 0"/><path d="M7.4 12.6a6.5 6.5 0 019.2 0"/><circle cx="12" cy="16.9" r=".7" fill="currentColor" stroke="none"/>'),
+    "modern-space-design": _logo('<path d="M4 20h16"/><path d="M6 20v-8a6 6 0 0112 0v8"/><path d="M9.5 20v-7a2.5 2.5 0 015 0v7"/><path d="M4 8.5L12 4l8 4.5"/>'),
+    "eco-architecture": _logo('<path d="M4 11.5L12 5l8 6.5"/><path d="M6.5 10v9.5h11V10"/><path d="M12 18.5c-2.6-.4-3.8-2.3-3.4-4.9 2.6-.2 4.6 1.2 4.9 3.6"/><path d="M12 18.5v-2.6"/>'),
+    "food-nutrition": _logo('<path d="M4 12h16a8 8 0 01-16 0z"/><path d="M9 8.5c0-1.5 1-1.5 1-3M13 8.5c0-1.5 1-1.5 1-3"/><path d="M8 20.5h8"/>'),
+    "interior-construction": _logo('<path d="M4.5 15.5L15.5 4.5l4 4-11 11z"/><path d="M8 12l1.6 1.6M10.5 9.5l1.6 1.6M13 7l1.6 1.6"/>'),
+}
+DEFAULT_LOGO = _logo('<path d="M4 5.5h6.5a2 2 0 012 2V20a2 2 0 00-2-2H4z"/><path d="M20 5.5h-5.5a2 2 0 00-2 2V20a2 2 0 012-2H20z"/>')
+
 META_KEYS = ("name", "brand", "key", "eyebrow", "intro", "pathLabel", "examLabel", "examsDesc", "tipsDesc", "mockDesc", "bgLabel", "sentLabel", "mock")
 
 
@@ -217,6 +229,7 @@ def main(slug, skip, home=True):
     page = ((ENGINE / "index.html").read_text(encoding="utf-8")
             .replace("__VER__", ver).replace("__TITLE__", html.escape(name + " 회독 스터디"))
             .replace("__BRAND__", html.escape(cfg.get("brand") or name))
+            .replace("__LOGO__", LOGOS.get(slug, DEFAULT_LOGO))
             .replace("__DESC__", html.escape(name + ": 강의 회독, 정리 슬라이드, 용어 카드, 필기, 문제은행"))
             .replace("__NAV__", "\n".join("      " + x for x in nav)))
     write(SITE / "index.html", page)

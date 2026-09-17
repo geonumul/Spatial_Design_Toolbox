@@ -1,3 +1,4 @@
+/* flat-restyle v1 */
 /* 회독 스터디 엔진 (과목 공통. 과목 설정은 subjects/<slug>/data/meta.js): 라우터, 길잡이, 회독 플레이어, 정리 슬라이드, 용어 카드, 필기, 문제은행, 오답노트, 동기화 */
 (function () {
 'use strict';
@@ -181,7 +182,7 @@ document.addEventListener('click', ev => {
   const r = store.terms[t.dataset.t] || { seen: 0 };
   pop = document.createElement('div');
   pop.className = 'tpop';
-  pop.innerHTML = '<b>' + esc(termFace(d)) + (d.en && d.ko ? ' <span style="font-weight:600;opacity:.85">' + esc(d.en) + '</span>' : '') + '</b>' + esc(d.say) + (d.more ? '<br><span style="opacity:.85;font-size:14px">' + esc(d.more) + '</span>' : '') + '<br><span style="opacity:.6;font-size:13px">지금까지 ' + r.seen + '번 봤어요</span>';
+  pop.innerHTML = '<b>' + esc(termFace(d)) + (d.en && d.ko ? ' <span style="font-weight:450;opacity:.85">' + esc(d.en) + '</span>' : '') + '</b>' + esc(d.say) + (d.more ? '<br><span style="opacity:.85;font-size:14px">' + esc(d.more) + '</span>' : '') + '<br><span style="opacity:.6;font-size:13px">지금까지 ' + r.seen + '번 봤어요</span>';
   document.body.appendChild(pop);
   const b = t.getBoundingClientRect(), w = Math.min(300, window.innerWidth - 24);
   pop.style.maxWidth = w + 'px';
@@ -1293,7 +1294,7 @@ function rEssay(q) {
 function qResult() {
   const ss = st.session, pct = ss.total ? Math.round(ss.right / ss.total * 100) : 0;
   if (st.mock) { store.mockDone[st.scope] = true; save(); }
-  let h = '<div class="card result"><div class="muted" style="font-weight:650">' + (st.mock ? '모의고사 결과' : '이번 세트 결과') + '</div><div class="big num">' + pct + '<small>%</small></div><p>' + ss.total + '문항 중 ' + ss.right + '문항 통과' + (ss.essayN ? ', 서술 평균 포함률 ' + Math.round(ss.essaySum / ss.essayN * 100) + '%' : '') + '</p><div class="bytype">'
+  let h = '<div class="card result"><div class="muted" style="font-weight:450">' + (st.mock ? '모의고사 결과' : '이번 세트 결과') + '</div><div class="big num">' + pct + '<small>%</small></div><p>' + ss.total + '문항 중 ' + ss.right + '문항 통과' + (ss.essayN ? ', 서술 평균 포함률 ' + Math.round(ss.essaySum / ss.essayN * 100) + '%' : '') + '</p><div class="bytype">'
     + Object.keys(ss.byType).map(t => '<span class="num">' + TYPE_NAME[t] + ' ' + ss.byType[t].ok + ' / ' + ss.byType[t].n + '</span>').join('') + '</div>';
   if (ss.wrongIds.length) h += '<div style="text-align:left;max-width:640px;margin:0 auto 16px"><b style="font-size:14px">틀린 문제 ' + ss.wrongIds.length + '개</b><ul style="margin-top:6px;font-size:14.5px">' + ss.wrongIds.map(id => { const q = BY_ID[id]; return q ? '<li><span class="tag ' + q.type + '">' + TYPE_NAME[q.type] + '</span>' + fmt(q.type === 'essay' && q.qko ? q.qko : q.q) + '</li>' : ''; }).join('') + '</ul></div>';
   const back = st.scope !== 'all' ? '#/week/' + st.scope : '#/';
