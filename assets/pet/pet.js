@@ -32,7 +32,7 @@ const RULE = { heartsMax: 5, heartRegenMin: 30, goal: 10, coin: 3, reviewBonus: 
 const SPECIES = [
   { id: 'puppy', animal: '강아지', name: '콩이', body: '#FFF3DE', belly: '#FFFFFF', ear: 'puppy', inner: '#C9956B', mouth: 'bear', patch: '#E3B58B' },
   { id: 'cat', animal: '고양이', name: '나비', body: '#FFE1BD', belly: '#FFF6EA', ear: 'cat', inner: '#FFB8B8', mouth: 'cat', mark: '#F5B97F' },
-  { id: 'capybara', animal: '카피바라', name: '카피', body: '#C8966A', belly: '#DDB48D', ear: 'capy', inner: '#A87A52', mouth: 'capy', headRx: 38, headRy: 28, softEyes: true },
+  { id: 'capybara', animal: '카피바라', name: '카피', body: '#BC8A5F', belly: '#DDB088', ear: 'none', inner: '#8A6248', mouth: 'capy', capy: true },
   { id: 'guinea', animal: '기니피그', name: '뭉치', body: '#FFFDF8', belly: '#FFFFFF', ear: 'petal', inner: '#F4B9A8', mouth: 'guinea', potato: true, patch: '#EFA35E', patch2: '#7A5642' },
   { id: 'lizard', animal: '도마뱀', name: '초롱', body: '#8FD77A', belly: '#D9F5C5', ear: 'none', inner: '#8FD77A', mouth: 'smile', tail: 'lizard', eyesUp: true, spots: '#6BBF5A' },
   { id: 'otter', animal: '해달', name: '조개', body: '#B89478', belly: '#F2E4D6', ear: 'small', inner: '#9C7A60', mouth: 'bear', face: '#F2E4D6', faceRy: 20, shell: true },
@@ -69,89 +69,179 @@ const FOODS = [
 const GROW = [{ at: 0, name: '아기', scale: 0.82 }, { at: 60, name: '꼬마', scale: 0.92 }, { at: 200, name: '어린이', scale: 1 }];
 const growOf = love => { let g = GROW[0]; GROW.forEach(x => { if (love >= x.at) g = x; }); return g; };
 
+/* 개인기 자세: 부위(꼬리, 뒷발, 몸, 머리, 앞발)를 따로 움직여 실제 자세를 그린다.
+   값: all(펫 전체), body(몸, 발 높이 기준 크기), head(머리), hindL/hindR(뒷발), armL/armR(앞발), tail
+   각 부위 { dx, dy, r(도), s(크기), sx, sy }. mood 는 표정, back 은 뒤돌아본 모습, wink 는 한쪽 눈 감기,
+   upside 는 배를 보이고 누운 모습(입을 뒤집어 웃게), heart 는 머리 옆 하트, air 는 그림자를 작게 */
+const PET_POSES = {
+  none: {},
+  sit: { body: { sy: 0.9 }, head: { dy: 7 }, hindL: { dx: -8, dy: 1, r: -38 }, hindR: { dx: 8, dy: 1, r: 38 }, armL: { dx: 7, dy: 8 }, armR: { dx: -7, dy: 8 }, mood: 'happy' },
+  paw: { body: { sy: 0.9 }, head: { dy: 7, r: -7 }, hindL: { dx: -8, dy: 1, r: -38 }, hindR: { dx: 8, dy: 1, r: 38 }, armL: { dx: 7, dy: 8 }, armR: { dx: 13, dy: -22, r: -40, s: 1.3 }, mood: 'normal', blush: true },
+  side: { all: { sx: 0.66 }, head: { dx: 13 }, tail: { dx: -6 }, armL: { dx: 8 }, armR: { dx: 8 }, mood: 'normal' },
+  back: { back: true, mood: 'normal' },
+  side2: { all: { sx: 0.66 }, head: { dx: -13 }, tail: { dx: 6 }, armL: { dx: -8 }, armR: { dx: -8 }, mood: 'normal' },
+  wink: { head: { r: -11, dx: -2 }, armL: { dx: 5, dy: -10, r: 30 }, wink: true, blush: true, heart: true, mood: 'normal' },
+  crouch: { all: { sx: 1.12, sy: 0.84 }, armL: { dy: 3 }, armR: { dy: 3 }, mood: 'happy' },
+  air: { all: { dy: -24 }, hindL: { dx: -4, dy: 6, r: 22, sy: 1.25 }, hindR: { dx: 4, dy: 6, r: -22, sy: 1.25 }, armL: { dx: -14, dy: -18, r: 45 }, armR: { dx: 14, dy: -18, r: -45 }, mood: 'happy', air: true },
+  roll1: { all: { r: -90, dx: 8, dy: 8 }, armL: { dy: -6 }, armR: { dy: -6 }, mood: 'happy' },
+  roll2: { all: { r: 180, dy: -4 }, hindL: { r: -25 }, hindR: { r: 25 }, armL: { dx: -4, dy: -3, r: -30 }, armR: { dx: 4, dy: -3, r: 30 }, upside: true, mood: 'normal' },
+  roll3: { all: { r: 180, dy: -4 }, hindL: { r: 20, dy: -3 }, hindR: { r: -20, dy: -3 }, armL: { dx: 3, dy: -6, r: 25 }, armR: { dx: -3, dy: -6, r: -25 }, upside: true, mood: 'normal' },
+  roll4: { all: { r: 90, dx: -8, dy: 8 }, armL: { dy: -6 }, armR: { dy: -6 }, mood: 'happy' },
+  danceL: { body: { r: -10 }, tail: { r: -18 }, hindL: { dy: -6, r: -12 }, armR: { dx: 4, dy: -12, r: -35 }, head: { dx: -3, r: 6 }, mood: 'happy' },
+  danceR: { body: { r: 10 }, tail: { r: 18 }, hindR: { dy: -6, r: 12 }, armL: { dx: -4, dy: -12, r: 35 }, head: { dx: 3, r: -6 }, mood: 'happy' },
+};
+/* 개인기마다 자세 순서 [자세, 밀리초]. 사이트와 펫 프로그램이 같이 쓴다 */
+const TRICK_FRAMES = {
+  sit: [['crouch', 160], ['sit', 1500]],
+  paw: [['sit', 380], ['paw', 1300], ['sit', 300]],
+  spin: [['side', 130], ['back', 170], ['side2', 130], ['none', 120], ['side', 130], ['back', 170], ['side2', 130], ['none', 200]],
+  wink: [['none', 150], ['wink', 1500]],
+  jump: [['crouch', 260], ['air', 420], ['crouch', 170], ['none', 150], ['crouch', 200], ['air', 420], ['crouch', 170], ['none', 200]],
+  roll: [['crouch', 180], ['roll1', 220], ['roll2', 300], ['roll3', 300], ['roll2', 300], ['roll3', 300], ['roll4', 220], ['none', 250]],
+  dance: [['danceL', 230], ['danceR', 230], ['danceL', 230], ['danceR', 230], ['danceL', 230], ['danceR', 230], ['none', 200]],
+};
+
 /* ---------- 그림 (동글동글 벡터) ---------- */
 function petSvg(pet, opt) {
   opt = opt || {};
   const sp = SP[pet.sp] || SPECIES[0];
-  const trick = opt.trick || '';
-  const mood = opt.mood || 'normal';   // normal, happy, sad, sleep
+  const P = PET_POSES[opt.pose || (opt.trick === 'wink' ? 'wink' : '')] || PET_POSES.none;
+  const posed = P !== PET_POSES.none;
+  const mood = posed && P.mood && opt.mood !== 'sleep' ? P.mood : (opt.mood || 'normal');   // normal, happy, sad, sleep
+  const back = !!P.back, wink = !!P.wink;
   const w = pet.wear || {};
-  const B = sp.body, L = sp.belly;
-  let ears = '';
-  if (sp.ear === 'cat') ears = '<path d="M30 38 L34 12 L52 28 Z" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4" stroke-linejoin="round"/><path d="M36 30 L37 19 L46 27 Z" fill="' + sp.inner + '"/><path d="M90 38 L86 12 L68 28 Z" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4" stroke-linejoin="round"/><path d="M84 30 L83 19 L74 27 Z" fill="' + sp.inner + '"/>';
-  else if (sp.ear === 'fox') ears = '<path d="M28 42 L30 8 L54 28 Z" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4" stroke-linejoin="round"/><path d="M33 30 L32 16 L44 26 Z" fill="#FFFFFF"/><path d="M92 42 L90 8 L66 28 Z" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4" stroke-linejoin="round"/><path d="M87 30 L88 16 L76 26 Z" fill="#FFFFFF"/>';
-  else if (sp.ear === 'bunny') ears = '<ellipse cx="46" cy="16" rx="8" ry="20" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4" transform="rotate(-10 46 16)"/><ellipse cx="46" cy="18" rx="3.6" ry="13" fill="' + sp.inner + '" transform="rotate(-10 46 18)"/><ellipse cx="74" cy="16" rx="8" ry="20" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4" transform="rotate(10 74 16)"/><ellipse cx="74" cy="18" rx="3.6" ry="13" fill="' + sp.inner + '" transform="rotate(10 74 18)"/>';
-  else if (sp.ear === 'bear') ears = '<circle cx="34" cy="28" r="11" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4"/><circle cx="34" cy="28" r="5.5" fill="' + sp.inner + '"/><circle cx="86" cy="28" r="11" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4"/><circle cx="86" cy="28" r="5.5" fill="' + sp.inner + '"/>';
-  else if (sp.ear === 'puppy') ears = '<ellipse cx="28" cy="50" rx="9" ry="18" fill="' + sp.inner + '" stroke="#5B4A48" stroke-width="2.4" transform="rotate(18 28 50)"/><ellipse cx="92" cy="50" rx="9" ry="18" fill="' + sp.inner + '" stroke="#5B4A48" stroke-width="2.4" transform="rotate(-18 92 50)"/>';
-  else if (sp.ear === 'hamster') ears = '<circle cx="36" cy="30" r="8" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4"/><circle cx="36" cy="30" r="4" fill="' + sp.inner + '"/><circle cx="84" cy="30" r="8" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4"/><circle cx="84" cy="30" r="4" fill="' + sp.inner + '"/>';
-  else if (sp.ear === 'small') ears = '<ellipse cx="34" cy="34" rx="7" ry="6" fill="' + sp.inner + '" stroke="#5B4A48" stroke-width="2.4"/><ellipse cx="86" cy="34" rx="7" ry="6" fill="' + sp.inner + '" stroke="#5B4A48" stroke-width="2.4"/>';
-  else if (sp.ear === 'capy') ears = '<ellipse cx="31" cy="37" rx="7" ry="6" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4" transform="rotate(-20 31 37)"/><ellipse cx="31.5" cy="37.5" rx="3.2" ry="2.6" fill="' + sp.inner + '" transform="rotate(-20 31.5 37.5)"/><ellipse cx="89" cy="37" rx="7" ry="6" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4" transform="rotate(20 89 37)"/><ellipse cx="88.5" cy="37.5" rx="3.2" ry="2.6" fill="' + sp.inner + '" transform="rotate(20 88.5 37.5)"/>';
-  else if (sp.ear === 'petal') ears = '<path d="M36 44 C28 34 14 36 13 46 C12 54 22 57 30 52 Z" fill="' + (sp.patch || B) + '" stroke="#5B4A48" stroke-width="2.4" stroke-linejoin="round"/><path d="M31 46 C26 41 19 42 18 46.5 C18 50 23 51 28 49 Z" fill="' + sp.inner + '"/><path d="M84 44 C92 34 106 36 107 46 C108 54 98 57 90 52 Z" fill="' + (sp.patch2 || B) + '" stroke="#5B4A48" stroke-width="2.4" stroke-linejoin="round"/><path d="M89 46 C94 41 101 42 102 46.5 C102 50 97 51 92 49 Z" fill="' + sp.inner + '"/>';
-  else if (sp.ear === 'tuft') ears = '<path d="M58 20 C54 10 60 8 60 16 C62 6 68 10 62 20" fill="' + B + '" stroke="#5B4A48" stroke-width="2.2" stroke-linejoin="round"/>';
-  let tail = '';
-  if (sp.tail === 'lizard') tail = '<path d="M80 102 Q104 108 110 92 Q114 82 106 80" fill="none" stroke="#5B4A48" stroke-width="9" stroke-linecap="round"/><path d="M80 102 Q104 108 110 92 Q114 82 106 80" fill="none" stroke="' + B + '" stroke-width="5.5" stroke-linecap="round"/>';
+  const B = sp.body, L = sp.belly, O = '#5B4A48', INK = '#3A2E2C';
+  const kind = sp.capy ? 'capy' : sp.potato ? 'potato' : 'round';
+  // 부위 기준점: 뒷발, 앞발, 머리 돌리는 점
+  const RIG = {
+    round: { hindL: [44, 108], hindR: [76, 108], armL: [46, 99], armR: [74, 99], head: [60, 84], tail: [84, 100] },
+    potato: { hindL: [30, 108], hindR: [90, 108], armL: [48, 110], armR: [72, 110], head: [60, 76], tail: [60, 100] },
+    capy: { hindL: [83, 104], hindR: [97, 104], armL: [43, 104], armR: [61, 104], head: [58, 96], tail: [108, 90] },
+  }[kind];
+  const n = v => Math.round(v * 100) / 100;
+  const tf = (a, t) => {
+    if (!t) return '';
+    const s = t.s || 1, sx = n((t.sx || 1) * s), sy = n((t.sy || 1) * s);
+    return 'translate(' + n(a[0] + (t.dx || 0)) + ' ' + n(a[1] + (t.dy || 0)) + ') rotate(' + (t.r || 0) + ') scale(' + sx + ' ' + sy + ') translate(' + (-a[0]) + ' ' + (-a[1]) + ')';
+  };
+  const grp = (a, t, inner) => (inner ? (t ? '<g transform="' + tf(a, t) + '">' + inner + '</g>' : inner) : '');
+
+  /* 얼굴 */
+  const EY = kind === 'capy' ? 49 : sp.eyesUp ? 40 : 57;
+  const EX = kind === 'capy' ? [44, 72] : sp.eyesUp ? [44, 76] : [46, 74];
+  const arc = (x, y, up) => '<path d="M' + (x - 6) + ' ' + y + ' Q' + x + ' ' + (up ? y - 8 : y + 5) + ' ' + (x + 6) + ' ' + y + '" stroke="' + INK + '" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  const openEye = x => {
+    if (kind === 'capy') return '<ellipse cx="' + x + '" cy="49" rx="3.4" ry="3.9" fill="' + INK + '"/><circle cx="' + (x + 1.3) + '" cy="47.6" r="1.3" fill="#FFF"/>';
+    if (sp.eyesUp) { const px = x + (x < 60 ? 1 : -1); return '<circle cx="' + x + '" cy="40" r="11" fill="#FFFFFF" stroke="' + O + '" stroke-width="2.4"/><circle cx="' + px + '" cy="41" r="4.6" fill="' + INK + '"/><circle cx="' + (px + 1.4) + '" cy="39" r="1.6" fill="#FFF"/>'; }
+    return '<ellipse cx="' + x + '" cy="57" rx="5.2" ry="6.4" fill="' + INK + '"/><circle cx="' + (x + 1.8) + '" cy="54.4" r="2" fill="#FFF"/><circle cx="' + (x - 1.4) + '" cy="59.6" r="1" fill="#FFF"/>';
+  };
   let eyes;
-  if (mood === 'sleep') eyes = '<path d="M40 58 Q46 63 52 58" stroke="#3A2E2C" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M68 58 Q74 63 80 58" stroke="#3A2E2C" stroke-width="3" fill="none" stroke-linecap="round"/>';
-  else if (mood === 'happy') eyes = '<path d="M40 60 Q46 51 52 60" stroke="#3A2E2C" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M68 60 Q74 51 80 60" stroke="#3A2E2C" stroke-width="3.2" fill="none" stroke-linecap="round"/>';
-  else if (sp.eyesUp && mood !== 'sad') eyes = '<g class="pet-eyes"><circle cx="44" cy="40" r="11" fill="#FFFFFF" stroke="#5B4A48" stroke-width="2.4"/><circle cx="76" cy="40" r="11" fill="#FFFFFF" stroke="#5B4A48" stroke-width="2.4"/><circle cx="45" cy="41" r="4.6" fill="#3A2E2C"/><circle cx="75" cy="41" r="4.6" fill="#3A2E2C"/><circle cx="46.4" cy="39" r="1.6" fill="#FFF"/><circle cx="76.4" cy="39" r="1.6" fill="#FFF"/></g>';
-  else if (sp.softEyes && mood !== 'sad') eyes = '<g class="pet-eyes"><ellipse cx="46" cy="56" rx="4" ry="4.6" fill="#3A2E2C"/><ellipse cx="74" cy="56" rx="4" ry="4.6" fill="#3A2E2C"/><circle cx="47.6" cy="54.3" r="1.6" fill="#FFF"/><circle cx="75.8" cy="54.3" r="1.6" fill="#FFF"/><circle cx="72.6" cy="57.8" r=".7" fill="#FFF"/><circle cx="44.6" cy="57.8" r=".7" fill="#FFF"/></g>';
-  else eyes = '<g class="pet-eyes"><ellipse cx="46" cy="57" rx="5.2" ry="6.4" fill="#3A2E2C"/><ellipse cx="74" cy="57" rx="5.2" ry="6.4" fill="#3A2E2C"/><circle cx="47.8" cy="54.4" r="2" fill="#FFF"/><circle cx="75.8" cy="54.4" r="2" fill="#FFF"/><circle cx="44.6" cy="59.6" r="1" fill="#FFF"/><circle cx="72.6" cy="59.6" r="1" fill="#FFF"/></g>'
-    + (mood === 'sad' ? '<path d="M38 47 L50 50" stroke="#3A2E2C" stroke-width="2.2" stroke-linecap="round"/><path d="M82 47 L70 50" stroke="#3A2E2C" stroke-width="2.2" stroke-linecap="round"/><path d="M78 64 Q80 70 77 72 Q74 70 78 64Z" fill="#8FD0FF"/>' : '');
-  let mouth;
-  if (sp.mouth === 'smile') mouth = '<path d="M38 66 Q60 84 82 66" stroke="#5B4A48" stroke-width="2.6" fill="#E86A7A" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 66 Q60 72 80 66" fill="' + B + '"/>';
-  else if (sp.mouth === 'capy') mouth = '<ellipse cx="60" cy="69" rx="17" ry="11" fill="' + L + '"/><ellipse cx="54.5" cy="66" rx="2" ry="1.4" fill="#6B5040"/><ellipse cx="65.5" cy="66" rx="2" ry="1.4" fill="#6B5040"/><path d="M55 72 Q57.5 75 60 72 Q62.5 75 65 72" stroke="#6B5040" stroke-width="1.9" fill="none" stroke-linecap="round"/>';
-  else if (sp.mouth === 'guinea') mouth = '<path d="M57 65.5 Q60 63.5 63 65.5 Q60 69 57 65.5Z" fill="#F48FA8"/><path d="M60 68 L60 70 M55.5 70 Q57.8 73 60 70 Q62.2 73 64.5 70" stroke="#5B4A48" stroke-width="2" fill="none" stroke-linecap="round"/>';
-  else if (sp.mouth === 'beak') mouth = '<path d="M54 64 Q60 60 66 64 Q60 71 54 64Z" fill="#FFA24A" stroke="#5B4A48" stroke-width="1.8" stroke-linejoin="round"/>';
-  else if (sp.mouth === 'cat') mouth = '<path d="M60 64 l-2.4 2" stroke="#5B4A48" stroke-width="2"/><path d="M54 66 Q57 70 60 66 Q63 70 66 66" stroke="#5B4A48" stroke-width="2.2" fill="none" stroke-linecap="round"/><ellipse cx="60" cy="63" rx="2.6" ry="1.8" fill="#FF8FA3"/>';
-  else if (sp.mouth === 'bear') mouth = '<ellipse cx="60" cy="67" rx="10" ry="7.5" fill="' + L + '"/><ellipse cx="60" cy="64" rx="3.4" ry="2.4" fill="#3A2E2C"/><path d="M56 69 Q60 73 64 69" stroke="#3A2E2C" stroke-width="2" fill="none" stroke-linecap="round"/>';
-  else mouth = '<ellipse cx="60" cy="64" rx="2.4" ry="1.8" fill="#FF8FA3"/><path d="M56 67 Q58 70 60 67 Q62 70 64 67" stroke="#5B4A48" stroke-width="2" fill="none" stroke-linecap="round"/>';
-  if (mood === 'sad' && sp.mouth !== 'beak') mouth = '<path d="M55 71 Q60 66 65 71" stroke="#5B4A48" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
-  let head = '';
-  if (w.head === 'ribbon') head = '<g transform="translate(78 26) rotate(18)"><path d="M0 0 L-13 -8 L-13 8 Z" fill="#FF7FA6" stroke="#5B4A48" stroke-width="2"/><path d="M0 0 L13 -8 L13 8 Z" fill="#FF7FA6" stroke="#5B4A48" stroke-width="2"/><circle r="4.2" fill="#FF5C8D" stroke="#5B4A48" stroke-width="2"/></g>';
-  else if (w.head === 'flower') head = '<g transform="translate(80 30)">' + [0, 72, 144, 216, 288].map(a => '<circle cx="' + (6 * Math.cos(a * Math.PI / 180)).toFixed(1) + '" cy="' + (6 * Math.sin(a * Math.PI / 180)).toFixed(1) + '" r="5" fill="#FFFFFF" stroke="#5B4A48" stroke-width="1.6"/>').join('') + '<circle r="3.8" fill="#FFD34D"/></g>';
-  else if (w.head === 'beret') head = '<path d="M34 34 Q44 14 76 18 Q92 22 86 32 Q60 40 34 34Z" fill="#E5566D" stroke="#5B4A48" stroke-width="2.2"/><circle cx="60" cy="17" r="3" fill="#5B4A48"/>';
-  else if (w.head === 'crown') head = '<path d="M44 26 L48 12 L56 22 L60 8 L64 22 L72 12 L76 26 Z" fill="#FFD34D" stroke="#5B4A48" stroke-width="2.2" stroke-linejoin="round"/><circle cx="60" cy="20" r="2.6" fill="#FF7FA6"/>';
-  let neck = '';
-  if (w.neck === 'scarf') neck = '<path d="M36 84 Q60 94 84 84 L84 92 Q60 102 36 92 Z" fill="#6EC6FF" stroke="#5B4A48" stroke-width="2"/><path d="M72 92 L78 108 L68 106 Z" fill="#6EC6FF" stroke="#5B4A48" stroke-width="2"/>';
-  else if (w.neck === 'bow') neck = '<g transform="translate(60 88)"><path d="M0 0 L-12 -7 L-12 7 Z" fill="#7C6BFF" stroke="#5B4A48" stroke-width="2"/><path d="M0 0 L12 -7 L12 7 Z" fill="#7C6BFF" stroke="#5B4A48" stroke-width="2"/><circle r="3.6" fill="#5B4AE8"/></g>';
-  const face = w.face === 'glasses' ? '<circle cx="46" cy="57" r="10" fill="none" stroke="#5B4A48" stroke-width="2.4"/><circle cx="74" cy="57" r="10" fill="none" stroke="#5B4A48" stroke-width="2.4"/><path d="M56 57 L64 57" stroke="#5B4A48" stroke-width="2.4"/>' : '';
-  const faceMask = sp.face ? '<ellipse cx="60" cy="' + (sp.faceRy ? 64 : 60) + '" rx="28" ry="' + (sp.faceRy || 24) + '" fill="' + sp.face + '"/>' : '';
-  const spots = sp.spots ? '<circle cx="38" cy="52" r="3" fill="' + sp.spots + '"/><circle cx="84" cy="54" r="2.6" fill="' + sp.spots + '"/><circle cx="50" cy="96" r="3" fill="' + sp.spots + '"/><circle cx="70" cy="90" r="2.4" fill="' + sp.spots + '"/>' : '';
-  const shell = sp.shell ? '<g transform="translate(60 96)"><path d="M-10 4 Q0 -12 10 4 Z" fill="#FFC8B0" stroke="#5B4A48" stroke-width="1.8" stroke-linejoin="round"/><path d="M-4 3 L-2 -5 M2 3 L2 -6 M6 3 L5 -4" stroke="#E09A80" stroke-width="1.2"/></g>' : '';
-  const patch = sp.potato ? '' : (sp.patch ? '<ellipse cx="74" cy="54" rx="11" ry="10" fill="' + sp.patch + '" opacity=".75"/>' : '') + (sp.patch2 ? '<path d="M28 50 Q34 34 50 36 Q46 50 30 60 Z" fill="' + sp.patch2 + '" opacity=".85"/>' : '');
-  const mark = sp.mark ? '<path d="M52 30 Q54 36 56 30 M58 29 Q60 35 62 29 M64 30 Q66 36 68 30" stroke="' + sp.mark + '" stroke-width="2.6" fill="none" stroke-linecap="round"/>' : '';
-  const zz = mood === 'sleep' ? '<g class="pet-zz" fill="#8C84C8" font-family="Pretendard, sans-serif" font-weight="700"><text x="88" y="30" font-size="14">z</text><text x="98" y="18" font-size="11">z</text></g>' : '';
-  const wink = trick === 'wink' ? '<path d="M68 57 Q74 52 80 57" stroke="#3A2E2C" stroke-width="3" fill="none" stroke-linecap="round"/>' : '';
-  return '<svg class="pet-svg' + (opt.cls ? ' ' + opt.cls : '') + '" viewBox="0 0 120 120" aria-hidden="true">'
-    + '<ellipse cx="60" cy="112" rx="28" ry="5" fill="#000" opacity=".08"/>'
-    + '<g class="pet-bodyg">'
-    + tail + ears
-    + (sp.potato ? potatoBody(sp) + neck
-      : '<ellipse cx="60" cy="92" rx="26" ry="20" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4"/>'
-      + '<ellipse cx="60" cy="96" rx="15" ry="12" fill="' + L + '"/>'
-      + '<ellipse cx="44" cy="108" rx="8" ry="5" fill="' + B + '" stroke="#5B4A48" stroke-width="2.2"/><ellipse cx="76" cy="108" rx="8" ry="5" fill="' + B + '" stroke="#5B4A48" stroke-width="2.2"/>'
-      + neck
-      + '<ellipse cx="60" cy="58" rx="' + (sp.headRx || 34) + '" ry="' + (sp.headRy || 30) + '" fill="' + B + '" stroke="#5B4A48" stroke-width="2.4"/>')
-    + faceMask + patch + mark + spots
-    + (sp.potato ? '<g transform="translate(0 6)">' : '')
-    + '<ellipse cx="38" cy="68" rx="6.5" ry="4" fill="#FF9EB5" opacity=".55"/><ellipse cx="82" cy="68" rx="6.5" ry="4" fill="#FF9EB5" opacity=".55"/>'
-    + shell + (wink ? eyes.replace(/<ellipse cx="74"[^>]*>/, '').replace(/<circle cx="75.8"[^>]*>/, '').replace(/<circle cx="72.6"[^>]*>/, '') + wink : eyes) + mouth + face
-    + (sp.potato ? '</g><g transform="translate(0 10)">' + head + '</g>' : head)
-    + '</g>' + zz + '</svg>';
-  /* 기니피그: 머리와 몸이 하나로 이어진 동글동글 감자 몸. 짧은 발 네 개만 살짝 보이고 꼬리는 없다 */
-  function potatoBody(sp) {
-    const B = sp.body, O = '#5B4A48';
-    const blob = 'M60 36 C88 36 106 54 107 78 C108 100 90 111 60 111 C30 111 12 100 13 78 C14 54 32 36 60 36 Z';
-    return '<ellipse cx="36" cy="109" rx="6.5" ry="4" fill="#F7C8B8" stroke="' + O + '" stroke-width="2"/><ellipse cx="84" cy="109" rx="6.5" ry="4" fill="#F7C8B8" stroke="' + O + '" stroke-width="2"/>'
-      + '<path d="' + blob + '" fill="' + B + '"/>'
-      // 무늬: 왼쪽 위 주황, 오른쪽 위 갈색, 가운데는 흰 줄
-      + '<path d="M13 78 C14 54 32 36 52 36.6 C54 48 52 60 44 70 C36 80 24 84 13.6 84 Z" fill="' + sp.patch + '"/>'
-      + '<path d="M68 36.6 C90 38 106 56 107 78 C107 84 106 88 104 92 C94 88 86 80 80 70 C74 60 70 48 68 36.6 Z" fill="' + sp.patch2 + '"/>'
-      + '<path d="M86 96 C94 94 102 90 105 86 C104 98 96 106 86 109 C84 104 84 100 86 96 Z" fill="' + sp.patch + '" opacity=".9"/>'
-      + '<ellipse cx="60" cy="98" rx="20" ry="10" fill="' + sp.belly + '" opacity=".9"/>'
-      + '<path d="' + blob + '" fill="none" stroke="' + O + '" stroke-width="2.4"/>'
-      + '<ellipse cx="50" cy="110.5" rx="5" ry="3" fill="#F7C8B8" stroke="' + O + '" stroke-width="1.8"/><ellipse cx="70" cy="110.5" rx="5" ry="3" fill="#F7C8B8" stroke="' + O + '" stroke-width="1.8"/>';
+  const ay = kind === 'capy' ? 50 : 59;
+  if (mood === 'sleep') eyes = arc(EX[0], ay - 1, false) + arc(EX[1], ay - 1, false);
+  else if (mood === 'happy') eyes = arc(EX[0], ay + 1, true) + arc(EX[1], ay + 1, true);
+  else {
+    const useUp = sp.eyesUp && mood !== 'sad';
+    const ex = useUp ? EX : kind === 'capy' ? EX : [46, 74];
+    const oe = x => (useUp || kind === 'capy' ? openEye(x) : '<ellipse cx="' + x + '" cy="57" rx="5.2" ry="6.4" fill="' + INK + '"/><circle cx="' + (x + 1.8) + '" cy="54.4" r="2" fill="#FFF"/><circle cx="' + (x - 1.4) + '" cy="59.6" r="1" fill="#FFF"/>');
+    eyes = '<g class="pet-eyes">' + oe(ex[0]) + (wink ? arc(ex[1], (useUp ? 41 : kind === 'capy' ? 50 : 58), true) : oe(ex[1])) + '</g>';
+    if (mood === 'sad') eyes += kind === 'capy'
+      ? '<path d="M37 42 L48 44" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/><path d="M79 42 L68 44" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/><path d="M76 54 Q78 59 75.5 61 Q73 59 76 54Z" fill="#8FD0FF"/>'
+      : '<path d="M38 47 L50 50" stroke="' + INK + '" stroke-width="2.2" stroke-linecap="round"/><path d="M82 47 L70 50" stroke="' + INK + '" stroke-width="2.2" stroke-linecap="round"/><path d="M78 64 Q80 70 77 72 Q74 70 78 64Z" fill="#8FD0FF"/>';
   }
+  let mouth, mc = [60, 67];
+  if (kind === 'capy') { mc = [58, 84]; mouth = mood === 'sad' ? '<path d="M53 88 Q58 84.5 63 88" stroke="#6E4B38" stroke-width="2" fill="none" stroke-linecap="round"/>' : '<path d="M58 80 L58 83 M52.5 83 Q55.3 87 58 83 Q60.7 87 63.5 83" stroke="#6E4B38" stroke-width="2" fill="none" stroke-linecap="round"/>'; }
+  else if (mood === 'sad' && sp.mouth !== 'beak') mouth = '<path d="M55 71 Q60 66 65 71" stroke="' + O + '" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
+  else if (sp.mouth === 'smile') { mc = [60, 71]; mouth = '<path d="M38 66 Q60 84 82 66" stroke="' + O + '" stroke-width="2.6" fill="#E86A7A" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 66 Q60 72 80 66" fill="' + B + '"/>'; }
+  else if (sp.mouth === 'guinea') { mc = [60, 68]; mouth = '<path d="M56.5 65.5 Q60 63 63.5 65.5 Q60 69.5 56.5 65.5Z" fill="#F48FA8"/><path d="M60 68 L60 70.5 M54 70 Q57 74 60 70.5 Q63 74 66 70" stroke="' + O + '" stroke-width="2" fill="none" stroke-linecap="round"/>'; }
+  else if (sp.mouth === 'beak') mouth = '<path d="M54 64 Q60 60 66 64 Q60 71 54 64Z" fill="#FFA24A" stroke="' + O + '" stroke-width="1.8" stroke-linejoin="round"/>';
+  else if (sp.mouth === 'cat') { mc = [60, 66]; mouth = '<path d="M60 64 l-2.4 2" stroke="' + O + '" stroke-width="2"/><path d="M54 66 Q57 70 60 66 Q63 70 66 66" stroke="' + O + '" stroke-width="2.2" fill="none" stroke-linecap="round"/><ellipse cx="60" cy="63" rx="2.6" ry="1.8" fill="#FF8FA3"/>'; }
+  else if (sp.mouth === 'bear') mouth = '<ellipse cx="60" cy="67" rx="10" ry="7.5" fill="' + L + '"/><ellipse cx="60" cy="64" rx="3.4" ry="2.4" fill="' + INK + '"/><path d="M56 69 Q60 73 64 69" stroke="' + INK + '" stroke-width="2" fill="none" stroke-linecap="round"/>';
+  else { mc = [60, 66]; mouth = '<ellipse cx="60" cy="64" rx="2.4" ry="1.8" fill="#FF8FA3"/><path d="M56 67 Q58 70 60 67 Q62 70 64 67" stroke="' + O + '" stroke-width="2" fill="none" stroke-linecap="round"/>'; }
+  if (P.upside) mouth = '<g transform="rotate(180 ' + mc[0] + ' ' + mc[1] + ')">' + mouth + '</g>';
+  const blushY = kind === 'capy' ? 58 : 68, blushX = kind === 'capy' ? [33, 83] : [38, 82];
+  const blush = '<ellipse cx="' + blushX[0] + '" cy="' + blushY + '" rx="6.5" ry="4" fill="#FF9EB5" opacity="' + (P.blush ? '.9' : '.55') + '"/><ellipse cx="' + blushX[1] + '" cy="' + blushY + '" rx="6.5" ry="4" fill="#FF9EB5" opacity="' + (P.blush ? '.9' : '.55') + '"/>';
+
+  /* 옷 */
+  let hat = '';
+  if (w.head === 'ribbon') hat = '<g transform="translate(78 26) rotate(18)"><path d="M0 0 L-13 -8 L-13 8 Z" fill="#FF7FA6" stroke="' + O + '" stroke-width="2"/><path d="M0 0 L13 -8 L13 8 Z" fill="#FF7FA6" stroke="' + O + '" stroke-width="2"/><circle r="4.2" fill="#FF5C8D" stroke="' + O + '" stroke-width="2"/></g>';
+  else if (w.head === 'flower') hat = '<g transform="translate(80 30)">' + [0, 72, 144, 216, 288].map(a => '<circle cx="' + (6 * Math.cos(a * Math.PI / 180)).toFixed(1) + '" cy="' + (6 * Math.sin(a * Math.PI / 180)).toFixed(1) + '" r="5" fill="#FFFFFF" stroke="' + O + '" stroke-width="1.6"/>').join('') + '<circle r="3.8" fill="#FFD34D"/></g>';
+  else if (w.head === 'beret') hat = '<path d="M34 34 Q44 14 76 18 Q92 22 86 32 Q60 40 34 34Z" fill="#E5566D" stroke="' + O + '" stroke-width="2.2"/><circle cx="60" cy="17" r="3" fill="' + O + '"/>';
+  else if (w.head === 'crown') hat = '<path d="M44 26 L48 12 L56 22 L60 8 L64 22 L72 12 L76 26 Z" fill="#FFD34D" stroke="' + O + '" stroke-width="2.2" stroke-linejoin="round"/><circle cx="60" cy="20" r="2.6" fill="#FF7FA6"/>';
+  let neck = '';
+  if (w.neck === 'scarf') neck = '<path d="M36 84 Q60 94 84 84 L84 92 Q60 102 36 92 Z" fill="#6EC6FF" stroke="' + O + '" stroke-width="2"/><path d="M72 92 L78 108 L68 106 Z" fill="#6EC6FF" stroke="' + O + '" stroke-width="2"/>';
+  else if (w.neck === 'bow') neck = '<g transform="translate(60 88)"><path d="M0 0 L-12 -7 L-12 7 Z" fill="#7C6BFF" stroke="' + O + '" stroke-width="2"/><path d="M0 0 L12 -7 L12 7 Z" fill="#7C6BFF" stroke="' + O + '" stroke-width="2"/><circle r="3.6" fill="#5B4AE8"/></g>';
+  const glasses = w.face === 'glasses' ? '<circle cx="46" cy="57" r="10" fill="none" stroke="' + O + '" stroke-width="2.4"/><circle cx="74" cy="57" r="10" fill="none" stroke="' + O + '" stroke-width="2.4"/><path d="M56 57 L64 57" stroke="' + O + '" stroke-width="2.4"/>' : '';
+  const heart = P.heart ? '<path d="M97 30 C93 26 88 29 91 34 L97 40 L103 34 C106 29 101 26 97 30Z" fill="#FF6B8B" stroke="#E0456A" stroke-width="1.4"/>' : '';
+
+  /* 부위 */
+  let tail = '', hindL = '', hindR = '', body = '', head = '', armL = '', armR = '';
+  if (kind === 'round') {
+    let ears = '';
+    if (sp.ear === 'cat') ears = '<path d="M30 38 L34 12 L52 28 Z" fill="' + B + '" stroke="' + O + '" stroke-width="2.4" stroke-linejoin="round"/><path d="M36 30 L37 19 L46 27 Z" fill="' + sp.inner + '"/><path d="M90 38 L86 12 L68 28 Z" fill="' + B + '" stroke="' + O + '" stroke-width="2.4" stroke-linejoin="round"/><path d="M84 30 L83 19 L74 27 Z" fill="' + sp.inner + '"/>';
+    else if (sp.ear === 'puppy') ears = '<ellipse cx="28" cy="50" rx="9" ry="18" fill="' + sp.inner + '" stroke="' + O + '" stroke-width="2.4" transform="rotate(18 28 50)"/><ellipse cx="92" cy="50" rx="9" ry="18" fill="' + sp.inner + '" stroke="' + O + '" stroke-width="2.4" transform="rotate(-18 92 50)"/>';
+    else if (sp.ear === 'small') ears = '<ellipse cx="34" cy="34" rx="7" ry="6" fill="' + sp.inner + '" stroke="' + O + '" stroke-width="2.4"/><ellipse cx="86" cy="34" rx="7" ry="6" fill="' + sp.inner + '" stroke="' + O + '" stroke-width="2.4"/>';
+    if (sp.tail === 'lizard') tail = '<path d="M80 102 Q104 108 110 92 Q114 82 106 80" fill="none" stroke="' + O + '" stroke-width="9" stroke-linecap="round"/><path d="M80 102 Q104 108 110 92 Q114 82 106 80" fill="none" stroke="' + B + '" stroke-width="5.5" stroke-linecap="round"/>';
+    const foot = (x, y) => '<ellipse cx="' + x + '" cy="' + y + '" rx="8" ry="5" fill="' + B + '" stroke="' + O + '" stroke-width="2.2"/>';
+    const paw = (x, y) => '<ellipse cx="' + x + '" cy="' + y + '" rx="6.5" ry="5.5" fill="' + B + '" stroke="' + O + '" stroke-width="2.2"/><path d="M' + (x - 2.2) + ' ' + (y + 1) + ' v2 M' + (x + 2.2) + ' ' + (y + 1) + ' v2" stroke="' + O + '" stroke-width="1.2" stroke-linecap="round" opacity=".5"/>';
+    hindL = foot(44, 108); hindR = foot(76, 108);
+    armL = paw(46, 99); armR = paw(74, 99);
+    const spotsLow = sp.spots ? '<circle cx="50" cy="96" r="3" fill="' + sp.spots + '"/><circle cx="70" cy="90" r="2.4" fill="' + sp.spots + '"/>' : '';
+    const spotsTop = sp.spots ? '<circle cx="38" cy="52" r="3" fill="' + sp.spots + '"/><circle cx="84" cy="54" r="2.6" fill="' + sp.spots + '"/>' : '';
+    body = '<ellipse cx="60" cy="92" rx="26" ry="20" fill="' + B + '" stroke="' + O + '" stroke-width="2.4"/>'
+      + (back ? (sp.tail ? '' : '<circle cx="60" cy="100" r="6" fill="' + B + '" stroke="' + O + '" stroke-width="2.2"/>') : '<ellipse cx="60" cy="96" rx="15" ry="12" fill="' + L + '"/>')
+      + spotsLow + (back ? '' : neck);
+    const faceMask = sp.face ? '<ellipse cx="60" cy="' + (sp.faceRy ? 64 : 60) + '" rx="28" ry="' + (sp.faceRy || 24) + '" fill="' + sp.face + '"/>' : '';
+    const patch = (sp.patch ? '<ellipse cx="' + (back ? 46 : 74) + '" cy="54" rx="11" ry="10" fill="' + sp.patch + '" opacity=".75"/>' : '');
+    const mark = sp.mark ? '<path d="M52 30 Q54 36 56 30 M58 29 Q60 35 62 29 M64 30 Q66 36 68 30" stroke="' + sp.mark + '" stroke-width="2.6" fill="none" stroke-linecap="round"/>' : '';
+    const shell = sp.shell && !back ? '<g transform="translate(60 96)"><path d="M-10 4 Q0 -12 10 4 Z" fill="#FFC8B0" stroke="' + O + '" stroke-width="1.8" stroke-linejoin="round"/><path d="M-4 3 L-2 -5 M2 3 L2 -6 M6 3 L5 -4" stroke="#E09A80" stroke-width="1.2"/></g>' : '';
+    if (sp.shell && !back) armL = armL + shell;   // 조개는 앞발로 들고 있다
+    head = ears + '<ellipse cx="60" cy="58" rx="' + (sp.headRx || 34) + '" ry="' + (sp.headRy || 30) + '" fill="' + B + '" stroke="' + O + '" stroke-width="2.4"/>'
+      + (back ? patch + mark + spotsTop + (neck ? '<g transform="translate(0 -2)">' + neck + '</g>' : '') : faceMask + patch + mark + spotsTop + blush + eyes + mouth + glasses)
+      + hat;
+  } else if (kind === 'potato') {
+    const blob = 'M60 40 C93 40 113 57 114 79 C115 101 94 111 60 111 C26 111 5 101 6 79 C7 57 27 40 60 40 Z';
+    const foot = (x, y, rx, ry, sw) => '<ellipse cx="' + x + '" cy="' + y + '" rx="' + rx + '" ry="' + ry + '" fill="#F7C8B8" stroke="' + O + '" stroke-width="' + sw + '"/>';
+    hindL = foot(30, 108, 6.5, 4, 2); hindR = foot(90, 108, 6.5, 4, 2);
+    armL = foot(48, 110.5, 5, 3, 1.8); armR = foot(72, 110.5, 5, 3, 1.8);
+    const mir = back ? ' transform="translate(120 0) scale(-1 1)"' : '';
+    body = '<path d="' + blob + '" fill="' + B + '"/>'
+      + '<g' + mir + '><path d="M6 79 C7 57 27 40 52 40.5 C54 52 50 62 42 72 C32 82 19 86 6.5 86 Z" fill="' + sp.patch + '"/>'
+      + '<path d="M68 40.5 C93 41 113 57 114 79 C114 84 113.5 88 112 92 C100 88 88 80 80 70 C72 60 68 50 68 40.5 Z" fill="' + sp.patch2 + '"/>'
+      + '<path d="M88 96 C97 94 106 90 111 86 C110 98 100 106 88 109 C86 104 86 100 88 96 Z" fill="' + sp.patch + '" opacity=".9"/></g>'
+      + (back ? '' : '<ellipse cx="60" cy="99" rx="24" ry="9" fill="' + L + '" opacity=".9"/><ellipse cx="60" cy="76" rx="16" ry="11" fill="#FFEFE2"/>')
+      + '<path d="' + blob + '" fill="none" stroke="' + O + '" stroke-width="2.4"/>'
+      + (back ? '' : neck);
+    const ears = '<path d="M22 52 C14 46 3 51 4 61 C5 68 13 69 19 63 Z" fill="' + sp.patch + '" stroke="' + O + '" stroke-width="2.4" stroke-linejoin="round"/><path d="M18 54 C13 51 8 54 8.5 59 C9 62 13 63 16 60 Z" fill="' + sp.inner + '"/><path d="M98 52 C106 46 117 51 116 61 C115 68 107 69 101 63 Z" fill="' + sp.patch2 + '" stroke="' + O + '" stroke-width="2.4" stroke-linejoin="round"/><path d="M102 54 C107 51 112 54 111.5 59 C111 62 107 63 104 60 Z" fill="' + sp.inner + '"/>';
+    head = (back ? '' : '<g transform="translate(0 6)">' + blush + eyes + mouth + glasses + '</g>') + ears + '<g transform="translate(0 10)">' + hat + '</g>';
+  } else {
+    const F = B, D = '#9E6F48', S = L, N = '#6E4B38';
+    const leg = x => '<rect x="' + x + '" y="98" width="11" height="13" rx="5" fill="' + D + '" stroke="' + O + '" stroke-width="2.2"/>';
+    hindL = leg(78); hindR = leg(92); armL = leg(38); armR = leg(56);
+    body = '<path d="M40 70 C52 64 92 62 106 72 C118 80 116 104 100 106 C84 108 52 108 40 104 Z" fill="' + F + '" stroke="' + O + '" stroke-width="2.4" stroke-linejoin="round"/>'
+      + '<path d="M72 70 Q86 67 98 71 M84 76 Q94 74 104 78" stroke="' + D + '" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".6"/>'
+      + (neck && !back ? '<g transform="translate(-2 12)">' + neck + '</g>' : '');
+    const yuzu = mood === 'happy' && !(w.head && w.head !== 'none') ? '<g transform="translate(58 27)"><circle r="7.5" fill="#FFB43C" stroke="' + O + '" stroke-width="2"/><circle cx="-2.4" cy="-2.2" r="1.8" fill="#FFE0A0"/><path d="M1 -7 Q6 -12 10 -8 Q6 -5 1 -7Z" fill="#7BC46A" stroke="' + O + '" stroke-width="1.4" stroke-linejoin="round"/></g>' : '';
+    head = '<ellipse cx="23" cy="40" rx="4.4" ry="3.6" fill="' + D + '" stroke="' + O + '" stroke-width="2" transform="rotate(-20 23 40)"/><ellipse cx="93" cy="40" rx="4.4" ry="3.6" fill="' + D + '" stroke="' + O + '" stroke-width="2" transform="rotate(20 93 40)"/>'
+      + '<path d="M36 30 H80 Q92 30 92 44 L93 80 Q93 97 76 97 H40 Q23 97 23 80 L24 44 Q24 30 36 30 Z" fill="' + F + '" stroke="' + O + '" stroke-width="2.4" stroke-linejoin="round"/>'
+      + '<path d="M50 35 Q58 32 66 35" stroke="' + D + '" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".55"/>'
+      + (back ? '<path d="M40 50 Q58 44 76 50 M44 64 Q58 58 72 64 M46 78 Q58 73 70 78" stroke="' + D + '" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".5"/>'
+        : '<path d="M30 70 Q30 60 44 60 H72 Q86 60 86 70 L86 82 Q86 94 72 94 H44 Q30 94 30 82 Z" fill="' + S + '"/>'
+        + '<path d="M47 68 Q58 63 69 68 Q70 75 58 76 Q46 75 47 68 Z" fill="' + N + '"/><ellipse cx="52.5" cy="70" rx="2.2" ry="1.5" fill="' + INK + '"/><ellipse cx="63.5" cy="70" rx="2.2" ry="1.5" fill="' + INK + '"/><ellipse cx="55" cy="66.5" rx="3" ry="1.2" fill="#FFF" opacity=".35"/>'
+        + mouth + blush + eyes + (glasses ? '<g transform="translate(-1 -8)">' + glasses + '</g>' : ''))
+      + yuzu + hat;
+  }
+  // 뒤돌아본 모습: 발은 뒤에서 보면 앞발이 안 보인다
+  if (back) { armL = ''; armR = ''; }
+
+  const zz = mood === 'sleep' ? '<g class="pet-zz" fill="#8C84C8" font-family="Pretendard, sans-serif" font-weight="700"><text x="88" y="30" font-size="14">z</text><text x="98" y="18" font-size="11">z</text></g>' : '';
+  const sh = kind === 'capy' ? [66, 42] : [60, 28];
+  const shadow = '<ellipse cx="' + sh[0] + '" cy="112" rx="' + (P.air ? sh[1] * 0.6 : sh[1]) + '" ry="5" fill="#000" opacity="' + (P.air ? '.05' : '.08') + '"/>';
+  const allT = P.all ? (P.all.r ? 'translate(' + (P.all.dx || 0) + ' ' + (P.all.dy || 0) + ') rotate(' + P.all.r + ' 60 70)' : tf([60, 112], P.all)) : '';
+  const inner = grp(RIG.tail, P.tail, tail) + grp(RIG.hindL, P.hindL, hindL) + grp(RIG.hindR, P.hindR, hindR)
+    + (P.body ? '<g transform="' + tf([60, 112], P.body) + '">' + body + '</g>' : body)
+    + grp(RIG.head, P.head, head + heart) + grp(RIG.armL, P.armL, armL) + grp(RIG.armR, P.armR, armR);
+  return '<svg class="pet-svg' + (opt.cls ? ' ' + opt.cls : '') + '" viewBox="0 0 120 120" aria-hidden="true">'
+    + shadow + '<g class="pet-bodyg">' + (allT ? '<g transform="' + allT + '">' + inner + '</g>' : inner) + '</g>' + zz + '</svg>';
 }
 function eggSvg(cls) {
   return '<svg class="pet-svg ' + (cls || '') + '" viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="24" ry="5" fill="#000" opacity=".08"/><path d="M60 14 C86 14 96 60 96 78 C96 98 80 110 60 110 C40 110 24 98 24 78 C24 60 34 14 60 14Z" fill="#FFF6E6" stroke="#5B4A48" stroke-width="2.4"/><circle cx="46" cy="52" r="6" fill="#FFD9A8"/><circle cx="72" cy="40" r="4.5" fill="#FFC6D6"/><circle cx="70" cy="80" r="7" fill="#CDEBFF"/></svg>';
@@ -346,20 +436,30 @@ function trick(id) {
     if (s.love < k.need) { say('더 친해지면 배울 수 있어요'); react('shake'); return; }
     if (s.coins < k.cost) { say('연습용 간식 돈 ' + k.cost + '개가 필요해요'); react('shake'); return; }
     s.coins -= k.cost; s.tricks[id] = dayKey(); s.love += 5;
-    news(s.name + '가 "' + k.name + '"를 배웠어요', '이제 언제든 보여 달라고 할 수 있어요.', petSvg(s, { mood: 'happy', cls: 'big' }));
+    news(s.name + fJosa(s.name, '이', '가') + ' "' + k.name + '"' + fJosa(k.name, '을', '를') + ' 배웠어요', '이제 언제든 보여 달라고 할 수 있어요.', petSvg(s, { mood: 'happy', cls: 'big' }));
   }
-  perform(k);
   save();
+  perform(k);
 }
+// 개인기 보여 주기: TRICK_FRAMES 의 자세를 차례로 그린다 (내 펫 방과 오른쪽 아래 펫 둘 다)
 function perform(k) {
-  const room = $('.pet-room .pet-sprite');
-  $$('.pet-room .pet-sprite, .pet-hud .pet-sprite').forEach(el => {
-    el.classList.remove('t-sit', 't-paw', 't-spin', 't-wink', 't-jump', 't-roll', 't-dance'); void el.offsetWidth;
-    el.classList.add('t-' + k.anim);
-    if (k.anim === 'wink') { const s = load(); el.innerHTML = petSvg(s, { trick: 'wink' }); setTimeout(() => { el.innerHTML = petSvg(s, { mood: moodOf(s) }); }, 1400); }
-    setTimeout(() => el.classList.remove('t-' + k.anim), 1600);
-  });
-  say(k.say); hearts(room, 3);
+  const s = load();
+  $$('.pet-room .pet-sprite, .pet-hud .pet-sprite').forEach(el => playTrick(el, s, k.id));
+  say(k.say); hearts($('.pet-room .pet-sprite'), 3);
+}
+function playTrick(el, s, id) {
+  const frames = TRICK_FRAMES[id]; if (!el || !frames) return;
+  clearTimeout(el._trickT);
+  let i = 0;
+  el.classList.add('tricking');
+  const step = () => {
+    if (!el.isConnected) return;
+    if (i >= frames.length) { el.classList.remove('tricking'); el.innerHTML = petSvg(s, { mood: moodOf(s) }); return; }
+    const f = frames[i++];
+    el.innerHTML = petSvg(s, { pose: f[0] });
+    el._trickT = setTimeout(step, f[1]);
+  };
+  step();
 }
 function wear(id) {
   const s = load(), it = WEAR.find(x => x.id === id); if (!it) return;
@@ -380,13 +480,13 @@ function adoptView(mode) {
   let pick = change ? cur.sp : 'cat', typed = change ? cur.name : '', sure = false, busy = false, msg = '';
   const d = document.createElement('div'); d.className = 'pet-news pet-adopt'; d.setAttribute('role', 'dialog');
   const close = () => { d.remove(); document.removeEventListener('keydown', onKey); };
-  const onKey = e => { if (e.key === 'Escape' && change && !busy) close(); };
+  const onKey = e => { if (e.key === 'Escape' && !busy) close(); };
   document.addEventListener('keydown', onKey);
   const draw = () => {
     const sp = SP[pick];
     const nameVal = change || typed ? typed : sp.name;
     const spChanged = change && pick !== cur.sp;
-    let h = '<div class="pet-news-card wide"><b>' + (change ? '다른 동물로 바꾸기' : '같이 공부할 친구를 골라요') + '</b>'
+    let h = '<div class="pet-news-card wide"><button type="button" class="pet-adopt-x" data-x aria-label="닫기" title="닫기 (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button><b>' + (change ? '다른 동물로 바꾸기' : '같이 공부할 친구를 골라요') + '</b>'
       + '<p>' + (change ? '동물과 이름을 바꿀 수 있어요. 이름은 다른 친구와 겹치면 안 돼요.' : '문제를 맞히면 간식을 줄 수 있어요. 이름은 다른 친구와 겹치면 안 되고, 나중에 내 펫 페이지에서 바꿀 수 있어요.') + '</p>'
       + '<div class="pet-adopt-big">' + petSvg({ sp: pick, wear: change ? cur.wear : {} }, { mood: 'happy', cls: 'big' }) + '</div>'
       + '<div class="pet-adopt-grid">' + SPECIES.map(x => '<button type="button" class="pet-adopt-one' + (x.id === pick ? ' on' : '') + '" data-sp="' + x.id + '">' + petSvg({ sp: x.id, wear: {} }) + '<span>' + esc(x.animal) + (change && x.id === cur.sp ? ' (지금)' : '') + '</span></button>').join('') + '</div>'
@@ -403,7 +503,7 @@ function adoptView(mode) {
     inp.addEventListener('input', () => { typed = inp.value; if (msg) { msg = ''; const m = $('.pet-adopt-msg', d); if (m) m.remove(); } });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); go(); } });
     $$('[data-sp]', d).forEach(b => b.addEventListener('click', () => { typed = inp.value; const was = pick; pick = b.dataset.sp; if (!change && (!typed || typed === SP[was].name)) typed = ''; sure = false; msg = ''; draw(); }));
-    const x = $('[data-x]', d); if (x) x.addEventListener('click', () => { if (!busy) close(); });
+    $$('[data-x]', d).forEach(x => x.addEventListener('click', () => { if (!busy) close(); }));
     $('[data-go]', d).addEventListener('click', go);
   };
   const go = async () => {
@@ -437,6 +537,7 @@ function adoptView(mode) {
     if (window.SDT && SDT.user) { startBeat(); presenceBeat(); }
     friendsRender(); friendsLoad(true);
   };
+  d.addEventListener('click', e => { if (e.target === d && !busy) close(); });
   draw(); document.body.appendChild(d);
   setTimeout(() => { const i = $('#petNameIn', d); if (i && change) i.focus(); }, 0);
 }
