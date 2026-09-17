@@ -18,13 +18,16 @@
   var ROOT = me && me.src ? me.src.replace(/assets\/access\.js.*$/, "") : "";
   var PROD = "geonumul.github.io";
   var DAY = 86400000;
+  /* enforce: "login" 이면 이용권 없이 로그인만 확인한다 */
+  var LOGIN_ONLY = CFG.enforce === "login";
   var listeners = [];
 
   var st = {ready: false, off: false, error: null, user: null, admin: false, passes: [], all: 0, subjects: {}};
   var A = {
     state: st, root: ROOT,
     onChange: function(fn){ listeners.push(fn); if(st.ready){ try{ fn(st); }catch(e){} } },
-    can: function(key){ if(st.off) return true; return A.until(key) > Date.now(); },
+    can: function(key){ if(st.off) return true; if(LOGIN_ONLY) return !!st.user; return A.until(key) > Date.now(); },
+    loginOnly: LOGIN_ONLY,
     until: function(key){ return Math.max(st.all || 0, (key && st.subjects[key]) || 0); },
     db: function(){ return (window.firebase && firebase.firestore) ? firebase.firestore() : null; },
     refresh: function(){ return st.user ? loadUser(st.user) : Promise.resolve(); },
@@ -233,7 +236,7 @@
     try{
       var c = JSON.parse(localStorage.getItem("sdt_access") || "null"), uid = localStorage.getItem("sdt_uid");
       if(c && uid && c.uid === uid && Date.now() - c.t < 7 * DAY){
-        var until = GATE === "login" ? Infinity : Math.max(c.all || 0, (c.subjects || {})[sub.key] || 0);
+        var until = GATE === "login" || LOGIN_ONLY ? Infinity : Math.max(c.all || 0, (c.subjects || {})[sub.key] || 0);
         cached = until > Date.now();
       }
     }catch(e){}
@@ -244,7 +247,7 @@
       if(st.off) mode = "open";
       else if(st.error === "sdk") mode = "sdk";
       else if(!st.user) mode = "login";
-      else if(GATE === "login") mode = "open";
+      else if(GATE === "login" || LOGIN_ONLY) mode = "open";
       else if(st.error) mode = "load";
       else mode = A.can(sub.key) ? "open" : "nopass";
       root.classList.toggle("sdt-locked", mode !== "open");
@@ -262,7 +265,7 @@
         h = '<h1>로그인 기능을 불러오지 못했어요</h1><p>인터넷 연결을 확인하고 새로고침해 주세요. 광고 차단 확장 프로그램이 막고 있을 수도 있어요.</p>'
           + '<div class="g-row"><button type="button" class="acc-btn" data-act="reload">새로고침</button><a class="acc-btn line" href="' + esc(home) + '">홈으로</a></div>';
       } else if(mode === "login"){
-        h = (GATE === "login"
+        h = (GATE === "login" || LOGIN_ONLY
             ? '<h1>로그인하면 볼 수 있어요</h1><p>구글 계정으로 로그인해 주세요. 펫과 기록이 계정에 저장돼요.</p>'
             : '<h1>' + esc(josa(sub.name, "은", "는")) + ' 로그인한 뒤에 열려요</h1><p>구글 계정으로 로그인해 주세요. 이용권이 있으면 바로 공부를 시작할 수 있어요.</p>')
           + '<div class="g-row"><button type="button" class="acc-btn" data-act="login">구글 계정으로 로그인</button><a class="acc-btn line" href="' + esc(home) + '#subjects">전체 과목</a></div>';
