@@ -329,7 +329,10 @@ ol.steps li::before{content:counter(st);position:absolute;left:14px;top:12px;wid
 .trail circle{fill:var(--surface);stroke:var(--line-2);stroke-width:3}
 .trail circle.on{fill:var(--accent);stroke:var(--accent)}
 .trail circle.cur{fill:var(--surface);stroke:var(--accent);stroke-width:4}
-.pcount{font-size:13.5px;color:var(--sub);white-space:nowrap}
+.pcount{font-size:13.5px;color:var(--sub);white-space:nowrap;background:none;border:1px dashed transparent;border-radius:4px;padding:4px 8px;cursor:pointer;font-family:inherit}
+.pcount:hover{border-color:var(--line,#ddd);color:inherit}
+.pjump{display:flex;align-items:center;gap:6px;font-size:13.5px}
+.pjump input{width:74px;padding:5px 8px;border:1px solid var(--line,#ddd);border-radius:4px;font:inherit;font-size:16px}
 .hint{font-size:13px;color:var(--faint);text-align:center;margin-top:6px}
 
 /* flashcards */

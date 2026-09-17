@@ -239,7 +239,7 @@ body.inking .totop{display:none}
   .ptop .pchips{width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
   .ptop .pchips::-webkit-scrollbar{display:none}
   .pbar2{gap:8px}
-  .pbar2 .pcount{display:none}
+  .pbar2 .pcount{padding:4px 2px;font-size:12.5px}
   .inkbar{gap:2px}
   .inkbar .ib{width:40px;height:42px}
   .inkbar .ig-tools{margin-left:4px}

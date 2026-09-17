@@ -187,10 +187,7 @@ const routes = [
   [/^#\/quiz(?:\?(.*))?$/, pageQuiz],
   [/^#\/mock(?:\?(.*))?$/, pageMock],
   [/^#\/wrong$/, pageWrong],
-  [/^#\/notebook$/, pageNotebook],
-  [/^#\/notebook\/free\/(\d+)$/, pageFreePage],
-  [/^#\/notebook\/(L\d)$/, pageDeckPages],
-  [/^#\/notebook\/(L\d)\/(\d+)$/, pageSlidePage],
+  [/^#\/notebook/, () => location.replace('#/')],
   [/^#\/settings$/, pageSettings],
   [/^#\/exams$/, () => pageStatic('exams')],
   [/^#\/tips$/, () => pageStatic('tips')],
@@ -331,7 +328,6 @@ function pageHome() {
   h += '<h2 class="sec">문제 진행</h2><div class="card"><div class="plangrid">' + planGrid() + '</div></div>';
   h += '<h2 class="sec">도구</h2><div class="toolrow">'
     + '<a class="tool" href="#/week/c"><b>코딩 기초</b><span>파이썬, 클래스, 파이토치를 직접 쳐 보며</span></a>'
-    + '<a class="tool" href="#/notebook"><b>필기 노트</b><span>빈 노트, 슬라이드 위에 손글씨</span></a>'
     + '<a class="tool" href="#/terms/all"><b>용어 카드</b><span>전 주차 용어 ' + Object.keys(TERM).length + '개</span></a>'
     + '<a class="tool" href="#/mock"><b>모의고사</b><span>모델마다 서술 + 계산 한 쌍</span></a>'
     + '<a class="tool" href="#/wrong"><b>오답노트</b><span>틀린 문제만 다시</span></a>'
@@ -424,7 +420,6 @@ function pageWeek(week) {
       + '<a class="qbtn" href="#/quiz?week=' + week + '&type=calc&start=1"><b>계산만</b><span>시험 계산 문제 연습</span></a>'
       + '<a class="qbtn" href="#/mock?week=' + week + '"><b>이 주차 모의고사</b><span>서술 + 계산 한 쌍씩</span></a></div>';
   }
-  if (d) h += '<div class="termbar" style="margin-top:18px"><div><b>슬라이드에 필기</b><div class="muted">슬라이드 그림 위와 아래 여백에 손으로 적어요</div></div><a class="btn" href="#/notebook/' + w.deck + '">필기 노트 열기</a></div>';
   APP().innerHTML = h;
   renderMath(APP());
   const cc = $('#cumChip');
@@ -440,11 +435,10 @@ let P = null;
 function playerShell(opts) {
   return '<div id="player" class="on">'
     + '<div class="ptop"><a class="btn sm" href="' + esc(opts.backHref) + '">목록</a><div class="ptitle" id="ptitle"></div><div class="pchips">' + (opts.chips || '')
-    + (INK() ? '<button class="chip" id="inkChip" type="button">필기</button>' : '')
     + '<button class="chip auto' + (store.pref.auto ? ' on' : '') + '" id="autoChip" type="button">' + (store.pref.auto ? '자동 재생 중' : '자동 재생') + '</button></div></div>'
     + '<div class="stage" id="pstage"><div class="slide" id="pslide"></div></div>'
     + '<div class="sprog"><i id="sprogBar"></i></div>'
-    + '<div class="pbar2"><button class="btn" id="pPrev" type="button">이전</button><svg class="trail" id="trail" aria-hidden="true"></svg><span class="pcount num" id="pcount"></span><button class="btn primary" id="pNext" type="button">다음</button></div>'
+    + '<div class="pbar2"><button class="btn" id="pPrev" type="button">이전</button><svg class="trail" id="trail" aria-hidden="true"></svg><button class="pcount num" id="pcount" type="button" title="눌러서 쪽 번호로 이동"></button><button class="btn primary" id="pNext" type="button">다음</button></div>'
     + '<div class="hint" id="phint">화면을 누르면 다음, 왼쪽 가장자리를 누르면 이전. 옆으로 밀어도 넘어가요.</div></div>';
 }
 function navTap(x) {
@@ -456,7 +450,7 @@ function startPlayer(opts) {
   document.body.classList.add('playing');
   P = { frames: opts.frames, i: clamp(opts.start || 0, 0, opts.frames.length - 1), step: 0, steps: 0, r: null, timer: null, opts, answered: true, showAll: !!opts.showAll, ink: null };
   const stage = $('#pstage');
-  if (INK()) P.ink = new (INK().Layer)(stage, { onTap: x => navTap(x), onSwipe: d => (d > 0 ? pNext() : pPrev()) });
+  $('#pcount').addEventListener('click', e => { e.stopPropagation(); pJumpOpen(); });
   $('#pNext').addEventListener('click', e => { e.stopPropagation(); pNext(); });
   $('#pPrev').addEventListener('click', e => { e.stopPropagation(); pPrev(); });
   stage.addEventListener('click', e => {
@@ -477,8 +471,6 @@ function startPlayer(opts) {
     const c = $('#autoChip'); c.classList.toggle('on', store.pref.auto); c.textContent = store.pref.auto ? '자동 재생 중' : '자동 재생';
     schedule();
   });
-  const ic = $('#inkChip');
-  if (ic) ic.addEventListener('click', e => { e.stopPropagation(); toggleInk(); });
   const key = e => {
     if (/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) return;
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); pNext(); }
@@ -493,6 +485,37 @@ function startPlayer(opts) {
     P = null;
   };
   pShow(P.i, 'none');
+}
+/* 쪽 번호 적어서 바로 이동 */
+function pJumpOpen() {
+  if (!P) return;
+  const btn = $('#pcount'); if (!btn || $('#pjump')) return;
+  const paged = P.frames.some(f => f._p);
+  const pages = paged ? [...new Set(P.frames.filter(f => f._p).map(f => f._p))] : null;
+  const lo = paged ? Math.min(...pages) : 1, hi = paged ? Math.max(...pages) : P.frames.length;
+  const box = document.createElement('form');
+  box.id = 'pjump'; box.className = 'pjump';
+  box.innerHTML = '<label>' + (paged ? '쪽' : '장면') + ' <input type="number" inputmode="numeric" min="' + lo + '" max="' + hi + '" placeholder="' + lo + '~' + hi + '"></label><button class="btn sm primary" type="submit">이동</button>';
+  btn.after(box); btn.hidden = true;
+  const inp = $('input', box); inp.focus();
+  const close = () => { box.remove(); btn.hidden = false; };
+  box.addEventListener('click', e => e.stopPropagation());
+  inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') close(); });
+  inp.addEventListener('blur', () => setTimeout(() => { if (document.activeElement && box.contains(document.activeElement)) return; close(); }, 150));
+  box.addEventListener('submit', e => {
+    e.preventDefault();
+    const n = Math.round(+inp.value);
+    if (!n || n < lo || n > hi) { toast(lo + '부터 ' + hi + ' 사이 숫자를 적어요'); inp.select(); return; }
+    let idx;
+    if (paged) {
+      const cur = P.frames[P.i] || {};
+      idx = P.frames.findIndex(f => f._p === n && f._pass === cur._pass);
+      if (idx < 0) idx = P.frames.findIndex(f => f._p === n);
+      if (idx < 0) idx = P.frames.findIndex(f => f._p > n);
+    } else idx = n - 1;
+    close();
+    if (idx >= 0 && P) pShow(idx, idx < P.i ? 'prev' : 'next');
+  });
 }
 function toggleInk() {
   if (!P || !P.ink) return;
@@ -1371,13 +1394,13 @@ function qHead(q) {
   const pct = Math.round((st.pos - 1) / st.deck.length * 100);
   const mock = st.mock && st.mock[q.id] ? '<span class="mocklbl">' + esc(st.mock[q.id]) + '</span>' : '';
   return '<div class="qmeta"><span>' + mock + '<span class="tag ' + q.type + '">' + TYPE_NAME[q.type] + '</span><span class="lvl ' + esc(q.level) + '">' + (LEVEL_NAME[q.level] || '') + '</span>' + esc(weekName(q.part)) + ', ' + esc(q.unit || '') + (q.slides ? ' <span class="muted">(' + esc(q.slides) + ')</span>' : '') + '</span>'
-    + '<span class="row" style="margin:0;gap:8px"><span class="num">' + st.pos + ' / ' + st.deck.length + '</span>' + (INK() ? '<button class="btn sm" data-inkq type="button">필기</button>' : '') + '</span></div><div class="progress"><i style="width:' + pct + '%"></i></div>';
+    + '<span class="row" style="margin:0;gap:8px"><span class="num">' + st.pos + ' / ' + st.deck.length + '</span>' + '</span></div><div class="progress"><i style="width:' + pct + '%"></i></div>';
 }
 const nextBtn = id => '<button class="btn primary" id="' + id + '" type="button">' + (st.pos >= st.deck.length ? '결과 보기' : '다음 문제') + '</button>';
 const srcLine = q => q.src ? '<div class="muted" style="font-size:13px;margin-top:8px">출처: ' + esc(q.src) + '</div>' : '';
 function mount(h) {
   const s = stageEl(); s.innerHTML = h; renderMath(s);
-  const btn = $('[data-inkq]', s), card = $('.card', s), I = INK();
+  const btn = null, card = null, I = null;
   if (btn && card && I && st.cur) {
     const layer = new I.Layer(card, { scrollOnFinger: true });
     layer.setKey('q/' + st.cur.id);

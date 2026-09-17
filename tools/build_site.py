@@ -245,8 +245,7 @@ def main(slug, skip, home=True):
             nav.append(f'<a class="tab" data-nav="p{name}" href="#/{name}">{label}</a>')
     nav +=[f'<a class="tab" data-nav="w{w["id"]}" href="#/week/{w["id"]}">{html.escape(w["short"])}</a>' for w in weeks]
     nav += ['<a class="tab" data-nav="quiz" href="#/quiz">문제</a>',
-            '<a class="tab" data-nav="wrong" href="#/wrong">오답노트 <span id="wrongBadge" class="badge"></span></a>',
-            '<a class="tab" data-nav="note" href="#/notebook">필기 노트</a>']
+            '<a class="tab" data-nav="wrong" href="#/wrong">오답노트 <span id="wrongBadge" class="badge"></span></a>']
     if "exams" in pages:
         nav.append('<a class="tab" data-nav="exams" href="#/exams">기출 분석</a>')
     if "tips" in pages:
@@ -257,7 +256,7 @@ def main(slug, skip, home=True):
             .replace("__VER__", ver).replace("__TITLE__", html.escape(name + " 회독 스터디"))
             .replace("__BRAND__", html.escape(cfg.get("brand") or name))
             .replace("__LOGO__", "" if slug in ("eco-architecture", "modern-space-design") else LOGOS.get(slug, DEFAULT_LOGO))
-            .replace("__DESC__", html.escape(name + ": 강의 회독, 정리 슬라이드, 용어 카드, 필기, 문제은행"))
+            .replace("__DESC__", html.escape(name + ": 강의 회독, 정리 슬라이드, 용어 카드, 문제은행"))
             .replace("__NAV__", "\n".join("      " + x for x in nav)))
     write(SITE / "index.html", page)
 
