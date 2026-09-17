@@ -36,7 +36,7 @@ def main():
                         '<a class="hubback" href="../../index.html#subjects" aria-label="전체 과목으로">전체 과목</a>\n    <a class="brand" href="#/"', 1)
     # 사이트 공통 펫 (로그인은 허브의 assets/sync.js)
     page = page.replace('</head>', '<link rel="stylesheet" href="../../assets/pet/pet.css">\n</head>', 1)
-    page = page.replace('</body>', '<script src="../../assets/firebase-config.js"></script>\n<script src="../../assets/sync.js"></script>\n<script src="../../assets/pet/pet.js" defer></script>\n</body>', 1)
+    page = page.replace('</body>', '<script src="../../assets/firebase-config.js"></script>\n<script src="../../assets/sync.js"></script>\n<script src="../../assets/pet/pet.js" defer></script>\n<script src="../../assets/footer.js"></script>\n</body>', 1)
     # 이용권 검사: 로그인과 이용권이 없으면 과목 화면을 가린다 (assets/access.js, 설정은 assets/access-config.js)
     page = page.replace('<script src="../../assets/sync.js"></script>\n',
                         '<script src="../../assets/sync.js"></script>\n<script src="../../assets/access-config.js"></script>\n'
