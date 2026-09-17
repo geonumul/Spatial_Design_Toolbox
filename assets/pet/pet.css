@@ -219,4 +219,32 @@ body.playing .pet-hud,body.inking .pet-hud,body.paper .pet-hud,body.pet-open .pe
 .pet-leave-list b{font-size:14px!important;font-weight:600}
 .pet-leave-dlg .pet-news-art{height:120px}
 .pet-leave-dlg .pet-news-art .pet-svg.big{width:120px;height:120px}
+/* 키우는 사람 이름 */
+.pf-owner{margin-left:4px;font-size:12.5px;font-weight:500;color:#8A7AA8}
+.pf-wholine{flex-basis:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:8px;margin-top:2px;border-top:1px dashed #E3D9F5}
+.pf-wholine span{font-size:12.5px;color:#7A6E8A}
+.pf-wholine b{flex:1;font-size:15px!important;letter-spacing:0!important;font-weight:600}
+.pf-wholine .pet-btn,.pf-whoform .pet-btn{min-height:32px;padding:4px 12px;font-size:13px}
+.pf-whoform{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.pf-whoform[hidden]{display:none}
+.pf-whoform input{flex:1;min-width:8em;min-height:36px;border:1.5px solid #E3D9F5;border-radius:999px;padding:4px 14px;font:inherit;font-size:15px}
+.pf-whoform small{flex-basis:100%;font-size:12px;color:#9A8FA8}
+/* 내 펫 페이지 맨 위: 설치, 띄우기 */
+.pa{display:flex;flex-direction:column;gap:10px}
+.pa-head b{font-size:19px;font-weight:600}
+.pa-head p{margin:2px 0 0;font-size:13.5px;color:#7A6E8A;word-break:keep-all}
+.pa-step{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:18px;background:#FFF7FA;border:1.5px solid #F6E3EC}
+.pa-step.done{background:#F7F5FA;border-color:#ECE6F2;padding:9px 14px}
+.pa-step.done .pa-num{background:#CFC6DA}
+.pa-num{flex:none;width:28px;height:28px;border-radius:50%;background:#FF7FA6;color:#fff;font-weight:700;display:grid;place-items:center;font-size:14px}
+.pa-body{flex:1;min-width:0}
+.pa-body b{font-size:15.5px;font-weight:600}
+.pa-body p{margin:2px 0 8px;font-size:13px;color:#7A6E8A;word-break:keep-all}
+.pa-step.done .pa-body p{margin:2px 0 0}
+.pa-body a{color:#C8356A}
+.pa-body .pet-btn{text-decoration:none}
+.pa-body .pet-btn.main{color:#fff}
+.pa-msg{margin:0;padding:10px 12px;border-radius:14px;background:#FFF6E0;color:#8A6412;font-size:13.5px;word-break:keep-all;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pa-msg[hidden]{display:none}
+.pa-msg .pet-btn{min-height:34px;text-decoration:none;color:#fff}
 

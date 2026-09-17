@@ -125,13 +125,13 @@ service cloud.firestore {
   // ===================== 친구 전용 펫 v3 (2026-09-17, 펫 프로그램 1.3.0 과 사이트 pet/) =====================
   // 모두 새로 시작: 예전 petCodes, petFriends, petPresence, petChats, petInbox, plaza 는 규칙이 없어서 아무도 못 읽고 못 쓴다 (콘솔에서 지워도 된다).
   // 펫 이름은 모두 달라야 하고 한 사람은 이름 하나만 가진다. 친구 추가는 친구의 펫 이름으로 한다.
-  //   pet3Owners/{uid}                   내 펫 이름표 {name: 이름 열쇠, pet: 보이는 이름, sp, ts}. 나만 읽는다
+  //   pet3Owners/{uid}                   내 펫 이름표 {name: 이름 열쇠, pet: 보이는 이름, sp, who: 키우는 사람 이름(20글자까지), ts}. 나만 읽는다
   //   pet3Names/{열쇠}                    이름 자리 {uid, pet, sp}. 이름을 정확히 알 때 한 장만 읽는다 (목록 금지)
   //        열쇠 = 보이는 이름에서 띄어쓰기를 빼고 영문을 소문자로 바꾼 것. 한글, 영문, 숫자 1~8글자
   //        이름표와 이름 자리는 한 요청 안에서 같이 쓴다. 새 이름 자리를 잡으면서 예전 이름 자리는 비워야 한다
   //   pet3Friends/{uid}/list/{other}     "나는 other 와 친구 하고 싶다" {pet, sp, ts}. 양쪽에 다 있어야 친구
   //   pet3Friends/{uid}/requests/{from}  받은 친구 요청 {name, pet, sp, via, ts}. via = 받는 사람 펫 이름 열쇠
-  //   pet3Presence/{uid}                 접속 표시 {name, sp, wear, tricks(배운 개인기 id 목록), ts}. name 은 내 이름표의 pet 과 같아야 한다. 서로 친구만 읽는다
+  //   pet3Presence/{uid}                 접속 표시 {name, sp, wear, tricks(배운 개인기 id 목록), owner(이름표의 who), ts}. name 은 내 이름표의 pet 과 같아야 한다. 서로 친구만 읽는다
   //   pet3Chats/{a_b}/messages/{id}      1:1 대화 {from, text, ts}. a_b 는 두 uid 를 정렬해 _ 로 이은 것
   //   pet3Board/{uid}/messages/{id}      전체 채팅: 내 친구 모두에게 한 말 {from, text, ts}. 나와 서로 친구만 읽는다
   //   pet3Inbox/{uid}                    알림 {보낸 친구 uid: 1:1 새 메시지, p_uid: 콕 찌르기, b_uid: 전체 채팅 새 글}. 친구는 자기 칸 세 개만 고친다
@@ -165,10 +165,13 @@ service cloud.firestore {
     }
 
     // 내 펫 이름표: 새 이름 자리가 (같은 요청이 끝난 뒤) 내 것이어야 하고, 이름을 바꾸면 예전 자리는 비워야 한다
+    // 키우는 사람 이름: 친구에게 보여 줄 이름 (구글 이름이 기본, 바꿀 수 있음). 1~20글자
+    function p3Who(v) { return v is string && v.size() > 0 && v.size() <= 20; }
     function p3OwnerOk(uid, oldName) {
       let d = request.resource.data;
-      return d.keys().hasOnly(['name', 'pet', 'sp', 'ts'])
+      return d.keys().hasOnly(['name', 'pet', 'sp', 'who', 'ts'])
         && p3Key(d.name) && p3Pet(d.pet) && p3KeyOf(d.pet) == d.name && p3Sp(d.sp)
+        && (!('who' in d) || p3Who(d.who))
         && d.ts == request.time
         && getAfter(p3Doc('pet3Names/' + d.name)).data.uid == uid
         && (oldName == '' || oldName == d.name
@@ -217,8 +220,9 @@ service cloud.firestore {
         allow get: if p3In() && (request.auth.uid == owner || request.auth.uid == other);
         allow list: if p3Me(owner);
         allow create, update: if p3Me(owner) && owner != other
-          && request.resource.data.keys().hasOnly(['pet', 'sp', 'ts'])
+          && request.resource.data.keys().hasOnly(['pet', 'sp', 'who', 'ts'])
           && p3Str(request.resource.data.pet, 8) && p3Sp(request.resource.data.sp)
+          && (!('who' in request.resource.data) || p3Str(request.resource.data.who, 60))
           && request.resource.data.ts == request.time;
         allow delete: if p3In() && (request.auth.uid == owner || request.auth.uid == other);
       }
@@ -231,7 +235,8 @@ service cloud.firestore {
         allow create, update: if p3Me(from) && from != owner
           && request.resource.data.keys().hasOnly(['name', 'pet', 'sp', 'via', 'ts'])
           && p3Str(request.resource.data.name, 60)
-          && (request.resource.data.name == '' || request.resource.data.name == request.auth.token.get('name', ''))
+          && (request.resource.data.name == '' || request.resource.data.name == request.auth.token.get('name', '')
+            || request.resource.data.name == get(p3Doc('pet3Owners/' + from)).data.get('who', ''))
           && p3Key(request.resource.data.via)
           && get(p3Doc('pet3Names/' + request.resource.data.via)).data.uid == owner
           && request.resource.data.pet == get(p3Doc('pet3Owners/' + from)).data.pet
@@ -246,8 +251,9 @@ service cloud.firestore {
       allow get: if p3Me(uid) || p3Mutual(uid);
       allow list: if false;
       allow create, update: if p3Me(uid)
-        && request.resource.data.keys().hasOnly(['name', 'sp', 'wear', 'tricks', 'ts'])
+        && request.resource.data.keys().hasOnly(['name', 'sp', 'wear', 'tricks', 'owner', 'ts'])
         && request.resource.data.name == get(p3Doc('pet3Owners/' + uid)).data.pet
+        && (!('owner' in request.resource.data) || request.resource.data.owner == get(p3Doc('pet3Owners/' + uid)).data.get('who', ''))
         && (!('tricks' in request.resource.data) || (request.resource.data.tricks is list && request.resource.data.tricks.size() <= 10))
         && p3Sp(request.resource.data.sp)
         && (!('wear' in request.resource.data) || p3Wear(request.resource.data.wear))
