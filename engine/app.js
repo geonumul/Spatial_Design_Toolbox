@@ -528,7 +528,7 @@ function pJumpOpen() {
   const lo = paged ? Math.min(...pages) : 1, hi = paged ? Math.max(...pages) : P.frames.length;
   const box = document.createElement('form');
   box.id = 'pjump'; box.className = 'pjump';
-  box.innerHTML = '<label>' + (paged ? '쪽' : '장면') + ' <input type="number" inputmode="numeric" min="' + lo + '" max="' + hi + '" placeholder="' + lo + '~' + hi + '"></label><button class="btn sm primary" type="submit">이동</button>';
+  box.innerHTML = '<input type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="go" autocomplete="off" aria-label="' + (paged ? '이동할 쪽 번호' : '이동할 장면 번호') + ' (' + lo + '~' + hi + ')" placeholder="' + (paged ? '쪽' : '번호') + '"><span class="pjt">/ ' + hi + '</span>';
   btn.after(box); btn.hidden = true;
   const inp = $('input', box); inp.focus();
   const close = () => { box.remove(); btn.hidden = false; };
@@ -537,7 +537,7 @@ function pJumpOpen() {
   inp.addEventListener('blur', () => setTimeout(() => { if (document.activeElement && box.contains(document.activeElement)) return; close(); }, 150));
   box.addEventListener('submit', e => {
     e.preventDefault();
-    const n = Math.round(+inp.value);
+    const n = Math.round(+String(inp.value).replace(/[^0-9]/g, ''));
     if (!n || n < lo || n > hi) { toast(lo + '부터 ' + hi + ' 사이 숫자를 적어요'); inp.select(); return; }
     let idx;
     if (paged) {
@@ -645,7 +645,7 @@ function schedule() {
   const el = $('#pslide');
   const vis = $$('[data-s]', el).filter(e => +e.dataset.s === P.step);
   const text = vis.length ? vis.map(e => e.textContent).join(' ') : el.textContent;
-  const ms = (clamp(1500 + text.length * 60, 2200, 11000) + (f.kind === 'slideimg' || f.kind === 'walk' ? 1500 : 0)) * (+store.pref.speed || 1);
+  const ms = (clamp(1500 + text.length * 60, 2200, 11000) + (f.kind === 'slideimg' || f.kind === 'walk' || f.kind === 'walksum' ? 1500 : 0)) * (+store.pref.speed || 1);
   P.timer = setTimeout(pNext, ms);
 }
 function drawTrail() {
@@ -730,6 +730,24 @@ function walkFrame(o) {
     },
   };
 }
+/* 2회독부터: 부분씩 넘기지 않고 슬라이드 한 장에 번호를 붙여 한눈에 정리 */
+function walkSumFrame(o) {
+  const parts = (o.parts || []).filter(q => q && q.b && !q.full && !q.head);
+  const pct = v => (Math.round(v * 10000) / 100) + '%';
+  const first = s => { const m = String(s || '').match(/^[\s\S]*?[.?!](?=\s|$)/); return m ? m[0] : String(s || ''); };
+  const item = (q, i) => {
+    const say = String(q.say || ''), mm = say.match(/^([^:*$\n]{1,34}):\s*([\s\S]+)$/);
+    const body = !say ? '<span class="muted">슬라이드 글을 직접 읽어 봐요.</span>' : mm ? '<b>' + fmt(mm[1]) + '</b> ' + fmt(first(mm[2])) : fmt(first(say));
+    return '<li><span class="wk-k num">' + (i + 1) + '</span><div>' + body + '</div></li>';
+  };
+  return {
+    html: '<div class="wsum"><div class="wk-top"><span class="sk">' + esc(o.kicker) + '</span><span class="wk-n num">' + parts.length + '부분 한눈에</span></div>'
+      + '<div class="ws-grid"><div class="ws-slide"><img src="' + esc(o.slide) + '" alt="" loading="lazy" decoding="async">'
+      + parts.map((q, i) => '<i class="ws-b" style="left:' + pct(q.b[0]) + ';top:' + pct(q.b[1]) + ';width:' + pct(q.b[2]) + ';height:' + pct(q.b[3]) + '"><b>' + (i + 1) + '</b></i>').join('')
+      + '</div><ol class="ws-list">' + parts.map(item).join('') + '</ol></div></div>',
+    steps: 0,
+  };
+}
 function renderFrame(f, st) {
   const k = f.kind;
   const head = x => x ? '<h2 class="sh">' + fmt(x) + '</h2>' : '';
@@ -789,6 +807,10 @@ function renderFrame(f, st) {
           }));
         },
       };
+    case 'walksum': {
+      const w = f.walk || {};
+      return walkSumFrame({ parts: w.parts || [], slide: f.src, kicker: 'p.' + f._p + ' 한눈에 정리' });
+    }
     case 'walk': {
       const w = f.walk || {};
       return walkFrame({ parts: (w.head ? [Object.assign({ head: 1 }, w.head)] : []).concat(w.parts || [], [{ full: 1 }]), slide: f.src, title: f._t, kicker: 'p.' + f._p + ' 부분씩 읽기' });
@@ -889,7 +911,7 @@ async function pageLesson(deck, passStr, jump, all) {
     if (!content.length && !walked) return;
     const start = frames.length;
     const src = 'img/' + deck + '/p' + pad3(s.p) + '.jpg';
-    frames.push(s.walk ? { kind: 'walk', walk: s.walk, src, _p: s.p, _t: s.title } : { kind: 'slideimg', src, alt: 'p.' + s.p + ' ' + s.title, cap: 'p.' + s.p + '  ' + s.title, _p: s.p, _t: s.title });
+    frames.push(s.walk ? { kind: pass === 1 ? 'walk' : 'walksum', walk: s.walk, src, _p: s.p, _t: s.title } : { kind: 'slideimg', src, alt: 'p.' + s.p + ' ' + s.title, cap: 'p.' + s.p + '  ' + s.title, _p: s.p, _t: s.title });
     content.forEach(f => { f._p = s.p; f._t = s.title; frames.push(f); });
     groups.push({ start, end: frames.length - 1, p: s.p });
   });

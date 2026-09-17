@@ -69,7 +69,7 @@ service cloud.firestore {
       let c = get(codePath).data;
       return p.keys().hasOnly(['kind', 'scope', 'expiresAt', 'source', 'code', 'createdAt'])
         && p.source == 'code'
-        && p.code is string && p.code.matches('^[A-Z0-9]{6,32}$')
+        && p.code is string && p.code.matches('^[A-Z0-9!]{6,32}$')
         && passId == 'c_' + p.code
         && p.createdAt == request.time
         && c.active == true
@@ -89,7 +89,7 @@ service cloud.firestore {
     match /codes/{code} {
       allow get: if signedIn();
       allow list: if isAdmin();
-      allow create, update: if isAdmin() && code.matches('^[A-Z0-9]{6,32}$')
+      allow create, update: if isAdmin() && code.matches('^[A-Z0-9!]{6,32}$')
         && request.resource.data.kind in ['subject', 'month', 'year', 'days']
         && request.resource.data.days is int && request.resource.data.days > 0 && request.resource.data.days <= 400
         && request.resource.data.maxUses is int && request.resource.data.maxUses > 0
@@ -131,7 +131,7 @@ service cloud.firestore {
   //        이름표와 이름 자리는 한 요청 안에서 같이 쓴다. 새 이름 자리를 잡으면서 예전 이름 자리는 비워야 한다
   //   pet3Friends/{uid}/list/{other}     "나는 other 와 친구 하고 싶다" {pet, sp, ts}. 양쪽에 다 있어야 친구
   //   pet3Friends/{uid}/requests/{from}  받은 친구 요청 {name, pet, sp, via, ts}. via = 받는 사람 펫 이름 열쇠
-  //   pet3Presence/{uid}                 접속 표시 {name, sp, wear, ts}. name 은 내 이름표의 pet 과 같아야 한다. 서로 친구만 읽는다
+  //   pet3Presence/{uid}                 접속 표시 {name, sp, wear, tricks(배운 개인기 id 목록), ts}. name 은 내 이름표의 pet 과 같아야 한다. 서로 친구만 읽는다
   //   pet3Chats/{a_b}/messages/{id}      1:1 대화 {from, text, ts}. a_b 는 두 uid 를 정렬해 _ 로 이은 것
   //   pet3Board/{uid}/messages/{id}      전체 채팅: 내 친구 모두에게 한 말 {from, text, ts}. 나와 서로 친구만 읽는다
   //   pet3Inbox/{uid}                    알림 {보낸 친구 uid: 1:1 새 메시지, p_uid: 콕 찌르기, b_uid: 전체 채팅 새 글}. 친구는 자기 칸 세 개만 고친다
@@ -181,7 +181,10 @@ service cloud.firestore {
       allow create: if p3Me(uid) && p3OwnerOk(uid, '');
       // 이름이나 종을 바꾸는 것은 5초에 한 번까지
       allow update: if p3Me(uid) && p3OwnerOk(uid, resource.data.name) && request.time > resource.data.ts + duration.value(5, 's');
-      allow delete: if false;
+      // 펫 떠나보내기: 같은 요청에서 내 이름 자리도 비워야 이름표를 지울 수 있다
+      allow delete: if p3Me(uid)
+        && (!existsAfter(p3Doc('pet3Names/' + resource.data.name))
+          || getAfter(p3Doc('pet3Names/' + resource.data.name)).data.uid != uid);
     }
 
     // 이름 자리: 먼저 잡은 사람 것. 없는 자리만 만들 수 있고, 내 자리만 고치거나 비운다
@@ -202,7 +205,8 @@ service cloud.firestore {
         && getAfter(p3Doc('pet3Owners/' + request.auth.uid)).data.name == key;
       // 이름표가 아직 이 자리를 가리키면 못 비운다 (이름을 바꿀 때 같은 요청에서 비운다)
       allow delete: if p3In() && resource.data.uid == request.auth.uid
-        && getAfter(p3Doc('pet3Owners/' + request.auth.uid)).data.name != key;
+        && (!existsAfter(p3Doc('pet3Owners/' + request.auth.uid))
+          || getAfter(p3Doc('pet3Owners/' + request.auth.uid)).data.name != key);
     }
 
     match /pet3Friends/{owner} {
@@ -242,8 +246,9 @@ service cloud.firestore {
       allow get: if p3Me(uid) || p3Mutual(uid);
       allow list: if false;
       allow create, update: if p3Me(uid)
-        && request.resource.data.keys().hasOnly(['name', 'sp', 'wear', 'ts'])
+        && request.resource.data.keys().hasOnly(['name', 'sp', 'wear', 'tricks', 'ts'])
         && request.resource.data.name == get(p3Doc('pet3Owners/' + uid)).data.pet
+        && (!('tricks' in request.resource.data) || (request.resource.data.tricks is list && request.resource.data.tricks.size() <= 10))
         && p3Sp(request.resource.data.sp)
         && (!('wear' in request.resource.data) || p3Wear(request.resource.data.wear))
         && request.resource.data.ts == request.time;

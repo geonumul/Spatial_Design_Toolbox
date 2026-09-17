@@ -121,7 +121,7 @@
   function redeem(raw){
     var id = normCode(raw), u = st.user, db = A.db();
     if(!u) return Promise.resolve({ok: false, msg: "로그인한 뒤에 코드를 넣어 주세요."});
-    if(!/^[A-Z0-9]{6,32}$/.test(id)) return Promise.resolve({ok: false, msg: "코드는 영문과 숫자 6~32자예요. 다시 확인해 주세요."});
+    if(!/^[A-Z0-9!]{6,32}$/.test(id)) return Promise.resolve({ok: false, msg: "코드는 영문, 숫자, 느낌표로 6~32자예요. 다시 확인해 주세요."});
     if(!db) return Promise.resolve({ok: false, msg: "지금은 코드를 확인할 수 없어요. 새로고침한 뒤 다시 해 주세요."});
     var FV = firebase.firestore.FieldValue, TS = firebase.firestore.Timestamp;
     var codeRef = db.collection("codes").doc(id);

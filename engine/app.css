@@ -331,8 +331,9 @@ ol.steps li::before{content:counter(st);position:absolute;left:14px;top:12px;wid
 .trail circle.cur{fill:var(--surface);stroke:var(--accent);stroke-width:4}
 .pcount{font-size:13.5px;color:var(--sub);white-space:nowrap;background:none;border:1px dashed transparent;border-radius:4px;padding:4px 8px;cursor:pointer;font-family:inherit}
 .pcount:hover{border-color:var(--line,#ddd);color:inherit}
-.pjump{display:flex;align-items:center;gap:6px;font-size:13.5px}
-.pjump input{width:74px;padding:5px 8px;border:1px solid var(--line,#ddd);border-radius:4px;font:inherit;font-size:16px}
+.pjump{display:inline-flex;align-items:center;gap:4px;font-size:13.5px;color:var(--sub);white-space:nowrap;padding:4px 8px;border:1px dashed transparent}
+.pjump input{width:3.2em;padding:0 2px;margin:0;border:0;border-bottom:1.5px solid var(--primary,#4E3FE5);border-radius:0;background:transparent;font:inherit;font-size:16px;line-height:1.2;color:var(--ink,#1B1B2F);text-align:center;outline:none;-moz-appearance:textfield;appearance:textfield}
+.pjump input::placeholder{color:var(--sub);font-size:13px}
 .hint{font-size:13px;color:var(--faint);text-align:center;margin-top:6px}
 
 /* flashcards */

@@ -250,7 +250,7 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
       var kind = cf.kind.value, days = parseInt(cf.days.value, 10), uses = parseInt(cf.uses.value, 10);
       var scope = kind === "subject" ? cf.scope.value : "*";
       var until = new Date(cf.until.value + "T23:59:59");
-      if(!/^[A-Z0-9]{6,32}$/.test(id)){ say(msg, "코드는 영문과 숫자 6~32자로 넣어 주세요.", false); return; }
+      if(!/^[A-Z0-9!]{6,32}$/.test(id)){ say(msg, "코드는 영문, 숫자, 느낌표로 6~32자로 넣어 주세요. 대소문자는 구분하지 않아요.", false); return; }
       if(!(days > 0 && days <= 400)){ say(msg, "기간은 1일에서 400일 사이로 넣어 주세요.", false); return; }
       if(!(uses > 0)){ say(msg, "인원은 1명 이상으로 넣어 주세요.", false); return; }
       if(isNaN(until.getTime()) || until.getTime() <= Date.now()){ say(msg, "코드 마감일은 오늘 이후로 골라 주세요.", false); return; }
