@@ -9,6 +9,7 @@
   lesson/<덱>_*.json         회독 레슨 (tools/checkers/lesson_check.py)
   notes/slides_w*.json       정리 슬라이드. 기초 다지기는 slides_wb.json (tools/checkers/slide_check.py)
   bank/*.json                문제은행 JSON 배열 (tools/checkers/bank_check.py)
+  terms/<주차>.json          주차별 용어집 (선택). [{ko, en, say, more}] 배열, 파일 이름이 주차 id. 레슨, 정리 슬라이드가 없는 과목의 용어 카드, 용어 게임용
   walk/<덱>.json             슬라이드 부분씩 읽기 (tools/walk_build.py 가 만든다, 선택) -> 레슨 쪽마다 walk
   recall/<덱>.json           가리고 설명하기 (tools/recall_build.py 가 만든다, 선택) -> data/recall_<덱>.js
   pages/tips.html, exams.html  답안 팁, 기출 분석 (선택)
@@ -225,6 +226,24 @@ def main(slug, skip, home=True):
                                for u in d.get("units", [])]
         write(out, js_assign("SDT_NOTES", week, d))
         print(f"  정리 슬라이드 {week}: 단원 {len(d.get('units', []))}개")
+
+    # 2-1) 주차별 용어집 (선택): work/<slug>/terms/<주차 id>.json, 예) terms/2.json 또는 terms/w2.json
+    #      [{"ko", "en", "say", "more"}] 배열. 레슨과 정리 슬라이드가 없는 과목도 용어 카드, 용어 게임을 쓰도록.
+    #      이미 들어온 용어와 키가 같으면 add_term 이 건너뛴다. 폴더가 없는 과목은 아무 일도 없다.
+    for f in sorted((W / "terms").glob("*.json")):
+        week = re.sub(r"^w(?=.)", "", f.stem)
+        if week not in terms:
+            print(f"  [건너뜀] terms/{f.name}: 모르는 주차 {week}")
+            continue
+        try:
+            arr = load(f)
+        except Exception as e:
+            print(f"  [건너뜀] terms/{f.name}: {e}")
+            continue
+        before = len(terms[week])
+        for t in (arr if isinstance(arr, list) else arr.get("terms", [])):
+            add_term(week, t)
+        print(f"  용어집 {week}: {len(terms[week]) - before}개 추가")
 
     # 3) 문제은행 + 용어 퀴즈
     bank, seen = [], set()
