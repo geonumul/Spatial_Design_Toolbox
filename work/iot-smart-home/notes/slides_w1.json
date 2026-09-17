@@ -1,0 +1,1874 @@
+{
+ "week": "1",
+ "title": "1주차. AI@Home 개요와 지능형홈 시스템 구조",
+ "units": [
+  {
+   "id": "w1-1",
+   "title": "거실 쟁탈전: 스마트홈 확산 3단계",
+   "goal": "이 과목의 큰 지도를 그리고, 스마트홈이 퍼진 3단계의 시기, 주인공, 무기를 순서대로 말할 수 있어요.",
+   "terms": [
+    {
+     "ko": "사물인터넷",
+     "en": "Internet of Things",
+     "say": "집 안 물건들이 인터넷으로 서로 이야기하는 것"
+    },
+    {
+     "ko": "스마트홈",
+     "en": "Smart Home",
+     "say": "앱이나 말로 시켜야 움직이는 연결된 집"
+    },
+    {
+     "ko": "IPTV 홈 셋톱",
+     "en": "IPTV",
+     "say": "TV에 붙은 통신사 상자, 스마트홈 1단계의 주인공"
+    },
+    {
+     "ko": "락인",
+     "en": "Lock-in",
+     "say": "한 번 가입하면 다른 회사로 못 떠나게 붙잡아 두는 것"
+    },
+    {
+     "ko": "AI 스피커",
+     "en": "AI Speaker",
+     "say": "말로 부르면 대답하고 기기를 켜 주는 스피커"
+    },
+    {
+     "ko": "스마트싱스",
+     "en": "SmartThings",
+     "say": "삼성의 스마트홈 앱과 허브"
+    },
+    {
+     "ko": "LG 씽큐",
+     "en": "LG ThinQ",
+     "say": "LG의 스마트홈 앱"
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "거실 쟁탈전",
+     "sub": "**스마트홈(Smart Home)**이 퍼진 3단계 역사와 이 과목의 지도"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "이 과목에서 무엇을 배우는지 큰 지도를 그려요.",
+      "**스마트홈(Smart Home)** 확산 3단계의 시기와 주인공을 말해요.",
+      "통신사가 노린 **락인(Lock-in)**이 무엇인지 설명해요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "이 과목, 누가 가르치나요?",
+     "items": [
+      "과목 번호 07586, 전공선택 3학점이에요. 김철재, 공정식 교수님이 맡아요.",
+      "김철재 교수님은 정보통신 자격시험을 만드는 협회(ICQA)의 전략기획팀장이에요.",
+      "5년 전 직무분석으로 스마트홈관리사라는 직업의 틀을 처음 정했어요.",
+      "100명이 넘는 전문가와 함께 지능형홈관리사 출제, 감수, 채점을 해요.",
+      "그래서 이 수업 시험이 지능형홈관리사 필기와 닮았을 수 있어요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "15주 수업 계획 한눈에",
+     "cols": [
+      "주차",
+      "무엇을 배우나",
+      "층"
+     ],
+     "rows": [
+      [
+       "1, 2주",
+       "AI@Home 개요, 데이터 흐름과 IoT 파이프라인",
+       "역사, 핵심 이론"
+      ],
+      [
+       "3, 4주",
+       "무선통신 I, II (허브, 근거리 무선, 매터 표준)",
+       "Layer3"
+      ],
+      [
+       "5주",
+       "공간 센서 기술과 감지 범위",
+       "Layer2"
+      ],
+      [
+       "6, 9, 12주",
+       "AI 기술 I, II, III",
+       "Layer4"
+      ],
+      [
+       "7, 10, 11주",
+       "현장 실무와 HA 실습 (HA 는 Home Assistant 로 보여요)",
+       "HA"
+      ],
+      [
+       "8, 13, 14, 15주",
+       "중간고사, 전기와 조명, 배치 설계, 기말고사",
+       "시험, Layer1, 종합"
+      ]
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "이 과목이 키우려는 힘 세 가지",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"240\" y=\"40\" font-size=\"17\" text-anchor=\"middle\" class=\"tb\">학습목표 세 가지</text><rect x=\"15\" y=\"70\" width=\"140\" height=\"120\" rx=\"2\" class=\"box b1\"/><text x=\"85\" y=\"114\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b1\">목표 1</text><text x=\"85\" y=\"138\" font-size=\"18\" text-anchor=\"middle\" class=\"tb b1\">공간 DX</text><text x=\"85\" y=\"156\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">공간의 디지털 전환</text><rect x=\"170\" y=\"70\" width=\"140\" height=\"120\" rx=\"2\" class=\"box b2\"/><text x=\"240\" y=\"114\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b2\">목표 2</text><text x=\"240\" y=\"138\" font-size=\"18\" text-anchor=\"middle\" class=\"tb b2\">4-Layer</text><text x=\"240\" y=\"156\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">4층 구조 분석</text><rect x=\"325\" y=\"70\" width=\"140\" height=\"120\" rx=\"2\" class=\"box2 b3\"/><text x=\"395\" y=\"114\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b3\">목표 3</text><text x=\"395\" y=\"138\" font-size=\"18\" text-anchor=\"middle\" class=\"tb b3\">Architect</text><text x=\"395\" y=\"156\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">공간 지휘자</text><text x=\"240\" y=\"235\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b3\">뼈대: 살 사람의 경험에서 거꾸로 설계하기</text></svg>",
+     "caption": "공간이 디지털로 바뀌는 원리를 알고, 4층 구조를 분석하고, 전체를 지휘하는 사람이 되는 게 목표예요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "교재, 실습 도구, 1강의 세 덩어리",
+     "items": [
+      "교재는 『AI@Home 설계 입문』이에요. 4층 구조와 거주자 경험 설계가 뼈대예요.",
+      "실습은 **지능형홈 학습 시뮬레이터(Simulator)** v260805 로 해요. v 뒤 숫자는 버전 번호예요.",
+      "시뮬레이터에서 평면도 진단, 무선 간섭 분석, AI 기술 묶음(AI 스택) 연습을 도면 위에서 해요.",
+      "1강은 1.1 역사와 진화, 1.2 지능형 공간과 4대 가치, 1.3 4-Layer 구조와 Architect 예요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저, 이름은 그다음",
+     "items": [
+      "전등, 에어컨, 센서 같은 물건들이 인터넷으로 서로 이야기해요.",
+      "이걸 **사물인터넷(Internet of Things)**이라고 해요. 줄여서 IoT(아이오티)예요.",
+      "앱을 열거나 말로 시켜야 움직이는 연결된 집이 있어요. 이게 **스마트홈(Smart Home)**이에요.",
+      "과목 주문: 센서가 느끼고, 네트워크가 나르고, 허브와 플랫폼이 판단하고, 기기가 움직여요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "거실 리모컨 쟁탈전",
+     "scene": "일요일 저녁, 가족이 거실 TV 리모컨을 서로 쥐려고 해요. 리모컨을 쥔 사람이 무슨 채널을 볼지 정하니까요. 형은 동생에게 과자를 건네며 리모컨을 넘기라고 꼬셔요. 한번 리모컨을 손에 넣은 사람은 저녁 내내 절대 안 놓아 줘요.",
+     "map": [
+      [
+       "리모컨을 쥐려는 가족들",
+       "통신사, 빅테크, 가전 제조사"
+      ],
+      [
+       "리모컨을 쥐면 채널을 정함",
+       "거실 주도권, 플랫폼 패권"
+      ],
+      [
+       "과자로 동생 꼬시기",
+       "사은품으로 뿌린 **AI 스피커(AI Speaker)**"
+      ],
+      [
+       "한번 쥐면 안 놓아 줌",
+       "**락인(Lock-in)**"
+      ]
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "3단계를 한 줄로",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"240\" y=\"30\" font-size=\"15\" text-anchor=\"middle\" class=\"tm\">2010년대 초반부터 팬데믹까지, 거실 주도권 싸움</text><rect x=\"10\" y=\"60\" width=\"144\" height=\"150\" rx=\"2\" class=\"box b1\"/><text x=\"82\" y=\"112\" font-size=\"18\" text-anchor=\"middle\" class=\"tb b1\">1단계</text><text x=\"82\" y=\"130\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">2010년대 초중반</text><text x=\"82\" y=\"152\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b1\">IPTV 홈 셋톱</text><text x=\"82\" y=\"172\" font-size=\"15\" text-anchor=\"middle\" class=\"t b1\">통신 3사</text><line x1=\"155\" y1=\"135\" x2=\"158\" y2=\"135\" class=\"e2 b2\"/><polygon points=\"168.0,135.0 158.0,140.0 158.0,130.0\" class=\"arrow b2\"/><rect x=\"168\" y=\"60\" width=\"144\" height=\"150\" rx=\"2\" class=\"box b2\"/><text x=\"240\" y=\"112\" font-size=\"18\" text-anchor=\"middle\" class=\"tb b2\">2단계</text><text x=\"240\" y=\"130\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">2017~2019년</text><text x=\"240\" y=\"152\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b2\">AI 스피커</text><text x=\"240\" y=\"172\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">통신사 + 빅테크</text><line x1=\"313\" y1=\"135\" x2=\"316\" y2=\"135\" class=\"e2 b3\"/><polygon points=\"326.0,135.0 316.0,140.0 316.0,130.0\" class=\"arrow b3\"/><rect x=\"326\" y=\"60\" width=\"144\" height=\"150\" rx=\"2\" class=\"box2 b3\"/><text x=\"398\" y=\"112\" font-size=\"18\" text-anchor=\"middle\" class=\"tb b3\">3단계</text><text x=\"398\" y=\"130\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">2020~2022년</text><text x=\"398\" y=\"152\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b3\">가전 앱</text><text x=\"398\" y=\"172\" font-size=\"15\" text-anchor=\"middle\" class=\"t b3\">가전 제조사</text><text x=\"240\" y=\"245\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b3\">기술보다 마케팅이 먼저 달린 시기</text></svg>",
+     "caption": "**IPTV 홈 셋톱(IPTV)** → **AI 스피커(AI Speaker)** → 가전 앱 순서예요. 주인공은 통신사 → 빅테크 → 가전 제조사.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "1단계 (2010년대 초중반): TV 상자 경쟁",
+     "items": [
+      "TV 옆에 붙는 통신사 상자가 있어요. 이게 **IPTV 홈 셋톱(IPTV)**이에요.",
+      "통신 3사가 이 상자를 깔고 TV 화면을 집 조종판(홈 대시보드)으로 삼았어요.",
+      "한 번 가입한 손님이 다른 회사로 못 떠나게 붙잡아 두는 것을 **락인(Lock-in)**이라고 해요.",
+      "인터넷, TV, 전화를 묶어 가입한 손님의 **락인(Lock-in)**이 진짜 목표였어요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "2단계 (2017~2019년): 말하는 스피커 보급전",
+     "items": [
+      "통신사와 빅테크(구글 같은 큰 IT 회사)가 함께 뛰어들었어요.",
+      "말로 부르면 대답하고 기기를 켜 주는 스피커가 **AI 스피커(AI Speaker)**예요.",
+      "결합상품 사은품으로 **AI 스피커(AI Speaker)**를 공격적으로 뿌렸어요.",
+      "집에서 말로 명령받는 창구, 음성 인터페이스를 먼저 차지하려고요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "3단계 (2020~2022년): 가전 앱과 팬데믹 특수",
+     "items": [
+      "코로나로 집에 오래 머무는 집콕 생활이 늘고 가전이 잘 팔렸어요.",
+      "그래서 가전 제조사가 주인공이 됐어요.",
+      "삼성의 스마트홈 앱과 허브가 **스마트싱스(SmartThings)**, LG의 스마트홈 앱이 **LG 씽큐(LG ThinQ)**예요.",
+      "**스마트싱스(SmartThings)**, **LG 씽큐(LG ThinQ)** 같은 앱으로 휴대폰 원격 제어가 흔해졌어요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "3단계 한눈에",
+     "cols": [
+      "단계",
+      "시기",
+      "주인공",
+      "무기"
+     ],
+     "rows": [
+      [
+       "1단계",
+       "2010년대 초중반",
+       "통신 3사",
+       "**IPTV 홈 셋톱(IPTV)**, 목표는 **락인(Lock-in)**"
+      ],
+      [
+       "2단계",
+       "2017~2019년",
+       "통신사 + 빅테크",
+       "사은품 **AI 스피커(AI Speaker)**"
+      ],
+      [
+       "3단계",
+       "2020~2022년",
+       "가전 제조사",
+       "**스마트싱스(SmartThings)**, **LG 씽큐(LG ThinQ)** 앱"
+      ]
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "**락인(Lock-in)**의 뜻으로 맞는 것은?",
+     "choices": [
+      "집 안 물건이 인터넷으로 서로 이야기하는 것",
+      "한 번 가입한 손님이 다른 회사로 못 떠나게 붙잡는 것",
+      "말로 부르면 대답하는 스피커",
+      "휴대폰 앱으로 가전을 원격 제어하는 것"
+     ],
+     "a": 1,
+     "why": "가입자 붙잡기가 **락인(Lock-in)**이에요. 1번은 **사물인터넷(Internet of Things)**, 3번은 **AI 스피커(AI Speaker)**예요."
+    },
+    {
+     "kind": "check",
+     "q": "2017~2019년에 결합상품 사은품으로 공격적으로 뿌려진 것은?",
+     "choices": [
+      "**IPTV 홈 셋톱(IPTV)**",
+      "**AI 스피커(AI Speaker)**",
+      "월패드",
+      "스마트 플러그"
+     ],
+     "a": 1,
+     "why": "2단계 **AI 스피커(AI Speaker)** 보급전이에요. 말로 명령받는 창구를 먼저 잡으려 했어요."
+    },
+    {
+     "kind": "english",
+     "head": "외워 둘 문장",
+     "en": "The smart home spread through marketing battles for platform dominance, not because the technology was mature.",
+     "ko": "**스마트홈(Smart Home)** 확산기는 기술 완성도보다 통신사, 빅테크, 가전 제조사가 플랫폼 패권을 잡으려고 마케팅으로 이끈 시기예요.",
+     "tip": "주인공 순서 '통빅가': 통신사 → 빅테크 → 가전 제조사."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "기술이 완벽해서 퍼진 게 아니에요. 마케팅이 먼저 달렸어요.",
+      "**AI 스피커(AI Speaker)**는 1단계가 아니라 2단계예요. 1단계는 TV 옆 **IPTV 홈 셋톱(IPTV)**이에요.",
+      "강의 질문 '튜링 테스트, 다트머스 회의는 몇 년?' 은 1950년 논문, 1956년 회의로 알려져 있어요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "**스마트홈(Smart Home)**은 TV 상자 → 말하는 스피커 → 가전 앱, 3단계로 퍼졌어요.",
+      "1단계 통신사의 목표는 가입자 **락인(Lock-in)**이었어요.",
+      "2단계는 **AI 스피커(AI Speaker)**, 3단계는 **스마트싱스(SmartThings)**, **LG 씽큐(LG ThinQ)** 앱이에요.",
+      "**사물인터넷(Internet of Things)**은 물건끼리 인터넷으로 이야기하는 거예요.",
+      "오늘의 용어: 사물인터넷(Internet of Things), 스마트홈(Smart Home), IPTV 홈 셋톱(IPTV), 락인(Lock-in), AI 스피커(AI Speaker), 스마트싱스(SmartThings), LG 씽큐(LG ThinQ)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w1-2",
+   "title": "스마트홈이 멈춘 이유와 지능형 홈",
+   "goal": "스마트홈이 삶에 정착하지 못한 세 가지 이유를 말하고, 스마트홈과 지능형 홈, 진화 3세대를 구별할 수 있어요.",
+   "terms": [
+    {
+     "ko": "기기 중심의 수동 제어",
+     "en": "Manual Control",
+     "say": "내가 앱을 열거나 말을 해야만 움직이는 방식"
+    },
+    {
+     "ko": "브랜드별 앱 파편화",
+     "en": "App Fragmentation",
+     "say": "회사마다 앱이 따로라 휴대폰에 앱이 우르르"
+    },
+    {
+     "ko": "기술의 역설",
+     "en": "Paradox of Technology",
+     "say": "편하려고 샀는데 오히려 공부할 게 늘어난 상황"
+    },
+    {
+     "ko": "지능형 홈",
+     "en": "AI@Home",
+     "say": "내가 말하지 않아도 집이 알아서 챙겨 주는 똑똑한 집"
+    },
+    {
+     "ko": "비식별 센서",
+     "en": "",
+     "say": "얼굴을 찍지 않고 사람이 있는지만 알아채는 센서"
+    },
+    {
+     "ko": "세대단말기",
+     "en": "Wall Pad",
+     "say": "현관이나 거실 벽에 붙은 집 조종 화면"
+    },
+    {
+     "ko": "",
+     "en": "RS-485",
+     "say": "월패드와 설비를 잇는 옛날식 유선 줄"
+    },
+    {
+     "ko": "매터",
+     "en": "Matter",
+     "say": "회사가 달라도 기기끼리 말이 통하게 해 주는 공통 약속"
+    },
+    {
+     "ko": "스레드",
+     "en": "Thread",
+     "say": "Matter 기기들이 쓰는 저전력 무선 그물망"
+    },
+    {
+     "ko": "AI 인지 루프",
+     "en": "AI Cognitive Loop",
+     "say": "센서가 보고 → AI가 생각하고 → 기기가 움직이는 동그란 반복"
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "집이 알아서 하는 집",
+     "sub": "스마트홈이 멈춘 세 가지 이유와 **지능형 홈(AI@Home)**"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**스마트홈(Smart Home)**이 정착 못 한 이유 세 가지를 말해요.",
+      "**스마트홈(Smart Home)**과 **지능형 홈(AI@Home)**을 시험 문장으로 구별해요.",
+      "1세대, 2세대, **지능형 홈(AI@Home)**으로 이어지는 진화를 표로 말해요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞 단원과 이어서",
+     "items": [
+      "**스마트홈(Smart Home)**은 앱이나 말로 시켜야 움직이는 연결된 집이라고 했죠.",
+      "2단계에 **AI 스피커(AI Speaker)**를, 3단계에 **스마트싱스(SmartThings)** 같은 앱을 잔뜩 뿌렸어요.",
+      "그런데 그렇게 많이 팔렸는데도 사람들 생활에 자리 잡지 못했어요.",
+      "오늘은 그 이유와, 그 다음에 올 집을 봐요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "리모컨이 열 개인 거실",
+     "scene": "새로 이사한 집 거실에 에어컨, 조명, TV, 공기청정기 리모컨이 열 개나 굴러다녀요. 불 하나 켜려 해도 맞는 리모컨을 찾아 버튼을 눌러야 해요. 리모컨마다 버튼 모양이 달라서 설명서를 또 읽어야 해요. 결국 가족들은 그냥 벽 스위치를 손으로 눌러요.",
+     "map": [
+      [
+       "내가 버튼을 눌러야만 움직임",
+       "**기기 중심의 수동 제어(Manual Control)**"
+      ],
+      [
+       "리모컨이 회사마다 열 개",
+       "**브랜드별 앱 파편화(App Fragmentation)**"
+      ],
+      [
+       "편하려고 샀는데 설명서 공부",
+       "**기술의 역설(Paradox of Technology)**"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "이유 1: 내가 시켜야만 움직여요",
+     "items": [
+      "앱을 직접 열거나 말을 해야만 기기가 움직여요.",
+      "기기는 지금 누가 어디서 무엇을 하는지(공간 맥락) 몰라요.",
+      "이런 방식을 **기기 중심의 수동 제어(Manual Control)**라고 해요.",
+      "슬라이드 영어 이름은 Manual Control 이에요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "이유 2와 3: 앱이 흩어지고, 공부가 늘어요",
+     "items": [
+      "회사마다 전용 앱이 따로라 휴대폰에 앱이 우르르 쌓여요.",
+      "이걸 **브랜드별 앱 파편화(App Fragmentation)**라고 해요. 여러 기기를 묶어 관리하기 복잡하고 피곤해요.",
+      "편하려고 샀는데 기기마다 설정법, 통신 오류 대처법을 배워야 해요.",
+      "이 거꾸로 된 상황이 **기술의 역설(Paradox of Technology)**이에요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "세 개의 벽을 넘으면 지능형 홈",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"15\" y=\"35\" width=\"205\" height=\"52\" rx=\"2\" class=\"n4 b1\"/><text x=\"117.5\" y=\"57\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">기기 중심의 수동 제어</text><text x=\"117.5\" y=\"76\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">내가 시켜야만 움직여요</text><rect x=\"15\" y=\"100\" width=\"205\" height=\"52\" rx=\"2\" class=\"n4 b1\"/><text x=\"117.5\" y=\"122\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">브랜드별 앱 파편화</text><text x=\"117.5\" y=\"141\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">회사마다 앱이 따로</text><rect x=\"15\" y=\"165\" width=\"205\" height=\"52\" rx=\"2\" class=\"n4 b1\"/><text x=\"117.5\" y=\"187\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">기술의 역설</text><text x=\"117.5\" y=\"206\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">설정법 공부가 늘어나요</text><line x1=\"222\" y1=\"61\" x2=\"289.6\" y2=\"104.6\" class=\"e2 b2\"/><polygon points=\"298.0,110.0 286.9,108.8 292.3,100.4\" class=\"arrow b2\"/><line x1=\"222\" y1=\"126\" x2=\"288\" y2=\"129.5\" class=\"e2 b2\"/><polygon points=\"298.0,130.0 287.8,134.5 288.3,124.5\" class=\"arrow b2\"/><line x1=\"222\" y1=\"191\" x2=\"289.2\" y2=\"154.7\" class=\"e2 b2\"/><polygon points=\"298.0,150.0 291.6,159.1 286.8,150.3\" class=\"arrow b2\"/><rect x=\"300\" y=\"85\" width=\"165\" height=\"90\" rx=\"2\" class=\"n2 b3\"/><text x=\"382.5\" y=\"117\" font-size=\"18\" text-anchor=\"middle\" class=\"tb b3\">지능형 홈</text><text x=\"382.5\" y=\"137\" font-size=\"15\" text-anchor=\"middle\" class=\"t b3\">AI@Home</text><text x=\"382.5\" y=\"157\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b3\">스스로 반응</text><text x=\"240\" y=\"255\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b3\">스마트폰을 열지 않는다</text></svg>",
+     "caption": "세 가지 한계를 넘으려고 나온 방향이 **지능형 홈(AI@Home)**이에요. 공간이 사용자를 이해하고 스스로 반응해요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "스마트폰을 열지 않는 집",
+     "items": [
+      "얼굴을 찍지 않고 사람이 있는지만 알아채는 센서가 있어요. 이걸 **비식별 센서**라고 해요.",
+      "거주자는 손대지 않아요. **비식별 센서**가 행동과 환경 데이터를 모아요.",
+      "AI 알고리즘이 그 데이터로 최적 환경을 스스로 맞춰요.",
+      "이런 디지털 새 주거 공간 체계가 **지능형 홈(AI@Home)**이에요. 슬라이드 이름은 AI@Home."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "스마트홈 vs 지능형 홈 (용어해설집 1, 2번)",
+     "cols": [
+      "구분",
+      "**스마트홈(Smart Home)**",
+      "**지능형 홈(AI@Home)**"
+     ],
+     "rows": [
+      [
+       "움직이는 계기",
+       "사용자 명령(앱, 음성)",
+       "AI가 생활 패턴을 스스로 학습, 예측"
+      ],
+      [
+       "하는 일",
+       "원격 제어, 단순 자동화",
+       "상황에 맞는 기능을 먼저(선제적으로)"
+      ],
+      [
+       "중심",
+       "**세대단말기(Wall Pad)** 같은 중앙 제어 장치",
+       "**비식별 센서**와 AI"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "진화 표에 나오는 낱말 먼저",
+     "items": [
+      "아파트 벽에 붙은 집 조종 화면이 **세대단말기(Wall Pad)**예요. 흔히 월패드라고 불러요.",
+      "월패드와 설비를 잇는 옛날식 유선 줄 규격이 **RS-485**예요. 알에스 사팔오라고 읽어요.",
+      "회사가 달라도 기기끼리 말이 통하게 하는 공통 약속, 서로 쓰는 언어가 **매터(Matter)**예요.",
+      "기기끼리 쪽지를 릴레이하듯 잇는 저전력 무선 그물망이 **스레드(Thread)**예요.",
+      "센서가 보고, AI가 생각하고, 기기가 움직이는 반복이 **AI 인지 루프(AI Cognitive Loop)**예요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "진화 3세대 (1.1.4)",
+     "cols": [
+      "구분",
+      "1세대 유선",
+      "2세대 개별 무선",
+      "지능형 홈"
+     ],
+     "rows": [
+      [
+       "통신",
+       "**세대단말기(Wall Pad)** 중심 **RS-485** 유선",
+       "**와이파이(Wi-Fi)**, **지그비(Zigbee)** 따로따로",
+       "**매터(Matter)**, **스레드(Thread)**, **IPv6(Internet Protocol version 6)** 통합"
+      ],
+      [
+       "제어",
+       "벽 중앙 수동 패널",
+       "휴대폰 앱, 음성 스피커 명령",
+       "**AI 인지 루프(AI Cognitive Loop)** 기반 자율 조율"
+      ],
+      [
+       "공간 가치",
+       "단지 중앙 통제, 방범",
+       "기기 하나씩 원격 작동",
+       "거주자 경험에 맞춘 공간 케어"
+      ]
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "진화 3세대를 계단으로",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"85\" y=\"140\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b1\">과거</text><rect x=\"15\" y=\"150\" width=\"140\" height=\"90\" rx=\"2\" class=\"box b1\"/><text x=\"85\" y=\"182\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b1\">1세대</text><text x=\"85\" y=\"202\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">유선 홈네트워크</text><text x=\"85\" y=\"220\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">RS-485, 월패드</text><line x1=\"150\" y1=\"158\" x2=\"160.9\" y2=\"147.1\" class=\"e2 b2\"/><polygon points=\"168.0,140.0 164.5,150.6 157.4,143.5\" class=\"arrow b2\"/><text x=\"240\" y=\"90\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b2\">현재 시장</text><rect x=\"170\" y=\"100\" width=\"140\" height=\"90\" rx=\"2\" class=\"box b2\"/><text x=\"240\" y=\"132\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b2\">2세대</text><text x=\"240\" y=\"152\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">개별 무선 IoT</text><text x=\"240\" y=\"170\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">와이파이, 지그비</text><line x1=\"305\" y1=\"108\" x2=\"315.9\" y2=\"97.1\" class=\"e2 b3\"/><polygon points=\"323.0,90.0 319.5,100.6 312.4,93.5\" class=\"arrow b3\"/><text x=\"395\" y=\"40\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b3\">지향점</text><rect x=\"325\" y=\"50\" width=\"140\" height=\"90\" rx=\"2\" class=\"n2 b3\"/><text x=\"395\" y=\"82\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b3\">지능형 홈</text><text x=\"395\" y=\"102\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">통합 통신과 AI</text><text x=\"395\" y=\"120\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">매터, 스레드, IPv6</text><text x=\"330\" y=\"250\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">지금은 2세대 위에 AI를 얹는 전환기</text></svg>",
+     "caption": "1세대 유선 → 2세대 개별 무선 → **지능형 홈(AI@Home)** 통합 통신과 AI. 지금 시장은 2세대에 서 있어요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "시험에 이렇게 나와요",
+     "items": [
+      "기출 18번: 지능형 홈 '무선' 기술이 아닌 것은? 답은 유선인 **RS-485**예요.",
+      "기출 23번: **스레드(Thread)**는 **IPv6(Internet Protocol version 6)** 기반 저전력 메시예요. 'VPN 기반 암호화 기술' 이라는 보기가 틀린 설명.",
+      "**IPv6(Internet Protocol version 6)**, 아이피 브이 식스는 모든 기기에 인터넷 주소를 넉넉히 붙여 주는 규칙이에요.",
+      "스마트홈(명령 기반)과 **지능형 홈(AI@Home)**(AI가 선제적으로) 차이는 꼭 외울 것 목록에 있어요."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "얼굴을 찍지 않고 사람이 있는지만 알아채는 센서는?",
+     "choices": [
+      "**비식별 센서**",
+      "**세대단말기(Wall Pad)**",
+      "AI RGB 카메라",
+      "스마트 플러그"
+     ],
+     "a": 0,
+     "why": "**비식별 센서**는 누구인지 알아보지 않고 있다, 없다만 알아요. 그래서 **지능형 홈(AI@Home)**이 써요."
+    },
+    {
+     "kind": "check",
+     "q": "지능형 홈 구현에 쓰는 '무선' 통신 기술이 아닌 것은? (기출 18번)",
+     "choices": [
+      "**스레드(Thread)**",
+      "**지웨이브(Z-Wave)**",
+      "**RS-485**",
+      "**지그비(Zigbee)**"
+     ],
+     "a": 2,
+     "why": "**RS-485**는 월패드와 설비를 잇는 유선 직렬 통신이에요. 1세대 유선 홈네트워크의 주인공."
+    },
+    {
+     "kind": "english",
+     "head": "외워 둘 문장",
+     "en": "A smart home waits for the user's command, while AI@Home learns daily patterns and acts proactively.",
+     "ko": "**스마트홈(Smart Home)**은 사용자 명령으로 원격 제어와 단순 자동화를 하고, **지능형 홈(AI@Home)**은 AI가 생활 패턴을 학습해 먼저 챙겨요.",
+     "tip": "명령을 기다리면 스마트홈, 먼저 챙기면 지능형 홈."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "필기 가이드북은 지금 단계에서 두 말을 같게 봐도 된다고도 적어요. 시험은 해설집 정의(명령 대 선제)로 풀어요.",
+      "**비식별 센서**는 얼굴을 알아보는 카메라가 아니에요.",
+      "**RS-485**는 무선이 아니라 유선이에요. **스레드(Thread)**와 헷갈리지 마세요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "정착 못 한 이유 1, 2: **기기 중심의 수동 제어(Manual Control)**, **브랜드별 앱 파편화(App Fragmentation)**.",
+      "이유 3은 **기술의 역설(Paradox of Technology)**, 편하려다 공부가 늘어난 상황이에요.",
+      "**지능형 홈(AI@Home)**은 **비식별 센서**와 AI로 공간이 스스로 반응하는 집이에요.",
+      "1세대 **세대단말기(Wall Pad)**와 **RS-485** 유선 → 2세대 개별 무선 → **매터(Matter)**, **스레드(Thread)** 통합.",
+      "지능형 홈의 제어는 **AI 인지 루프(AI Cognitive Loop)** 기반 자율 조율이에요.",
+      "오늘의 용어: 기기 중심의 수동 제어(Manual Control), 브랜드별 앱 파편화(App Fragmentation), 기술의 역설(Paradox of Technology), 지능형 홈(AI@Home), 비식별 센서, 세대단말기(Wall Pad), RS-485, 매터(Matter), 스레드(Thread), AI 인지 루프(AI Cognitive Loop)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w1-3",
+   "title": "플랫폼 생태계 8곳과 비즈니스 모델의 빈틈",
+   "goal": "빅테크, 가전, 전문 브랜드, 스타트업의 강점과 한계를 짝지어 말하고, 네 산업의 돈 버는 법에서 생긴 빈자리를 설명할 수 있어요.",
+   "terms": [
+    {
+     "ko": "구글 홈",
+     "en": "Google Home",
+     "say": "구글의 스마트홈, 여러 회사 기기와 잘 어울림"
+    },
+    {
+     "ko": "애플 홈",
+     "en": "Apple Home",
+     "say": "애플의 스마트홈, 보안은 강하지만 문이 좁음"
+    },
+    {
+     "ko": "MFi",
+     "en": "Made for iPhone/iPad/iPod",
+     "say": "애플 기기와 짝꿍이 되려면 받아야 하는 비싼 인증 도장"
+    },
+    {
+     "ko": "멀티모달",
+     "en": "Multimodal",
+     "say": "말, 손짓, 화면 터치를 한꺼번에 알아듣는 AI"
+    },
+    {
+     "ko": "",
+     "en": "KNX",
+     "say": "독일 고급 스위치가 쓰는 튼튼한 유선 방식"
+    },
+    {
+     "ko": "홈 어시스턴트",
+     "en": "Home Assistant",
+     "say": "누구나 고쳐 쓸 수 있는 무료 공개 스마트홈 프로그램"
+    },
+    {
+     "ko": "비즈니스 모델",
+     "en": "Business Model",
+     "say": "회사가 돈을 버는 방법"
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "플랫폼 8곳과 빈자리",
+     "sub": "누가 집을 쥐고 있고, 무엇이 비어 있나"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**구글 홈(Google Home)**, **애플 홈(Apple Home)** 같은 생태계의 강점과 한계를 짝지어요.",
+      "**KNX**, **홈 어시스턴트(Home Assistant)**, **MFi(Made for iPhone/iPad/iPod)** 같은 이름의 뜻을 말해요.",
+      "**비즈니스 모델(Business Model)** 때문에 생긴 빈자리를 설명해요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞 단원과 이어서",
+     "items": [
+      "**브랜드별 앱 파편화(App Fragmentation)**, 회사마다 앱이 따로라 휴대폰이 앱 창고가 된다고 했죠.",
+      "**매터(Matter)**는 회사가 달라도 말이 통하게 하는 공통 약속이었어요.",
+      "회사들은 저마다 기기, 앱, 서비스가 맞물린 동네를 만들어요. 이걸 생태계라고 불러요.",
+      "오늘은 그 생태계 8곳과, 돈 버는 방식 때문에 비어 있는 자리를 봐요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "상가 식당 네 곳",
+     "scene": "동네 상가에 식당이 네 곳 있어요. 한 곳은 메뉴가 엄청 많고 누구나 받지만, 주방마다 맛이 들쭉날쭉해요. 한 곳은 맛과 위생은 최고인데 비싼 회원 카드가 있어야 들어갈 수 있어요. 나머지 두 곳은 옆 가전 매장과 붙어 있어서 가전을 사면 같이 따라와요.",
+     "map": [
+      [
+       "메뉴 많고 맛이 들쭉날쭉",
+       "**구글 홈(Google Home)**: 개방형, 제조사마다 편차"
+      ],
+      [
+       "비싼 회원 카드가 있어야 입장",
+       "**애플 홈(Apple Home)**과 **MFi(Made for iPhone/iPad/iPod)** 인증"
+      ],
+      [
+       "가전 매장과 붙은 식당",
+       "**스마트싱스(SmartThings)**, **LG 씽큐(LG ThinQ)**"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "이름 먼저 풀기",
+     "items": [
+      "말, 손짓, 화면 터치를 한꺼번에 알아듣는 AI가 있어요. 이걸 **멀티모달(Multimodal)**이라고 해요.",
+      "다른 회사가 만든 기기나 앱을 서드파티라고 불러요.",
+      "애플 기기와 짝꿍이 되려면 받는 비싼 인증 도장이 **MFi(Made for iPhone/iPad/iPod)**예요. Made for iPhone/iPad/iPod 의 줄임말.",
+      "**MFi(Made for iPhone/iPad/iPod)**는 연회비 99달러에 기기 하나마다 로열티(사용료)가 붙어요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "빅테크와 가전 4곳 (1.1.5)",
+     "cols": [
+      "누구",
+      "강점",
+      "한계"
+     ],
+     "rows": [
+      [
+       "**구글 홈(Google Home)**",
+       "**매터(Matter)** 지원 개방형, **멀티모달(Multimodal)** AI, 서드파티 호환이 넓음",
+       "제조사마다 반응속도, 안정성 차이. 일관된 로컬 제어 부족"
+      ],
+      [
+       "**애플 홈(Apple Home)**",
+       "강한 프라이버시 보안, 고급 사용자 경험(UX), 홈 앱 직관 제어",
+       "비싼 **MFi(Made for iPhone/iPad/iPod)** 인증 장벽, 폐쇄적이라 기기 선택이 좁음"
+      ],
+      [
+       "삼성 **스마트싱스(SmartThings)**",
+       "대형 가전과 허브 결합, **매터(Matter)** 적극 수용, 높은 인지도",
+       "건축, 인테리어 현장과 회사 대 회사(B2B) 연계 설계 부족"
+      ],
+      [
+       "LG **LG 씽큐(LG ThinQ)**",
+       "고급 가전 완성도, 가전 중심 연동 시나리오",
+       "오픈 생태계 확장, 독립 IoT 센서 생태계 한계"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "LG의 최근 움직임",
+     "items": [
+      "2024년 LG는 네덜란드 스마트홈 기업 아톰(Athom)의 지분 80%를 샀어요.",
+      "아톰은 Homey 라는 스마트홈 허브를 만든 회사예요.",
+      "**LG 씽큐(LG ThinQ)**의 약점인 오픈 생태계를 정면으로 넘어 보려는 시도예요.",
+      "UX 는 사용자 경험, 즉 쓰는 사람이 느끼는 편하고 좋은 느낌이에요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "전문 브랜드와 스타트업 4곳 (1.1.6)",
+     "cols": [
+      "누구",
+      "강점",
+      "한계"
+     ],
+     "rows": [
+      [
+       "융(Jung, 독일 고급)",
+       "건축 마감재급 최고급 수동 스위치, 유선 **KNX** 안정성",
+       "초고가, 무선 확장 한계, 폐쇄적 시공"
+      ],
+      [
+       "아카라(Aqara, 중국 기반)",
+       "루미(Lumi) 기반 센서 가성비, 홈킷과 **매터(Matter)** 호환",
+       "중국 서버 연동이라 국내 보안, 프라이버시 우려"
+      ],
+      [
+       "고퀄(Gowell, 국내)",
+       "국내 집에 맞춘 **지그비(Zigbee)** 스위치, 조명, 인테리어 B2B",
+       "빅테크급 AI 대규모 연산 생태계 확장 한계"
+      ],
+      [
+       "스마트홈 스타트업",
+       "**홈 어시스턴트(Home Assistant)** 같은 오픈소스로 유연한 맞춤 자동화",
+       "회사가 오래갈지 불확실, 공식 AS와 양산 인프라 부족"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "표 속 낱말 풀기",
+     "items": [
+      "독일 고급 스위치가 쓰는 튼튼한 유선 방식이 **KNX**예요. 케이엔엑스라고 읽어요.",
+      "누구나 고쳐 쓸 수 있는 무료 공개 스마트홈 프로그램이 **홈 어시스턴트(Home Assistant)**예요.",
+      "오픈소스는 프로그램 설계도를 공개해서 누구나 고쳐 쓰게 한 것이에요.",
+      "B2B, 비투비는 회사와 회사 사이 거래예요. AS 는 고장 수리 서비스예요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "8곳을 네 칸에 나눠 보면",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"15\" y=\"35\" width=\"220\" height=\"100\" rx=\"2\" class=\"box b1\"/><text x=\"125\" y=\"72\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b1\">빅테크</text><text x=\"125\" y=\"92\" font-size=\"15\" text-anchor=\"middle\" class=\"t b1\">구글 홈, 애플 홈</text><text x=\"125\" y=\"111\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">열린 문 대 닫힌 문</text><rect x=\"245\" y=\"35\" width=\"220\" height=\"100\" rx=\"2\" class=\"box b2\"/><text x=\"355\" y=\"72\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b2\">가전 제조사</text><text x=\"355\" y=\"92\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">스마트싱스, LG 씽큐</text><text x=\"355\" y=\"111\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">가전은 강하고 현장 연계는 약함</text><rect x=\"15\" y=\"150\" width=\"220\" height=\"100\" rx=\"2\" class=\"box b3\"/><text x=\"125\" y=\"187\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b3\">전문 브랜드</text><text x=\"125\" y=\"207\" font-size=\"15\" text-anchor=\"middle\" class=\"t b3\">융, 아카라, 고퀄</text><text x=\"125\" y=\"226\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">유선 고급, 가성비, 국내 맞춤</text><rect x=\"245\" y=\"150\" width=\"220\" height=\"100\" rx=\"2\" class=\"box b4\"/><text x=\"355\" y=\"187\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b4\">스타트업</text><text x=\"355\" y=\"207\" font-size=\"15\" text-anchor=\"middle\" class=\"t b4\">홈 어시스턴트 같은 오픈소스</text><text x=\"355\" y=\"226\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b4\">유연하지만 AS가 불안</text></svg>",
+     "caption": "1.1.5 는 빅테크와 가전 4곳, 1.1.6 은 전문 브랜드와 스타트업 4곳이에요. 모두 강점과 한계가 짝으로 나와요.",
+     "builds": 4
+    },
+    {
+     "kind": "points",
+     "head": "돈 버는 방식이 빈틈을 만들어요 (1.1.7)",
+     "items": [
+      "회사가 돈을 버는 방법을 **비즈니스 모델(Business Model)**이라고 해요. 줄여서 BM 이에요.",
+      "통신사는 회선 요금을 매달 받아요. 그래서 가입자 **락인(Lock-in)**이 제일 중요해요.",
+      "건설사는 1,000세대를 한 번에 짓고, 가장 싼 값을 부른 업체에 맡기는 관행이 있어요.",
+      "그래서 누구도 우리 집 한 칸 한 칸의 생활을 설계하지 않아요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "네 산업의 **비즈니스 모델(Business Model)**과 빈틈",
+     "cols": [
+      "누구",
+      "돈 버는 법",
+      "비어 있는 것"
+     ],
+     "rows": [
+      [
+       "통신사(Telco)",
+       "회선, 트래픽(오가는 데이터 양) 월정액",
+       "집 안 공간 맥락, 생활 방식 디자인에 못 들어감"
+      ],
+      [
+       "건설사(Builder)",
+       "분양, 준공 턴키(한 번에 지어 넘기기)",
+       "입주민 개인 맞춤 무선, AI 케어 반영 불가"
+      ],
+      [
+       "제조사(Manufacturer)",
+       "기기 단품 판매량 늘리기",
+       "다른 브랜드까지 엮는 공간 전체 UX 설계 없음"
+      ],
+      [
+       "인테리어(Interior)",
+       "후시공 마감",
+       "보기 좋은 마감에 치우침. 전기, 무선, AI 통합 설계 역량 부족"
+      ]
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "네 산업 사이의 빈자리",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"10\" y=\"20\" width=\"150\" height=\"60\" rx=\"2\" class=\"box b1\"/><text x=\"85\" y=\"46\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">통신사</text><text x=\"85\" y=\"66\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">회선 월정액</text><rect x=\"320\" y=\"20\" width=\"150\" height=\"60\" rx=\"2\" class=\"box b1\"/><text x=\"395\" y=\"46\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">건설사</text><text x=\"395\" y=\"66\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">분양, 턴키 시공</text><rect x=\"10\" y=\"190\" width=\"150\" height=\"60\" rx=\"2\" class=\"box b1\"/><text x=\"85\" y=\"216\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">제조사</text><text x=\"85\" y=\"236\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">기기 판매</text><rect x=\"320\" y=\"190\" width=\"150\" height=\"60\" rx=\"2\" class=\"box b1\"/><text x=\"395\" y=\"216\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">인테리어</text><text x=\"395\" y=\"236\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">후시공 마감</text><line x1=\"160\" y1=\"70\" x2=\"195\" y2=\"110\" class=\"e b2\"/><line x1=\"320\" y1=\"70\" x2=\"285\" y2=\"110\" class=\"e b2\"/><line x1=\"160\" y1=\"200\" x2=\"195\" y2=\"160\" class=\"e b2\"/><line x1=\"320\" y1=\"200\" x2=\"285\" y2=\"160\" class=\"e b2\"/><rect x=\"170\" y=\"105\" width=\"140\" height=\"60\" rx=\"2\" class=\"n2 b3\"/><text x=\"240\" y=\"132\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b3\">빈자리</text><text x=\"240\" y=\"152\" font-size=\"15\" text-anchor=\"middle\" class=\"t b3\">Architect</text></svg>",
+     "caption": "누구도 집 안 공간 전체의 경험을 맡지 않아요. 그 빈자리를 채우는 사람이 **지능형 공간 Architect(Architect)**예요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "시험에 이렇게 나와요",
+     "items": [
+      "1.1강 CHECKPOINT 1: 정착 못 한 핵심 요인 → **기기 중심의 수동 제어(Manual Control)** 구조와 **브랜드별 앱 파편화(App Fragmentation)**.",
+      "CHECKPOINT 2: 실무 시각 → 안정적인 2세대 실무 지식을 기본으로, AI가 자율 조율하는 AI@Home 을 지향.",
+      "CHECKPOINT 3: 네 산업 **비즈니스 모델(Business Model)**의 빈자리를 채우는 사람 → 지능형 공간 Architect.",
+      "기출 1번은 설명 상자를 주고 플랫폼 사례를 고르게 했고, 풀이 정답은 구글의 IoT 플랫폼이었어요."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "**비즈니스 모델(Business Model)**의 뜻으로 맞는 것은?",
+     "choices": [
+      "회사가 돈을 버는 방법",
+      "기기끼리 대화하는 규칙",
+      "애플 기기 인증 도장",
+      "공개된 스마트홈 프로그램"
+     ],
+     "a": 0,
+     "why": "BM 은 돈 버는 방법이에요. 3번은 **MFi(Made for iPhone/iPad/iPod)**, 4번은 **홈 어시스턴트(Home Assistant)**예요."
+    },
+    {
+     "kind": "check",
+     "q": "슬라이드에 나온 **애플 홈(Apple Home)**의 한계로 맞는 것은?",
+     "choices": [
+      "제조사마다 반응속도 편차",
+      "비싼 **MFi(Made for iPhone/iPad/iPod)** 인증 장벽과 좁은 기기 선택",
+      "중국 서버 연동 우려",
+      "무선 확장 한계와 초고가"
+     ],
+     "a": 1,
+     "why": "1번은 **구글 홈(Google Home)**, 3번은 아카라, 4번은 융의 한계예요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "**구글 홈(Google Home)**의 한계는 폐쇄성이 아니에요. 개방형이라 오히려 제조사마다 편차가 생겨요.",
+      "**KNX**는 무선이 아니라 유선이에요. 융의 강점이에요.",
+      "아카라의 **매터(Matter)** 호환은 강점, 중국 서버 연동 우려는 한계예요. 칸을 섞지 마세요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "**구글 홈(Google Home)**은 개방형과 **멀티모달(Multimodal)** AI가 강점이에요.",
+      "**애플 홈(Apple Home)**은 보안이 강하지만 비싼 **MFi(Made for iPhone/iPad/iPod)** 장벽이 있어요.",
+      "융은 유선 **KNX**, 스타트업은 **홈 어시스턴트(Home Assistant)** 같은 오픈소스예요.",
+      "**비즈니스 모델(Business Model)**이 다른 네 산업 사이에 공간 경험을 맡을 빈자리가 있어요.",
+      "그 빈자리를 채우는 사람이 이 과목이 키우려는 Architect 예요.",
+      "오늘의 용어: 구글 홈(Google Home), 애플 홈(Apple Home), MFi(Made for iPhone/iPad/iPod), 멀티모달(Multimodal), KNX, 홈 어시스턴트(Home Assistant), 비즈니스 모델(Business Model)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w1-4",
+   "title": "월패드의 한계와 연결 vs 자율",
+   "goal": "아파트 홈네트워크 구조와 그 한계를 말하고, 연결과 자율의 차이, 홈게이트웨이와 클라우드의 역할 분담을 설명할 수 있어요.",
+   "terms": [
+    {
+     "ko": "지능형 홈네트워크",
+     "en": "Home Network",
+     "say": "아파트 전체와 우리 집 설비를 잇는 줄과 장비"
+    },
+    {
+     "ko": "단지서버",
+     "en": "Complex Server",
+     "say": "단지 전체 기록을 보관하는 본부 컴퓨터"
+    },
+    {
+     "ko": "홈게이트웨이",
+     "en": "Home Gateway",
+     "say": "우리 집 길과 단지 큰 길을 이어 주는 대문"
+    },
+    {
+     "ko": "홈네트워크 설비",
+     "en": "Home Network Facility",
+     "say": "집 안 기기를 하나로 묶어 주는 설비 전체"
+    },
+    {
+     "ko": "자동화 시나리오",
+     "en": "Automation Scenario",
+     "say": "'집에 오면 불 켜기'처럼 미리 정해 둔 자동 행동 묶음"
+    },
+    {
+     "ko": "연결",
+     "en": "Connected",
+     "say": "기기를 줄로 이어만 두고 내가 직접 조종하는 방식"
+    },
+    {
+     "ko": "자율",
+     "en": "Autonomous",
+     "say": "집이 스스로 알아채고 알아서 움직이는 방식"
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "월패드에서 자율까지",
+     "sub": "아파트 홈네트워크의 한계와 **연결(Connected)** vs **자율(Autonomous)**"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "아파트 **지능형 홈네트워크(Home Network)** 뼈대를 그림으로 말해요.",
+      "**연결(Connected)**과 **자율(Autonomous)**을 한 문장씩 구별해요.",
+      "**홈게이트웨이(Home Gateway)**와 클라우드의 역할 분담(기출 7번)을 풀어요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞 단원과 이어서",
+     "items": [
+      "**세대단말기(Wall Pad)**는 아파트 벽의 집 조종 화면, 월패드였죠.",
+      "**RS-485**는 월패드와 설비를 잇는 옛날식 유선 줄이었어요.",
+      "**지능형 홈(AI@Home)**은 공간이 스스로 반응하는 집이었고요.",
+      "1.2강은 월패드의 한계에서 출발해 4대 가치와 설계법까지 가요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "월패드, 화면은 좋아졌는데",
+     "items": [
+      "과거 구형 월패드는 **RS-485** 유선 기반 수동 패널이었어요.",
+      "목적은 준공 후 하자 관리와 단지 중앙 통제였어요.",
+      "요즘 스마트 월패드는 터치 화면과 멀티미디어 기능이 좋아졌어요.",
+      "하지만 아래 구조는 그대로라서 출발점이 같아요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저, 이름은 그다음",
+     "items": [
+      "아파트 단지 전체와 우리 집 설비를 잇는 줄과 장비가 있어요. 이걸 **지능형 홈네트워크(Home Network)**라고 해요.",
+      "단지 전체 기록을 보관하고 관리하는 본부 컴퓨터가 **단지서버(Complex Server)**예요.",
+      "우리 집 길(세대망)과 단지 큰 길(단지망)을 이어 주는 대문이 **홈게이트웨이(Home Gateway)**예요.",
+      "**홈게이트웨이(Home Gateway)**는 말이 다른 두 길 사이의 통역사 같은 장치예요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "학교 방송실",
+     "scene": "학교에는 방송실이 하나 있어요. 방송실에서 스위치를 올리면 모든 교실 스피커에서 똑같은 안내 방송이 나와요. 우리 반만 음악을 틀고 싶어도 교실에서 따로 바꿀 방법이 없어요. 선도 벽 속에 묻혀 있어서 스피커 하나 더 달기도 어려워요.",
+     "map": [
+      [
+       "학교 방송실",
+       "**단지서버(Complex Server)**"
+      ],
+      [
+       "교실 벽 스피커와 버튼",
+       "**세대단말기(Wall Pad)**(월패드)"
+      ],
+      [
+       "벽 속에 묻힌 선",
+       "폐쇄적인 **RS-485** 유선망"
+      ],
+      [
+       "모든 교실에 똑같은 방송",
+       "고정된 일괄 **자동화 시나리오(Automation Scenario)**"
+      ]
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "아파트 홈네트워크의 뼈대",
+     "svg": "<svg viewBox=\"0 0 480 280\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"180\" y=\"20\" width=\"120\" height=\"46\" rx=\"2\" class=\"n2 b1\"/><text x=\"240\" y=\"50\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b1\">단지서버</text><rect x=\"340\" y=\"20\" width=\"125\" height=\"46\" rx=\"2\" class=\"box b1\"/><text x=\"402.5\" y=\"48\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">단지 인프라</text><line x1=\"300\" y1=\"43\" x2=\"328\" y2=\"43\" class=\"e b1\"/><polygon points=\"338.0,43.0 328.0,48.0 328.0,38.0\" class=\"arrow b1\"/><text x=\"402\" y=\"86\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">주차, CCTV, 로비폰</text><line x1=\"240\" y1=\"66\" x2=\"240\" y2=\"98\" class=\"e2 b2\"/><polygon points=\"240.0,108.0 235.0,98.0 245.0,98.0\" class=\"arrow b2\"/><text x=\"250\" y=\"92\" font-size=\"14\" text-anchor=\"start\" class=\"tm b2\">RS-485 유선</text><rect x=\"165\" y=\"110\" width=\"150\" height=\"50\" rx=\"2\" class=\"box b2\"/><text x=\"240\" y=\"140\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b2\">세대단말기(월패드)</text><line x1=\"240\" y1=\"160\" x2=\"104.7\" y2=\"195.5\" class=\"e2 b3\"/><polygon points=\"95.0,198.0 103.4,190.6 105.9,200.3\" class=\"arrow b3\"/><line x1=\"240\" y1=\"160\" x2=\"240\" y2=\"188\" class=\"e2 b3\"/><polygon points=\"240.0,198.0 235.0,188.0 245.0,188.0\" class=\"arrow b3\"/><line x1=\"240\" y1=\"160\" x2=\"375.3\" y2=\"195.5\" class=\"e2 b3\"/><polygon points=\"385.0,198.0 374.1,200.3 376.6,190.6\" class=\"arrow b3\"/><rect x=\"40\" y=\"200\" width=\"110\" height=\"44\" rx=\"2\" class=\"box b3\"/><text x=\"95\" y=\"228\" font-size=\"15\" text-anchor=\"middle\" class=\"t b3\">방범</text><rect x=\"185\" y=\"200\" width=\"110\" height=\"44\" rx=\"2\" class=\"box b3\"/><text x=\"240\" y=\"228\" font-size=\"15\" text-anchor=\"middle\" class=\"t b3\">조명</text><rect x=\"330\" y=\"200\" width=\"110\" height=\"44\" rx=\"2\" class=\"box b3\"/><text x=\"385\" y=\"228\" font-size=\"15\" text-anchor=\"middle\" class=\"t b3\">난방</text><text x=\"240\" y=\"270\" font-size=\"14\" text-anchor=\"middle\" class=\"tb b3\">고정된 유선 직렬 제어라 새 센서를 달기 어려워요</text></svg>",
+     "caption": "**단지서버(Complex Server)** - **세대단말기(Wall Pad)** - 세대 설비가 줄줄이 이어진 구조예요. 단지 인프라도 서버에 붙어요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "구조적 한계 (1.2.2)",
+     "items": [
+      "이슈: 건설사의 유지보수, 중앙통제형 유선 설비는 지능형 공간과 설계 출발점이 달라요.",
+      "기술 분석(공급 쪽): 센서 종류가 적고 유선망이 닫혀 있어서 입주 후 개인 맞춤 무선 확장이 안 돼요.",
+      "가치 분석(수요 쪽): 모든 집에 같은 시나리오라 거주자가 느끼는 **자율(Autonomous)** 자동화에 한계가 있어요.",
+      "그래서 **지능형 홈네트워크(Home Network)**만으로는 지능형 공간이 되기 어려워요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "장면으로 보는 지능형 공간 (1.2.3)",
+     "items": [
+      "'집에 오면 불 켜기' 처럼 미리 정해 둔 자동 행동 묶음이 있어요.",
+      "이걸 **자동화 시나리오(Automation Scenario)**라고 해요.",
+      "3대 핵심 시나리오: 개별귀가모드, 개별취침모드, 평일출근모드.",
+      "시뮬레이터 [SIM 0-0] 에서 이 **자동화 시나리오(Automation Scenario)**를 직접 실행해 봐요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "연결과 자율, 뜻 먼저 (1.2.4)",
+     "items": [
+      "기기를 네트워크로 묶어 두고 사용자가 직접 손으로 조종하는 방식이 **연결(Connected)**이에요.",
+      "센서 고리로 AI가 상황을 알아채고 스스로 맞추는 방식이 **자율(Autonomous)**이에요.",
+      "정부 정의(2023년 8월 9일, 관계부처 합동 지능형 홈 구축, 확산 방안)에 두 낱말이 다 있어요.",
+      "'가정 내 기기를 연결하고, AI 기반으로 조명, 가전이 자율적으로 작동해 개인 맞춤 서비스를 주는 새 주거환경'."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "**연결(Connected)** vs **자율(Autonomous)**",
+     "cols": [
+      "구분",
+      "**연결(Connected)**",
+      "**자율(Autonomous)**"
+     ],
+     "rows": [
+      [
+       "집 이름",
+       "**스마트홈(Smart Home)**",
+       "**지능형 홈(AI@Home)**"
+      ],
+      [
+       "누가 움직이나",
+       "사용자가 직접 수동 제어",
+       "AI가 스스로 조율"
+      ],
+      [
+       "시작 신호",
+       "앱, 음성 명령",
+       "센서 고리로 상황을 알아챔"
+      ],
+      [
+       "예",
+       "앱을 눌러 거실 불 켜기",
+       "들어오면 알아서 불이 켜짐"
+      ]
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "**연결(Connected)**과 **자율(Autonomous)**, 누가 움직이나",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"120\" y=\"30\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">연결 (Connected)</text><rect x=\"40\" y=\"50\" width=\"160\" height=\"40\" rx=\"2\" class=\"box b1\"/><text x=\"120\" y=\"75\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">사람: 앱, 음성 명령</text><line x1=\"120\" y1=\"92\" x2=\"120\" y2=\"108\" class=\"e2 b1\"/><polygon points=\"120.0,118.0 115.0,108.0 125.0,108.0\" class=\"arrow b1\"/><rect x=\"40\" y=\"120\" width=\"160\" height=\"40\" rx=\"2\" class=\"box b1\"/><text x=\"120\" y=\"146\" font-size=\"15\" text-anchor=\"middle\" class=\"t b1\">네트워크</text><line x1=\"120\" y1=\"162\" x2=\"120\" y2=\"178\" class=\"e2 b1\"/><polygon points=\"120.0,188.0 115.0,178.0 125.0,178.0\" class=\"arrow b1\"/><rect x=\"40\" y=\"190\" width=\"160\" height=\"40\" rx=\"2\" class=\"box b1\"/><text x=\"120\" y=\"216\" font-size=\"15\" text-anchor=\"middle\" class=\"t b1\">기기 하나 작동</text><text x=\"120\" y=\"256\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">내가 안 누르면 멈춰요</text><line x1=\"240\" y1=\"20\" x2=\"240\" y2=\"260\" class=\"e\"/><text x=\"360\" y=\"30\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b2\">자율 (Autonomous)</text><rect x=\"300\" y=\"50\" width=\"120\" height=\"38\" rx=\"2\" class=\"n2 b2\"/><text x=\"360\" y=\"74\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">센서 감지</text><rect x=\"380\" y=\"150\" width=\"90\" height=\"38\" rx=\"2\" class=\"n2 b2\"/><text x=\"425\" y=\"174\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">AI 판단</text><rect x=\"250\" y=\"150\" width=\"90\" height=\"38\" rx=\"2\" class=\"n2 b2\"/><text x=\"295\" y=\"174\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">기기 조율</text><line x1=\"400\" y1=\"90\" x2=\"421\" y2=\"138.8\" class=\"e2 b3\"/><polygon points=\"425.0,148.0 416.5,140.8 425.6,136.8\" class=\"arrow b3\"/><line x1=\"378\" y1=\"169\" x2=\"352\" y2=\"169\" class=\"e2 b3\"/><polygon points=\"342.0,169.0 352.0,164.0 352.0,174.0\" class=\"arrow b3\"/><line x1=\"290\" y1=\"148\" x2=\"313.7\" y2=\"99\" class=\"e2 b3\"/><polygon points=\"318.0,90.0 318.2,101.2 309.1,96.8\" class=\"arrow b3\"/><text x=\"360\" y=\"256\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">공간이 스스로 알아채요</text></svg>",
+     "caption": "왼쪽은 사람이 시작하는 한 줄, 오른쪽은 센서에서 시작해 도는 고리예요. 오른쪽 고리가 **AI 인지 루프(AI Cognitive Loop)**예요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "시험에 이렇게 나와요",
+     "items": [
+      "기출 9번: 기술기준의 **홈네트워크 설비(Home Network Facility)** 빈칸. 주택, 통합된 주거서비스, 홈네트워크망/장비/사용기기로 구분.",
+      "기출 10번: 세대망과 단지망(또는 통신사 기간망)을 서로 잇는 장치는 **홈게이트웨이(Home Gateway)**예요.",
+      "기출 7번: 집 안 게이트웨이는 일부 기기 제어와 데이터 처리, 클라우드는 대규모 분석과 원격 서비스.",
+      "클라우드는 먼 곳의 큰 도서관이에요. 둘이 역할을 나눠도 서로 다른 통신 기기 연동, 외부 서비스 연계 다 돼요."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "게이트웨이와 클라우드를 함께 쓰는 구성으로 가장 적절한 설명은? (기출 7번)",
+     "choices": [
+      "모든 처리는 클라우드에서만 하니 게이트웨이는 필요 없다",
+      "둘을 함께 쓰면 다른 통신 방식 기기는 연동할 수 없다",
+      "게이트웨이는 집 안 제어와 처리, 클라우드는 대규모 분석과 원격 서비스로 나눌 수 있다",
+      "게이트웨이에서 처리하면 클라우드 서비스는 못 쓴다"
+     ],
+     "a": 2,
+     "why": "우리 집 통역사(게이트웨이)와 먼 곳의 큰 도서관(클라우드)이 일을 나눠요. 나머지는 '반드시, 못 한다' 같은 극단 보기예요."
+    },
+    {
+     "kind": "check",
+     "q": "세대망과 단지망을 서로 이어 주는 장치는? (기출 10번)",
+     "choices": [
+      "**단지서버(Complex Server)**",
+      "**홈게이트웨이(Home Gateway)**",
+      "**세대단말기(Wall Pad)**",
+      "스마트 플러그"
+     ],
+     "a": 1,
+     "why": "**홈게이트웨이(Home Gateway)**는 우리 집 길과 단지 큰 길을 잇는 대문이에요. **단지서버(Complex Server)**는 단지 기록 본부예요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "월패드 화면이 좋아져도 중앙통제 유선 구조는 그대로라 **자율(Autonomous)** 공간이 아니에요.",
+      "**홈네트워크 설비(Home Network Facility)** 빈칸은 '독립된'이 아니라 '통합된' 주거서비스, '홈오토메이션'이 아니라 '홈네트워크'.",
+      "**연결(Connected)**은 사람이 시작, **자율(Autonomous)**은 센서가 시작이에요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "**지능형 홈네트워크(Home Network)**는 **단지서버(Complex Server)** - 월패드 - 세대 설비가 유선으로 이어진 뼈대예요.",
+      "**홈게이트웨이(Home Gateway)**는 세대망과 단지망을 잇는 대문이에요.",
+      "**자동화 시나리오(Automation Scenario)** 3대 모드: 귀가, 취침, 출근.",
+      "**연결(Connected)**은 사람이 직접 조종, **자율(Autonomous)**은 AI가 스스로 조율해요.",
+      "**홈네트워크 설비(Home Network Facility)**는 주택, 통합된 주거서비스, 망/장비/사용기기로 외워요.",
+      "오늘의 용어: 지능형 홈네트워크(Home Network), 단지서버(Complex Server), 홈게이트웨이(Home Gateway), 홈네트워크 설비(Home Network Facility), 자동화 시나리오(Automation Scenario), 연결(Connected), 자율(Autonomous)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w1-5",
+   "title": "지능형 공간의 4대 가치와 거주자 경험 역산 설계",
+   "goal": "편의, 안전, 쾌적, 절감의 사례를 슬라이드대로 말하고, 거주자 경험 역산 설계(R-BD) 4단계를 순서대로 쓸 수 있어요.",
+   "terms": [
+    {
+     "ko": "지능형홈 설계 4대 가치",
+     "en": "4 Core Values of AI@Home Design",
+     "say": "편하게, 안전하게, 상쾌하게, 아껴서. 집이 지켜야 할 네 가지 약속"
+    },
+    {
+     "ko": "편의",
+     "en": "Convenience",
+     "say": "스위치를 찾지 않아도 되는 편함"
+    },
+    {
+     "ko": "안전",
+     "en": "Safety",
+     "say": "위험을 먼저 막아 주는 든든함"
+    },
+    {
+     "ko": "쾌적",
+     "en": "Comfort",
+     "say": "공기와 빛이 늘 기분 좋은 상태"
+    },
+    {
+     "ko": "절감",
+     "en": "Saving",
+     "say": "안 쓰는 전기를 알아서 끄는 알뜰함"
+    },
+    {
+     "ko": "mmWave 재실센서",
+     "en": "mmWave Presence Sensor",
+     "say": "가만히 책 읽는 사람의 숨쉬기까지 알아채는 레이더 센서"
+    },
+    {
+     "ko": "CO2 센서",
+     "en": "Carbon Dioxide Sensor",
+     "say": "방 안 공기가 탁해졌는지 재는 센서"
+    },
+    {
+     "ko": "ERV",
+     "en": "Energy Recovery Ventilator",
+     "say": "창문 안 열고도 바깥 공기로 바꿔 주는 환기 장치"
+    },
+    {
+     "ko": "서카디안 조명",
+     "en": "Circadian Lighting",
+     "say": "해가 뜨고 지는 흐름에 맞춰 빛 색깔이 바뀌는 조명"
+    },
+    {
+     "ko": "거주자 경험 역산 설계",
+     "en": "Resident-Experience Backward Design",
+     "say": "살 사람의 기분(목표)부터 정하고 거꾸로 기기를 고르는 설계법"
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "집이 지킬 네 가지 약속",
+     "sub": "4대 가치와 거주자 경험 역산 설계"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**지능형홈 설계 4대 가치(4 Core Values of AI@Home Design)**를 영어 이름까지 말해요.",
+      "가치마다 **서카디안 조명(Circadian Lighting)** 같은 슬라이드 사례를 짝지어요.",
+      "**거주자 경험 역산 설계(Resident-Experience Backward Design)** 4단계를 순서대로 써요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞 단원과 이어서, 뜻 먼저",
+     "items": [
+      "**자율(Autonomous)**은 AI가 스스로 조율하는 방식, **비식별 센서**는 얼굴 없이 사람만 아는 센서였죠.",
+      "그럼 집은 무엇을 위해 스스로 움직일까요? 늘 지킬 약속 네 가지가 있어요.",
+      "편하게, 안전하게, 상쾌하게, 아껴서. 이걸 묶어 **지능형홈 설계 4대 가치(4 Core Values of AI@Home Design)**라고 해요.",
+      "**편의(Convenience)**, **안전(Safety)**, **쾌적(Comfort)**, **절감(Saving)**. 앞 글자만 모아 '편안쾌절'."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "말 안 해도 챙기는 호텔 집사",
+     "scene": "좋은 호텔에는 말하지 않아도 알아서 챙기는 집사가 있어요. 손님이 방에 들어서면 미리 불을 켜 두고, 가스 냄새가 나면 곧바로 밸브를 잠가요. 방 공기가 답답해지기 전에 환기를 하고, 손님이 나가면 에어컨을 꺼서 전기를 아껴요.",
+     "map": [
+      [
+       "들어서면 미리 불 켜기",
+       "**편의(Convenience)**"
+      ],
+      [
+       "가스 냄새에 바로 밸브 잠그기",
+       "**안전(Safety)**"
+      ],
+      [
+       "답답해지기 전에 환기",
+       "**쾌적(Comfort)**"
+      ],
+      [
+       "나가면 에어컨 끄기",
+       "**절감(Saving)**"
+      ]
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "지능형 공간의 네 가지 약속",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"15\" y=\"35\" width=\"220\" height=\"100\" rx=\"2\" class=\"box b1\"/><text x=\"125\" y=\"72\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b1\">편의 Convenience</text><text x=\"125\" y=\"92\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">스위치 찾지 않아도</text><text x=\"125\" y=\"110\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">mmWave, 미니멀 월</text><rect x=\"245\" y=\"35\" width=\"220\" height=\"100\" rx=\"2\" class=\"box b2\"/><text x=\"355\" y=\"72\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b2\">안전 Safety</text><text x=\"355\" y=\"92\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">가스 차단, 낙상 감지</text><text x=\"355\" y=\"110\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">비상 조명, 비상 전원</text><rect x=\"15\" y=\"145\" width=\"220\" height=\"100\" rx=\"2\" class=\"box b3\"/><text x=\"125\" y=\"182\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b3\">쾌적 Comfort</text><text x=\"125\" y=\"202\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">CO2 오르면 먼저 환기</text><text x=\"125\" y=\"220\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">서카디안 조명</text><rect x=\"245\" y=\"145\" width=\"220\" height=\"100\" rx=\"2\" class=\"box b4\"/><text x=\"355\" y=\"182\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b4\">절감 Saving</text><text x=\"355\" y=\"202\" font-size=\"14\" text-anchor=\"middle\" class=\"t b4\">10분 무감지면 끄기</text><text x=\"355\" y=\"220\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b4\">월 15~20% 절감 제안</text><text x=\"240\" y=\"264\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b4\">앞 글자만 모으면 편안쾌절</text></svg>",
+     "caption": "이 네 약속이 **지능형홈 설계 4대 가치(4 Core Values of AI@Home Design)**예요. 앞 글자만 모아 편안쾌절.",
+     "builds": 4
+    },
+    {
+     "kind": "points",
+     "head": "가치 1 **편의(Convenience)**: 손댈 일을 아예 없애요",
+     "items": [
+      "수동 조작 삭제: 스위치를 찾지 않아도 몸과 재실(방에 사람이 있음)을 감지해 자동으로 켜요.",
+      "가만히 책 읽는 사람의 숨쉬기까지 알아채는 레이더 센서가 있어요. **mmWave 재실센서(mmWave Presence Sensor)**예요.",
+      "mmWave 는 밀리미터파, 파장이 밀리미터 길이인 아주 짧은 전파예요.",
+      "미니멀 월: 스위치 개수를 줄여 벽면 디자인을 깔끔하게 해요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "가치 2 **안전(Safety)**: 위험을 먼저 막아요",
+     "items": [
+      "선제적 물리 차단: 가스, 화재를 감지하면 밸브를 잠그고 환기를 돌려요.",
+      "비식별 프라이버시: 욕실, 침실에는 카메라 대신 레이더로 넘어짐(낙상)을 감지해요.",
+      "비상 인프라(L1): 정전에 대비해 피난 유도 조명과 비상 전원선을 미리 깔아요.",
+      "**안전(Safety)**은 '타협 없는 선제적 물리 보호' 라고 슬라이드에 적혀 있어요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "**PIR 센서(Passive Infrared Sensor)**와 **mmWave 재실센서(mmWave Presence Sensor)**",
+     "cols": [
+      "구분",
+      "PIR 센서",
+      "mmWave 재실센서"
+     ],
+     "rows": [
+      [
+       "무엇으로 느끼나",
+       "몸의 열(적외선)이 움직이는 변화",
+       "아주 짧은 전파(레이더) 반사"
+      ],
+      [
+       "가만히 있는 사람",
+       "못 느껴요",
+       "숨쉬기, 가슴 움직임까지 느껴요"
+      ],
+      [
+       "어울리는 곳",
+       "복도, 현관의 움직임",
+       "독서, 수면, 욕실 낙상"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "가치 3 **쾌적(Comfort)**: 기분 좋은 실내를 스스로 유지해요",
+     "items": [
+      "방 안 공기가 탁해졌는지 재는 센서가 **CO2 센서(Carbon Dioxide Sensor)**예요. CO2 는 이산화탄소예요.",
+      "창문을 안 열고도 바깥 공기로 바꿔 주는 환기 장치가 **ERV(Energy Recovery Ventilator)**예요.",
+      "선제적 환기: **CO2 센서(Carbon Dioxide Sensor)** 값이 오르면 답답함을 느끼기 전에 **ERV(Energy Recovery Ventilator)**를 돌려요.",
+      "해 뜨고 지는 흐름에 맞춰 빛 색(색온도)과 밝기(조도)가 바뀌는 조명이 **서카디안 조명(Circadian Lighting)**이에요.",
+      "빌트인 센싱: 환경 센서를 인테리어 마감 안에 묻어 한 몸처럼 만들어요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "가치 4 **절감(Saving)**: 낭비를 알아서 끊어요",
+     "items": [
+      "자율 전력 회수: 10분 동안 아무도 감지되지 않으면 냉난방과 조명을 자동으로 꺼요.",
+      "누진세 예방: 분전반 실시간 계측으로, 많이 쓸수록 비싸지는 요금 구간 전에 사용을 조절해요.",
+      "분전반은 집 전기를 방마다 나눠 주는 두꺼비집, **세대분전반(Household Distribution Board)**이에요.",
+      "고객 제안: 월 에너지 15~20% 절감을 숫자(ROI)로 보여 줘요. ROI 는 들인 돈에 비해 돌아오는 이득이에요."
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "**절감(Saving)**을 숫자로 말해 보기 (연습 예시)",
+     "steps": [
+      "15%는 100분의 15예요. 100,000 × 15 ÷ 100 = 15,000원.",
+      "20%는 100분의 20이에요. 100,000 × 20 ÷ 100 = 20,000원.",
+      "그래서 한 달에 15,000원에서 20,000원을 아껴요.",
+      "1년은 12달이니 15,000 × 12 = 180,000원, 20,000 × 12 = 240,000원이에요."
+     ],
+     "answer": "1년에 약 18만~24만 원. 고객에게는 이렇게 숫자로 **절감(Saving)**을 제안해요.",
+     "given": "한 달 전기요금 100,000원인 집, 월 15~20% 절감"
+    },
+    {
+     "kind": "points",
+     "head": "거꾸로 설계하는 법 (1.2.7)",
+     "items": [
+      "기기부터 사지 않아요. 살 사람이 느낄 최종 경험 목표(UX)부터 정해요.",
+      "그 목표에서 필요한 데이터와 기술 요구를 거꾸로 찾아내는 설계법이 있어요.",
+      "이걸 **거주자 경험 역산 설계(Resident-Experience Backward Design)**라고 해요. 줄여서 R-BD 예요.",
+      "**거주자 경험 역산 설계(Resident-Experience Backward Design)**는 시공 후 고칠 수 없는 벽 속 인프라 실수를 처음부터 막아요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "거꾸로 설계하는 4단계",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"15\" y=\"30\" width=\"210\" height=\"95\" rx=\"2\" class=\"box2 b1\"/><text x=\"120\" y=\"64\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">1. 경험 목표</text><text x=\"120\" y=\"84\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">수면 중 쾌적 환경 유지</text><text x=\"120\" y=\"102\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">UX Goal</text><line x1=\"227\" y1=\"77\" x2=\"243\" y2=\"77\" class=\"e2 b2\"/><polygon points=\"253.0,77.0 243.0,82.0 243.0,72.0\" class=\"arrow b2\"/><rect x=\"255\" y=\"30\" width=\"210\" height=\"95\" rx=\"2\" class=\"box b2\"/><text x=\"360\" y=\"74\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b2\">2. 필요 데이터 식별</text><text x=\"360\" y=\"93\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">정적 재실 + 실내 온습도</text><line x1=\"360\" y1=\"127\" x2=\"360\" y2=\"148\" class=\"e2 b3\"/><polygon points=\"360.0,158.0 355.0,148.0 365.0,148.0\" class=\"arrow b3\"/><rect x=\"255\" y=\"160\" width=\"210\" height=\"95\" rx=\"2\" class=\"box b3\"/><text x=\"360\" y=\"204\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b3\">3. 기술 사양 도출</text><text x=\"360\" y=\"223\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">mmWave 레이더 + 센서</text><line x1=\"253\" y1=\"207\" x2=\"237\" y2=\"207\" class=\"e2 b4\"/><polygon points=\"227.0,207.0 237.0,202.0 237.0,212.0\" class=\"arrow b4\"/><rect x=\"15\" y=\"160\" width=\"210\" height=\"95\" rx=\"2\" class=\"n2 b4\"/><text x=\"120\" y=\"204\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b4\">4. 물리 검증 (L1/L2)</text><text x=\"120\" y=\"223\" font-size=\"14\" text-anchor=\"middle\" class=\"t b4\">침대 위 상시전원, 마감재</text></svg>",
+     "caption": "기기부터 사지 않아요. 느낄 경험 → 필요한 데이터 → 기술 → 벽 속 전기와 마감 순서로 거꾸로 내려와요.",
+     "builds": 4
+    },
+    {
+     "kind": "points",
+     "head": "시험에 이렇게 나와요",
+     "items": [
+      "1.2강 CHECKPOINT: 가만히 있는 재실 감지 → **mmWave 재실센서(mmWave Presence Sensor)**. 4대 가치 → 편의, 안전, 쾌적, 절감. 역산 설계 → R-BD.",
+      "용어해설집 14번: 4대 가치 영어 이름은 Convenience, Safety, Comfort, Saving 이에요.",
+      "기출 34번: 스마트 스위치 효과로 틀린 것 → '전력 사용을 줄이는 데 도움이 안 된다'. 예약, 외출 모드는 **절감(Saving)**이에요.",
+      "기출 31번: 비접촉 인체 감지에 안 맞는 것 → 피부 접촉식 생체 신호 센서. PIR, UWB, 적외선 이미지는 비접촉."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "스마트 스위치 자동화 효과로 가장 적절하지 않은 것은? (기출 34번)",
+     "choices": [
+      "조명을 바꾸지 않고 원격 제어를 더할 수 있다",
+      "여러 조명을 함께 제어하지만 불필요한 전력을 줄이는 데는 도움이 안 된다",
+      "휴대폰 앱으로 켜고 끌 수 있다",
+      "예약, 외출 모드로 조명 사용을 자동화할 수 있다"
+     ],
+     "a": 1,
+     "why": "외출 모드로 안 쓰는 조명을 끄는 것 자체가 **절감(Saving)**이에요. 그래서 2번이 틀린 설명이에요."
+    },
+    {
+     "kind": "check",
+     "q": "독서나 수면처럼 움직임이 거의 없는 사람까지 감지하는 센서는? (1.2강 CHECKPOINT)",
+     "choices": [
+      "**PIR 센서(Passive Infrared Sensor)**",
+      "**mmWave 재실센서(mmWave Presence Sensor)**",
+      "**CO2 센서(Carbon Dioxide Sensor)**",
+      "조도 센서"
+     ],
+     "a": 1,
+     "why": "**mmWave 재실센서(mmWave Presence Sensor)**는 숨쉬기, 가슴 움직임까지 알아채요. PIR 은 움직일 때만 느껴요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "필기 가이드북은 '안전, 편리, 절감, 쾌적' 으로도 써요. 해설집 표기는 **편의(Convenience)**예요.",
+      "**ERV(Energy Recovery Ventilator)**는 센서가 아니라 환기 장치, **CO2 센서(Carbon Dioxide Sensor)**는 환기 신호를 주는 센서예요.",
+      "**거주자 경험 역산 설계(Resident-Experience Backward Design)**는 기기 먼저가 아니라 경험 목표 먼저예요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "4대 가치는 **편의(Convenience)**, **안전(Safety)**, **쾌적(Comfort)**, **절감(Saving)**. 편안쾌절.",
+      "**mmWave 재실센서(mmWave Presence Sensor)**는 가만히 있는 사람까지, PIR 은 움직일 때만 느껴요.",
+      "**CO2 센서(Carbon Dioxide Sensor)** 값이 오르면 **ERV(Energy Recovery Ventilator)**가 환기를 돌려요.",
+      "**서카디안 조명(Circadian Lighting)**은 해 뜨고 지는 흐름을 따라요.",
+      "**거주자 경험 역산 설계(Resident-Experience Backward Design)**: 경험 목표 → 데이터 → 기술 사양 → 물리 검증.",
+      "오늘의 용어: 지능형홈 설계 4대 가치(4 Core Values of AI@Home Design), 편의(Convenience), 안전(Safety), 쾌적(Comfort), 절감(Saving), mmWave 재실센서(mmWave Presence Sensor), CO2 센서(Carbon Dioxide Sensor), ERV(Energy Recovery Ventilator), 서카디안 조명(Circadian Lighting), 거주자 경험 역산 설계(Resident-Experience Backward Design)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w1-6",
+   "title": "4-Layer 적층구조: L1부터 L4까지",
+   "goal": "4-Layer 적층구조의 네 층 이름과 하는 일을 말하고, 층마다 배우는 실습 항목과 기출 주제를 짝지을 수 있어요.",
+   "terms": [
+    {
+     "ko": "4-Layer 적층구조",
+     "en": "4-Layer Architecture",
+     "say": "집의 똑똑함을 4층 건물처럼 쌓아 본 그림"
+    },
+    {
+     "ko": "L1 전기 및 인프라 계층",
+     "en": "Electrical, Infrastructure Layer",
+     "say": "맨 아래 1층, 전기가 잘 들어오는지 챙기는 층"
+    },
+    {
+     "ko": "L2 공간 및 기기 배치 계층",
+     "en": "Spatial, Interior Layer",
+     "say": "2층, 센서를 집 어디에 달지 정하는 층"
+    },
+    {
+     "ko": "L3 연결 및 네트워크 계층",
+     "en": "Connectivity, Network Layer",
+     "say": "3층, 기기끼리 끊기지 않게 무선을 잇는 층"
+    },
+    {
+     "ko": "L4 지능 및 자동화 계층",
+     "en": "Intelligence, AI Layer",
+     "say": "꼭대기 4층, AI가 생각하고 결정하는 층"
+    },
+    {
+     "ko": "누전",
+     "en": "Electric Leakage",
+     "say": "전기가 새서 엉뚱한 곳으로 흐르는 위험한 상황"
+    },
+    {
+     "ko": "중성선",
+     "en": "Neutral Line",
+     "say": "전기가 돌아 나가는 길, 스마트 스위치에 꼭 필요한 선"
+    },
+    {
+     "ko": "SMPS",
+     "en": "Switching Mode Power Supply",
+     "say": "콘센트 전기를 LED가 먹기 좋은 전기로 바꿔 주는 어댑터"
+    },
+    {
+     "ko": "감지 사각지대",
+     "en": "",
+     "say": "센서 눈에 안 보이는 구석"
+    },
+    {
+     "ko": "커미셔닝",
+     "en": "Commissioning",
+     "say": "새 기기를 우리 집 시스템에 정식 등록하는 절차"
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "4층짜리 똑똑한 집",
+     "sub": "**4-Layer 적층구조(4-Layer Architecture)** L1부터 L4까지"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**4-Layer 적층구조(4-Layer Architecture)**의 네 층 이름을 아래부터 말해요.",
+      "층마다 하는 일과 실습 번호(1-1, 3-4 같은)를 짝지어요.",
+      "**SMPS(Switching Mode Power Supply)** 여유율 20% 계산을 손으로 해요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "4층 건물",
+     "scene": "4층짜리 건물을 떠올려 봐요. 1층에는 전기실, 2층에는 방과 가구 배치, 3층에는 전화와 인터넷 선이 모이는 통신실이 있어요. 꼭대기 4층에는 건물 전체를 보고 결정하는 관리실이 있어요. 1층 전기가 나가면 4층 관리실 컴퓨터도 꺼져요.",
+     "map": [
+      [
+       "1층 전기실",
+       "**L1 전기 및 인프라 계층(Electrical, Infrastructure Layer)**"
+      ],
+      [
+       "2층 방과 가구 배치",
+       "**L2 공간 및 기기 배치 계층(Spatial, Interior Layer)**"
+      ],
+      [
+       "3층 통신실",
+       "**L3 연결 및 네트워크 계층(Connectivity, Network Layer)**"
+      ],
+      [
+       "4층 관리실",
+       "**L4 지능 및 자동화 계층(Intelligence, AI Layer)**"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞 단원과 이어서, 뜻 먼저",
+     "items": [
+      "**거주자 경험 역산 설계(Resident-Experience Backward Design)** 마지막 단계가 '물리 검증(L1/L2)' 이었죠. 그 L1, L2가 오늘의 층이에요.",
+      "**자율(Autonomous)** 공간도 결국 층층이 쌓인 기술 위에서 움직여요.",
+      "집의 똑똑함을 4층 건물처럼 아래에서 위로 쌓아 본 그림이 있어요.",
+      "이걸 **4-Layer 적층구조(4-Layer Architecture)**라고 해요. 영어로 4-Layer Architecture."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "4-Layer, 아래에서 위로 쌓아요",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"80\" y=\"200\" width=\"300\" height=\"52\" rx=\"2\" class=\"box b1\"/><text x=\"230\" y=\"222\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">L1 전기 및 인프라 계층</text><text x=\"230\" y=\"242\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">전기가 잘 들어오나 챙겨요</text><text x=\"430\" y=\"232\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b1\">1층</text><rect x=\"80\" y=\"140\" width=\"300\" height=\"52\" rx=\"2\" class=\"box b2\"/><text x=\"230\" y=\"162\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b2\">L2 공간 및 기기 배치 계층</text><text x=\"230\" y=\"182\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">센서를 어디에 달지 정해요</text><text x=\"430\" y=\"172\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b2\">2층</text><rect x=\"80\" y=\"80\" width=\"300\" height=\"52\" rx=\"2\" class=\"box b3\"/><text x=\"230\" y=\"102\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b3\">L3 연결 및 네트워크 계층</text><text x=\"230\" y=\"122\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">무선이 안 끊기게 이어요</text><text x=\"430\" y=\"112\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b3\">3층</text><rect x=\"80\" y=\"20\" width=\"300\" height=\"52\" rx=\"2\" class=\"n2 b4\"/><text x=\"230\" y=\"42\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b4\">L4 지능 및 자동화 계층</text><text x=\"230\" y=\"62\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b4\">AI가 생활 패턴 보고 판단</text><text x=\"430\" y=\"52\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b4\">4층</text><line x1=\"40\" y1=\"250\" x2=\"40\" y2=\"35\" class=\"e2 b4\"/><polygon points=\"40.0,25.0 45.0,35.0 35.0,35.0\" class=\"arrow b4\"/></svg>",
+     "caption": "1층 전기가 받쳐야 2층 배치, 3층 무선, 4층 AI가 설 수 있어요. 그림도 아래부터 차례로 쌓여요.",
+     "builds": 4
+    },
+    {
+     "kind": "compare",
+     "head": "네 층이 하는 일 (1.3.1)",
+     "cols": [
+      "층",
+      "이름",
+      "하는 일"
+     ],
+     "rows": [
+      [
+       "4층",
+       "**L4 지능 및 자동화 계층(Intelligence, AI Layer)**",
+       "생활 패턴을 학습해 AI가 자동 판단, 제어하는 최상위 단계"
+      ],
+      [
+       "3층",
+       "**L3 연결 및 네트워크 계층(Connectivity, Network Layer)**",
+       "무선 인프라를 깔고 간섭을 피해 기기 사이 통신을 안 끊기게"
+      ],
+      [
+       "2층",
+       "**L2 공간 및 기기 배치 계층(Spatial, Interior Layer)**",
+       "동선 분석, 사각지대 제거로 기기 최적 위치 설계"
+      ],
+      [
+       "1층",
+       "**L1 전기 및 인프라 계층(Electrical, Infrastructure Layer)**",
+       "배선 진단, 전력 공급 점검으로 하드웨어 물리적 안전 보장"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "L1 전기 층에서 배울 것 (1.3.2)",
+     "items": [
+      "1-1 전기, 전력 기초 이론과 실내건축 적용 원리.",
+      "1-2 배선 이상 진단, **누전(Electric Leakage)**과 잔광 현상 분석. 전기가 새서 엉뚱한 곳으로 흐르는 위험이 **누전(Electric Leakage)**이에요.",
+      "잔광 현상은 불을 껐는데도 LED가 희미하게 빛나는 현상이에요.",
+      "1-3 배선 설계와 **중성선(Neutral Line)**(N선) 확보.",
+      "1-4 LED 전원장치(**SMPS(Switching Mode Power Supply)**) 정격 용량 계산, 여유율 20% 이상."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "L1 낱말 풀기",
+     "items": [
+      "전기가 들어왔다가 돌아 나가는 길이 **중성선(Neutral Line)**이에요. 스마트 스위치에 꼭 필요해요.",
+      "콘센트 전기를 LED가 먹기 좋은 전기로 바꿔 주는 어댑터가 **SMPS(Switching Mode Power Supply)**예요.",
+      "정격 용량은 기계가 오래 버틸 수 있는 최대 힘이에요.",
+      "여유율 20% 이상은 필요한 양보다 20% 넘게 크게 고르라는 뜻이에요."
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "**SMPS(Switching Mode Power Supply)** 용량 고르기 (연습 예시)",
+     "steps": [
+      "먼저 필요한 전력을 더해요. 24 × 5 = 120W.",
+      "여유율 20%를 더하면 120의 1.2배예요.",
+      "120 × 12 ÷ 10 = 144W 예요.",
+      "144W 이상인 제품을 골라요. 예를 들어 150W 짜리."
+     ],
+     "answer": "**SMPS(Switching Mode Power Supply)**는 144W 이상, 150W 짜리를 달면 안전해요.",
+     "given": "24W LED 조명 5개, 여유율 20% 이상"
+    },
+    {
+     "kind": "points",
+     "head": "L2 공간 층에서 배울 것 (1.3.3)",
+     "items": [
+      "공간 구조와 사람이 다니는 길(동선)을 분석해요.",
+      "센서 눈에 안 보이는 구석이 **감지 사각지대**예요. L2는 **감지 사각지대**를 없애요.",
+      "2-1 기기 구성 원리와 평면도 분석 기초. 2-2 거실, 침실, 욕실별 **PIR 센서(Passive Infrared Sensor)**, mmWave 센서 최적 배치.",
+      "2-3 기기 구성과 인테리어 마감재를 함께 맞춘 시공. 공간 디자인 관점이 들어가는 층이에요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "L3 연결 층에서 배울 것 (1.3.4)",
+     "items": [
+      "3-1 통신 프로토콜, 서로 쓰는 언어 이해: **지그비(Zigbee)**, **스레드(Thread)**, **매터(Matter)**.",
+      "3-2 무선 채널 간섭과 2.4GHz 대역 최적화. 2.4GHz, 이 점 사 기가헤르츠는 1초에 24억 번 출렁이는 전파 차선이에요.",
+      "3-3 AP(무선 인터넷을 뿌리는 상자) 배치와 **메시 네트워크(Mesh Network)**, 친구끼리 쪽지 릴레이 구성.",
+      "새 기기를 우리 집 시스템에 정식 등록하는 절차가 **커미셔닝(Commissioning)**이에요. 3-4 허브 연결 설정과 **커미셔닝(Commissioning)** 실습."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "L4 지능 층에서 배울 것 (1.3.5)",
+     "items": [
+      "자동화 실무 모듈: 4-1 재실 기반 낙상 감지, 4-2 외출 감지 기반 절전, 4-3 공기질 기반 환기.",
+      "AI 스택 설계 모듈: 4-4 AI 기술 체계와 인지 루프.",
+      "4-5 AI 스택 설계 주거 공간, 4-6 AI 스택 설계 확장 공간.",
+      "AI 스택은 AI가 일하려고 필요한 기술을 층층이 쌓은 묶음이에요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "L4 자동화 모듈은 4대 가치를 지켜요",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"20\" y=\"30\" width=\"190\" height=\"46\" rx=\"2\" class=\"box b1\"/><text x=\"115\" y=\"58\" font-size=\"15\" text-anchor=\"middle\" class=\"t b1\">4-1 재실 기반 낙상 감지</text><line x1=\"212\" y1=\"53\" x2=\"278\" y2=\"53\" class=\"e2 b1\"/><polygon points=\"288.0,53.0 278.0,58.0 278.0,48.0\" class=\"arrow b1\"/><rect x=\"290\" y=\"30\" width=\"170\" height=\"46\" rx=\"2\" class=\"n2 b1\"/><text x=\"375\" y=\"59\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">안전 Safety</text><rect x=\"20\" y=\"110\" width=\"190\" height=\"46\" rx=\"2\" class=\"box b2\"/><text x=\"115\" y=\"138\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">4-2 외출 감지 기반 절전</text><line x1=\"212\" y1=\"133\" x2=\"278\" y2=\"133\" class=\"e2 b2\"/><polygon points=\"288.0,133.0 278.0,138.0 278.0,128.0\" class=\"arrow b2\"/><rect x=\"290\" y=\"110\" width=\"170\" height=\"46\" rx=\"2\" class=\"n2 b2\"/><text x=\"375\" y=\"139\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b2\">절감 Saving</text><rect x=\"20\" y=\"190\" width=\"190\" height=\"46\" rx=\"2\" class=\"box b3\"/><text x=\"115\" y=\"218\" font-size=\"15\" text-anchor=\"middle\" class=\"t b3\">4-3 공기질 기반 환기</text><line x1=\"212\" y1=\"213\" x2=\"278\" y2=\"213\" class=\"e2 b3\"/><polygon points=\"288.0,213.0 278.0,218.0 278.0,208.0\" class=\"arrow b3\"/><rect x=\"290\" y=\"190\" width=\"170\" height=\"46\" rx=\"2\" class=\"n2 b3\"/><text x=\"375\" y=\"219\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b3\">쾌적 Comfort</text><text x=\"240\" y=\"264\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">앞 단원 4대 가치가 L4 실습 이름으로 돌아와요</text></svg>",
+     "caption": "4-1 낙상 감지는 **안전(Safety)**, 4-2 외출 절전은 **절감(Saving)**, 4-3 공기질 환기는 **쾌적(Comfort)**이에요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "시험에 이렇게 나와요",
+     "items": [
+      "층 이름 자체는 기출에 없었지만, 층마다 기출이 걸려요.",
+      "L1: 33번 전력 계산(200V × 0.1A = 20W), 39번 누전차단기 선정 기준.",
+      "L2: 31번 비접촉 인체 감지 센서. L3: 25번 와이파이와 지그비 간섭은 채널을 바꿔요, 18번 RS-485 는 유선.",
+      "L4: 7번 게이트웨이와 클라우드 역할 분담, 34번 스마트 스위치 절감."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "**커미셔닝(Commissioning)**의 뜻으로 맞는 것은?",
+     "choices": [
+      "전기가 새서 엉뚱한 곳으로 흐르는 것",
+      "새 기기를 우리 집 시스템에 정식 등록하는 절차",
+      "센서 눈에 안 보이는 구석",
+      "콘센트 전기를 LED용으로 바꾸는 어댑터"
+     ],
+     "a": 1,
+     "why": "1번 **누전(Electric Leakage)**, 3번 **감지 사각지대**, 4번 **SMPS(Switching Mode Power Supply)**예요."
+    },
+    {
+     "kind": "check",
+     "q": "거실, 침실, 욕실별 감지 센서 최적 배치(2-2)는 어느 층 일일까요?",
+     "choices": [
+      "L1 전기 및 인프라",
+      "L2 공간 및 기기 배치",
+      "L3 연결 및 네트워크",
+      "L4 지능 및 자동화"
+     ],
+     "a": 1,
+     "why": "센서를 어디에 달아 **감지 사각지대**를 없앨지는 **L2 공간 및 기기 배치 계층(Spatial, Interior Layer)** 일이에요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "무선은 L2가 아니라 **L3 연결 및 네트워크 계층(Connectivity, Network Layer)**이에요. L2는 공간과 기기 배치예요.",
+      "숫자가 클수록 위층이에요. 1층 전기, 4층 AI.",
+      "**SMPS(Switching Mode Power Supply)** 여유율은 20% '이상'이라 딱 맞는 용량이 아니라 더 큰 것을 골라요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "맨 아래 1층은 **L1 전기 및 인프라 계층(Electrical, Infrastructure Layer)**이에요.",
+      "맨 위 4층은 **L4 지능 및 자동화 계층(Intelligence, AI Layer)**이에요.",
+      "L1은 **누전(Electric Leakage)** 진단, **중성선(Neutral Line)** 확보, **SMPS(Switching Mode Power Supply)** 여유율 20% 이상.",
+      "L2는 **감지 사각지대** 제거, L3는 프로토콜, 간섭, 메시, **커미셔닝(Commissioning)**.",
+      "L4 자동화 모듈은 낙상 감지, 외출 절전, 공기질 환기예요.",
+      "오늘의 용어: 4-Layer 적층구조(4-Layer Architecture), L1 전기 및 인프라 계층(Electrical, Infrastructure Layer), L2 공간 및 기기 배치 계층(Spatial, Interior Layer), L3 연결 및 네트워크 계층(Connectivity, Network Layer), L4 지능 및 자동화 계층(Intelligence, AI Layer), 누전(Electric Leakage), 중성선(Neutral Line), SMPS(Switching Mode Power Supply), 감지 사각지대, 커미셔닝(Commissioning)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w1-7",
+   "title": "기반-제어 관계와 지능형 공간 Architect",
+   "goal": "층 사이의 기반-제어 관계를 설명하고, 기술 시공자와 Architect의 차이, 현장 구축 순서와 수업 순서를 구별할 수 있어요.",
+   "terms": [
+    {
+     "ko": "기반-제어 관계",
+     "en": "Foundation-Control Relationship",
+     "say": "아래층은 받쳐 주고, 위층은 아래층을 조종하는 사이"
+    },
+    {
+     "ko": "지능형 공간 Architect",
+     "en": "Architect",
+     "say": "전기, 공간, 무선, AI를 한꺼번에 지휘하는 오케스트라 지휘자"
+    },
+    {
+     "ko": "기술 시공자",
+     "en": "",
+     "say": "전선 깔기, 통신 개통처럼 한 가지 기술만 손으로 만드는 사람"
+    },
+    {
+     "ko": "",
+     "en": "Bottom-Up",
+     "say": "집은 아래층부터 짓는다는 순서"
+    },
+    {
+     "ko": "거주자 경험",
+     "en": "User Experience",
+     "say": "그 집에 사는 사람이 실제로 느끼는 편하고 좋은 기분"
+    },
+    {
+     "ko": "플리커",
+     "en": "Flicker",
+     "say": "조명이 파르르 깜빡거리는 현상"
+    },
+    {
+     "ko": "3선식 배선",
+     "en": "3-Wire Wiring",
+     "say": "전기 들어오는 선, 나가는 선(중성선), 전등 선이 다 있는 배선"
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "받치고 조종하는 사이",
+     "sub": "**기반-제어 관계(Foundation-Control Relationship)**와 **지능형 공간 Architect(Architect)**"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**기반-제어 관계(Foundation-Control Relationship)**의 상향 작용과 하향 작용을 말해요.",
+      "**기술 시공자**와 **지능형 공간 Architect(Architect)**를 구별해요.",
+      "현장 **Bottom-Up** 순서와 이 수업 순서를 비교해요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞 단원과 이어서, 뜻 먼저",
+     "items": [
+      "**4-Layer 적층구조(4-Layer Architecture)**는 집의 똑똑함을 4층으로 쌓은 그림이었죠.",
+      "맨 아래가 **L1 전기 및 인프라 계층(Electrical, Infrastructure Layer)**이었어요.",
+      "꼭대기는 **L4 지능 및 자동화 계층(Intelligence, AI Layer)**이었어요.",
+      "아래층은 위층이 설 수 있게 받쳐 주고, 위층은 아래층 설비를 조종해 공간 상태를 바꿔요.",
+      "이 양방향으로 기대는 사이를 **기반-제어 관계(Foundation-Control Relationship)**라고 해요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "건물 기초와 가구 배치",
+     "scene": "건물을 지을 때는 땅속 기초 공사가 먼저예요. 기초가 단단해야 그 위에 방을 꾸미고 가구를 들일 수 있어요. 가구 배치는 주말마다 바꿀 수 있지만, 기초를 고치려면 건물을 부숴야 해요.",
+     "map": [
+      [
+       "단단한 땅속 기초",
+       "L1, L2 물리 인프라 (상향 작용, 기반 제공)"
+      ],
+      [
+       "기초 위에 가구 들이기",
+       "L4 AI 판단이 아래 기기를 조종 (하향 작용)"
+      ],
+      [
+       "주말마다 바꾸는 가구",
+       "상위 제어의 유연성"
+      ],
+      [
+       "부숴야 고치는 기초",
+       "물리 마감의 고정성"
+      ]
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "아래는 받치고, 위는 조종해요",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"150\" y=\"30\" width=\"180\" height=\"44\" rx=\"2\" class=\"n2\"/><text x=\"240\" y=\"58\" font-size=\"15\" text-anchor=\"middle\" class=\"tb\">L4 지능, 자동화</text><rect x=\"150\" y=\"85\" width=\"180\" height=\"44\" rx=\"2\" class=\"box\"/><text x=\"240\" y=\"112\" font-size=\"15\" text-anchor=\"middle\" class=\"t\">L3 연결, 네트워크</text><rect x=\"150\" y=\"140\" width=\"180\" height=\"44\" rx=\"2\" class=\"box\"/><text x=\"240\" y=\"168\" font-size=\"15\" text-anchor=\"middle\" class=\"t\">L2 공간, 기기 배치</text><rect x=\"150\" y=\"195\" width=\"180\" height=\"44\" rx=\"2\" class=\"box\"/><text x=\"240\" y=\"222\" font-size=\"15\" text-anchor=\"middle\" class=\"t\">L1 전기, 인프라</text><line x1=\"110\" y1=\"235\" x2=\"110\" y2=\"45\" class=\"e2 b1\"/><polygon points=\"110.0,35.0 115.0,45.0 105.0,45.0\" class=\"arrow b1\"/><text x=\"58\" y=\"130\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">받쳐 줌</text><text x=\"58\" y=\"152\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">Foundation</text><line x1=\"370\" y1=\"35\" x2=\"370\" y2=\"225\" class=\"e2 b2\"/><polygon points=\"370.0,235.0 365.0,225.0 375.0,225.0\" class=\"arrow b2\"/><text x=\"425\" y=\"130\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b2\">조종함</text><text x=\"425\" y=\"152\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">Control</text><text x=\"240\" y=\"264\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">기초는 먼저 검증, 위층은 나중에 바꿔도 돼요</text></svg>",
+     "caption": "위로 가는 화살표는 상향 작용(기반 제공), 아래로 가는 화살표는 하향 작용(제어 작용)이에요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "그래서 순서가 중요해요 (1.3.6 인사이트)",
+     "items": [
+      "상향 작용: 위층 AI(L4)는 단단한 L1 전기, L2 공간, L3 네트워크 위에서만 제대로 돌아요.",
+      "하향 작용: AI 판단 결과가 아래 기기 제어와 전력 공급 조절로 이어져 공간을 바꿔요.",
+      "상위 제어의 유연성(L4): AI 자동화 로직, 앱 설정은 소프트웨어 업데이트로 언제든 고쳐요.",
+      "물리 마감의 고정성(L1, L2): 벽에 묻은 **중성선(Neutral Line)**, 센서 배선은 준공 후 고치려면 큰 철거 공사가 필요해요.",
+      "설계 지침: 고치기 비싼 아래 물리 기반부터 먼저 검증하고 확보한 뒤 위층 제어를 얹어요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "CHECKPOINT 1번과 이어서: 스마트 스위치 배선",
+     "items": [
+      "조명이 파르르 깜빡거리는 현상을 **플리커(Flicker)**라고 해요.",
+      "스마트 스위치는 꺼져 있을 때도 스스로는 켜 있어야 해서 늘 전기(상시 전원)가 필요해요.",
+      "전기 들어오는 선(활선), 돌아 나가는 선(중성선), 전등 가는 선(부하선)이 다 있는 배선이 **3선식 배선(3-Wire Wiring)**이에요.",
+      "답: **플리커(Flicker)**를 막고 상시 전원을 주려면 L1에서 **중성선(Neutral Line)** **3선식 배선(3-Wire Wiring)**을 미리 깔아요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "구현하는 사람과 지휘하는 사람 (1.3.7)",
+     "items": [
+      "전선 깔기, 통신 개통, AI 알고리즘 개발처럼 한 가지 기술을 손으로 만드는 사람이 **기술 시공자**예요.",
+      "그 집에 사는 사람이 실제로 느끼는 편하고 좋은 기분이 **거주자 경험(User Experience)**이에요. UX 라고도 해요.",
+      "**거주자 경험(User Experience)**을 악보 삼아 4-Layer 기술을 총괄해 맞추는 공간 지휘자가 **지능형 공간 Architect(Architect)**예요.",
+      "슬라이드에는 오케스트라를 지휘하는 구스타보 두다멜 사진이 실려 있어요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "**기술 시공자** vs **지능형 공간 Architect(Architect)**",
+     "cols": [
+      "구분",
+      "단순 구현자",
+      "통합 기획자"
+     ],
+     "rows": [
+      [
+       "이름",
+       "**기술 시공자**",
+       "**지능형 공간 Architect(Architect)**, 공간 지휘자"
+      ],
+      [
+       "하는 일",
+       "전기 배선, 통신 개통, AI 알고리즘 개발을 따로따로",
+       "**거주자 경험(User Experience)** 악보로 4-Layer 요소를 총괄 통합, 조율"
+      ],
+      [
+       "오케스트라로 치면",
+       "악기 하나를 잘 다루는 연주자",
+       "전체 소리를 맞추는 지휘자"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "짓는 순서와 배우는 순서 (1.3.8)",
+     "items": [
+      "집은 아래층부터 짓는다는 순서가 있어요. 영어 이름은 **Bottom-Up**, 아래에서 위로예요.",
+      "현장 실무 **Bottom-Up** 순서: L1 전기 인프라 → L2 기기 배치 → L3 통신 → L4 AI 자동화.",
+      "이 수업은 배우기 쉬운 순서: L3 무선통신 → L2 공간 센서 → L4 AI 인지 → L1 전기 기초.",
+      "순서는 달라도 목표는 같아요. 층 사이 기대는 관계를 가려낼 수 있게 되는 것."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "짓는 순서와 배우는 순서",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"240\" y=\"35\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">현장 실무 구축 순서 (Bottom-Up)</text><rect x=\"15\" y=\"50\" width=\"95\" height=\"50\" rx=\"2\" class=\"n2 b1\"/><text x=\"62.5\" y=\"80\" font-size=\"15\" text-anchor=\"middle\" class=\"t b1\">L1 전기</text><line x1=\"112\" y1=\"75\" x2=\"123\" y2=\"75\" class=\"e2 b1\"/><polygon points=\"133.0,75.0 123.0,80.0 123.0,70.0\" class=\"arrow b1\"/><rect x=\"135\" y=\"50\" width=\"95\" height=\"50\" rx=\"2\" class=\"box b1\"/><text x=\"182.5\" y=\"80\" font-size=\"15\" text-anchor=\"middle\" class=\"t b1\">L2 배치</text><line x1=\"232\" y1=\"75\" x2=\"243\" y2=\"75\" class=\"e2 b1\"/><polygon points=\"253.0,75.0 243.0,80.0 243.0,70.0\" class=\"arrow b1\"/><rect x=\"255\" y=\"50\" width=\"95\" height=\"50\" rx=\"2\" class=\"box b1\"/><text x=\"302.5\" y=\"80\" font-size=\"15\" text-anchor=\"middle\" class=\"t b1\">L3 통신</text><line x1=\"352\" y1=\"75\" x2=\"363\" y2=\"75\" class=\"e2 b1\"/><polygon points=\"373.0,75.0 363.0,80.0 363.0,70.0\" class=\"arrow b1\"/><rect x=\"375\" y=\"50\" width=\"95\" height=\"50\" rx=\"2\" class=\"box b1\"/><text x=\"422.5\" y=\"80\" font-size=\"15\" text-anchor=\"middle\" class=\"t b1\">L4 AI</text><text x=\"240\" y=\"150\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b2\">이 수업 배우는 순서 (배우기 쉬운 순)</text><rect x=\"15\" y=\"165\" width=\"95\" height=\"50\" rx=\"2\" class=\"box b2\"/><text x=\"62.5\" y=\"186\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">L3 무선</text><text x=\"62.5\" y=\"205\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">3, 4주</text><line x1=\"112\" y1=\"190\" x2=\"123\" y2=\"190\" class=\"e2 b2\"/><polygon points=\"133.0,190.0 123.0,195.0 123.0,185.0\" class=\"arrow b2\"/><rect x=\"135\" y=\"165\" width=\"95\" height=\"50\" rx=\"2\" class=\"box b2\"/><text x=\"182.5\" y=\"186\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">L2 센서</text><text x=\"182.5\" y=\"205\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">5주</text><line x1=\"232\" y1=\"190\" x2=\"243\" y2=\"190\" class=\"e2 b2\"/><polygon points=\"253.0,190.0 243.0,195.0 243.0,185.0\" class=\"arrow b2\"/><rect x=\"255\" y=\"165\" width=\"95\" height=\"50\" rx=\"2\" class=\"box b2\"/><text x=\"302.5\" y=\"186\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">L4 AI</text><text x=\"302.5\" y=\"205\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">6주</text><line x1=\"352\" y1=\"190\" x2=\"363\" y2=\"190\" class=\"e2 b2\"/><polygon points=\"373.0,190.0 363.0,195.0 363.0,185.0\" class=\"arrow b2\"/><rect x=\"375\" y=\"165\" width=\"95\" height=\"50\" rx=\"2\" class=\"n2 b2\"/><text x=\"422.5\" y=\"186\" font-size=\"15\" text-anchor=\"middle\" class=\"t b2\">L1 전기</text><text x=\"422.5\" y=\"205\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">13주</text><text x=\"240\" y=\"255\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">현장은 아래부터, 수업은 익숙한 무선부터</text></svg>",
+     "caption": "현장은 **Bottom-Up** 으로 L1부터 짓고, 수업은 배우기 쉬운 L3 무선부터 시작해 L1 전기로 끝나요.",
+     "builds": 2
+    },
+    {
+     "kind": "compare",
+     "head": "4-Layer × 실습 주차",
+     "cols": [
+      "층",
+      "주차",
+      "실습"
+     ],
+     "rows": [
+      [
+       "L4",
+       "6, 9주차",
+       "낙상 감지, 외출 절전 자동화"
+      ],
+      [
+       "L3",
+       "3, 4주차",
+       "허브 연결, 무선 간섭 진단"
+      ],
+      [
+       "L2",
+       "5, 14주차",
+       "센서 화각(볼 수 있는 각도), 음영 지역(신호가 안 닿는 곳) 배치"
+      ],
+      [
+       "L1",
+       "13주차",
+       "**SMPS(Switching Mode Power Supply)** 용량 산정, 배선 설계"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "시험에 이렇게 나와요",
+     "items": [
+      "1.3강 CHECKPOINT 1: **플리커(Flicker)** 방지와 상시 전원 → **중성선(Neutral Line)** **3선식 배선(3-Wire Wiring)**.",
+      "CHECKPOINT 2: 위 제어(L4)와 아래 인프라(L1, L2) 사이 관계 → **기반-제어 관계(Foundation-Control Relationship)**.",
+      "CHECKPOINT 3: **거주자 경험(User Experience)** 목표로 4-Layer 요소를 도면 위에서 총괄 지휘하는 사람 → **지능형 공간 Architect(Architect)**.",
+      "기출 22번: OS(운영체제), 펌웨어에 보안 패치를 주기적으로 적용하는 게 옳아요. 위층 소프트웨어는 고칠 수 있다는 것과 같은 결.",
+      "다음 주(2주차): 공간 데이터 흐름과 IoT 파이프라인. 1-Loop, 상태, 이벤트, 시계열 데이터, 비식별 센싱."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "**기반-제어 관계(Foundation-Control Relationship)**의 뜻으로 맞는 것은?",
+     "choices": [
+      "위층 AI가 아래층을 전혀 신경 쓰지 않는 관계",
+      "아래층은 물리 기반을 주고, 위층은 아래 설비를 제어해 공간을 바꾸는 양방향 관계",
+      "L1과 L4가 같은 일을 나눠 하는 관계",
+      "소프트웨어가 벽 속 배선을 바꾸는 관계"
+     ],
+     "a": 1,
+     "why": "상향 작용은 기반 제공, 하향 작용은 제어 작용이에요. 둘 다 있어서 양방향이에요."
+    },
+    {
+     "kind": "check",
+     "q": "현장에서 실제로 집을 구축하는 순서는?",
+     "choices": [
+      "L3 → L2 → L4 → L1",
+      "L4 → L3 → L2 → L1",
+      "L1 → L2 → L3 → L4",
+      "L2 → L1 → L4 → L3"
+     ],
+     "a": 2,
+     "why": "현장은 **Bottom-Up**, L1 전기부터 L4 AI까지 아래에서 위로예요. 1번은 이 수업 순서예요."
+    },
+    {
+     "kind": "english",
+     "head": "외워 둘 문장",
+     "en": "Lower layers give the physical foundation, and upper layers control them.",
+     "ko": "**기반-제어 관계(Foundation-Control Relationship)**: 아래 계층은 위 계층에 물리적 기반을 주고, 위 계층은 아래 설비를 제어해 공간 상태를 바꿔요.",
+     "tip": "받쳐 주면 Foundation, 조종하면 Control."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "현장 순서(L1 → L4)와 수업 순서(L3 → L2 → L4 → L1)를 바꿔 쓰지 마세요.",
+      "고치기 쉬운 건 위층 소프트웨어, 고치기 어려운 건 벽 속 배선이에요.",
+      "**지능형 공간 Architect(Architect)**는 직접 배선하는 **기술 시공자**가 아니라 전체를 맞추는 지휘자예요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "**기반-제어 관계(Foundation-Control Relationship)**: 아래는 받치고(Foundation), 위는 조종해요(Control).",
+      "아래 물리 기반부터 먼저 검증해요. 스마트 스위치는 **중성선(Neutral Line)** **3선식 배선(3-Wire Wiring)**으로 **플리커(Flicker)**를 막아요.",
+      "**기술 시공자**는 연주자, **지능형 공간 Architect(Architect)**는 **거주자 경험(User Experience)** 악보를 든 지휘자예요.",
+      "현장은 **Bottom-Up** L1 → L4, 수업은 L3 → L2 → L4 → L1.",
+      "오늘의 용어: 기반-제어 관계(Foundation-Control Relationship), 지능형 공간 Architect(Architect), 기술 시공자, Bottom-Up, 거주자 경험(User Experience), 플리커(Flicker), 3선식 배선(3-Wire Wiring)"
+     ]
+    }
+   ]
+  }
+ ]
+}

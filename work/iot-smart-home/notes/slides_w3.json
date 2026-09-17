@@ -1,0 +1,2330 @@
+{
+ "week": "3",
+ "title": "3주차. 무선통신 I: 허브와 근거리 무선",
+ "units": [
+  {
+   "id": "w3-1",
+   "title": "반장이 있는 집, 없는 집: 허브 방식과 논허브 방식",
+   "goal": "**허브 방식(Hub-based Type)**과 **논허브 방식(Hubless / Non-Hub Type)**의 연결 모양, 장단점, 인터넷이 끊겼을 때의 차이를 말할 수 있어요.",
+   "terms": [
+    {
+     "ko": "홈 허브",
+     "en": "Home Hub",
+     "say": "집 안 기기들을 한데 모아 주는 반장"
+    },
+    {
+     "ko": "허브 방식",
+     "en": "Hub-based Type",
+     "say": "센서들이 반장(허브)에게 모이는 연결 방법이에요."
+    },
+    {
+     "ko": "논허브 방식",
+     "en": "Hubless / Non-Hub Type",
+     "say": "반장 없이 기기가 각자 공유기나 스마트폰에 바로 붙는 방법이에요."
+    },
+    {
+     "ko": "공간 중심",
+     "en": "Space-centric",
+     "say": "집 전체를 한 팀으로 보는 생각이에요."
+    },
+    {
+     "ko": "기기 중심",
+     "en": "Device-centric",
+     "say": "기기 하나하나를 따로 연결하는 생각이에요."
+    },
+    {
+     "ko": "로컬 1-Loop",
+     "en": "Local 1-Loop",
+     "say": "감지부터 실행까지 집 안에서 한 바퀴를 다 도는 자동화예요."
+    },
+    {
+     "ko": "토폴로지",
+     "en": "Topology",
+     "say": "기기들이 이어진 모양이에요."
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "반장이 있는 집, 없는 집",
+     "sub": "허브 방식과 논허브 방식"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**허브 방식(Hub-based Type)**과 **논허브 방식(Hubless / Non-Hub Type)**을 연결 모양으로 구별해요.",
+      "인터넷이 끊겨도 **로컬 1-Loop(Local 1-Loop)**가 도는 까닭을 말해요.",
+      "비교표 숫자 100~200개, 2~3년을 외워요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "2주차에서 이어서",
+     "items": [
+      "2주차에 **1-Loop**를 배웠죠. 감지 → 전달 → 판단 → 실행, 한 바퀴예요.",
+      "**센서(Sensor)**가 느끼고, **액추에이터(Actuator)**가 손발처럼 움직였어요.",
+      "주문: 센서가 느끼고, 네트워크가 나르고, 허브와 플랫폼이 판단하고, 기기가 움직여요.",
+      "오늘은 그중 '판단'을 누가, 어디서 하느냐를 봐요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "반장이 있는 반, 없는 반",
+     "scene": "A반에는 반장이 있어요. 친구들이 말을 반장에게 모으면, 반장이 '창문 닫고 불 켜자' 하고 반 전체를 한꺼번에 챙겨요. B반에는 반장이 없어서 친구마다 교무실 선생님께 따로따로 찾아가요. 선생님이 자리를 비우면 B반은 아무것도 못 정해요.",
+     "map": [
+      [
+       "반장이 있는 A반",
+       "**허브 방식(Hub-based Type)**"
+      ],
+      [
+       "반장",
+       "**홈 허브(Home Hub)**"
+      ],
+      [
+       "반 전체를 한 팀으로 보기",
+       "**공간 중심(Space-centric)**"
+      ],
+      [
+       "각자 선생님께 따로 가기",
+       "**논허브 방식(Hubless / Non-Hub Type)**, **기기 중심(Device-centric)**"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저, 이름은 그다음",
+     "items": [
+      "센서들이 집 안의 전용 상자 하나에 모여요. 이 반장 상자가 **홈 허브(Home Hub)**예요.",
+      "반장에게 모이는 연결 방법을 **허브 방식(Hub-based Type)**이라고 해요.",
+      "반장 없이 기기가 공유기나 스마트폰에 바로 붙으면 **논허브 방식(Hubless / Non-Hub Type)**이에요.",
+      "기기들이 이어진 모양 자체는 **토폴로지(Topology)**라고 불러요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "두 방식의 연결 모양",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"118\" y=\"24\" font-size=\"16\" text-anchor=\"middle\" class=\"tb\">허브 방식</text><text x=\"362\" y=\"24\" font-size=\"16\" text-anchor=\"middle\" class=\"tb\">논허브 방식</text><line x1=\"240\" y1=\"34\" x2=\"240\" y2=\"250\" class=\"e\"/><rect x=\"73\" y=\"40\" width=\"90\" height=\"30\" rx=\"2\" class=\"box\"/><text x=\"118\" y=\"60\" font-size=\"14\" text-anchor=\"middle\" class=\"tb\">공유기</text><line x1=\"118\" y1=\"70\" x2=\"118\" y2=\"124\" class=\"e\"/><line x1=\"118\" y1=\"150\" x2=\"45\" y2=\"102\" class=\"e2 b1\"/><line x1=\"118\" y1=\"150\" x2=\"191\" y2=\"102\" class=\"e2 b1\"/><line x1=\"118\" y1=\"150\" x2=\"50\" y2=\"205\" class=\"e2 b1\"/><line x1=\"118\" y1=\"150\" x2=\"186\" y2=\"205\" class=\"e2 b1\"/><circle cx=\"45\" cy=\"102\" r=\"21\" class=\"n3\"/><text x=\"45\" y=\"107\" font-size=\"14\" text-anchor=\"middle\" class=\"tl\">센서</text><circle cx=\"191\" cy=\"102\" r=\"21\" class=\"n3\"/><text x=\"191\" y=\"107\" font-size=\"14\" text-anchor=\"middle\" class=\"tl\">센서</text><circle cx=\"50\" cy=\"205\" r=\"21\" class=\"n3\"/><text x=\"50\" y=\"210\" font-size=\"14\" text-anchor=\"middle\" class=\"tl\">센서</text><circle cx=\"186\" cy=\"205\" r=\"21\" class=\"n3\"/><text x=\"186\" y=\"210\" font-size=\"14\" text-anchor=\"middle\" class=\"tl\">센서</text><circle cx=\"118\" cy=\"150\" r=\"26\" class=\"n2\"/><text x=\"118\" y=\"155\" font-size=\"15\" text-anchor=\"middle\" class=\"tl\">허브</text><text x=\"118\" y=\"258\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">센서 → 허브 → 공유기</text><rect x=\"255\" y=\"40\" width=\"95\" height=\"30\" rx=\"2\" class=\"box\"/><text x=\"302.5\" y=\"60\" font-size=\"14\" text-anchor=\"middle\" class=\"tb\">스마트폰</text><rect x=\"378\" y=\"40\" width=\"90\" height=\"30\" rx=\"2\" class=\"box\"/><text x=\"423\" y=\"60\" font-size=\"14\" text-anchor=\"middle\" class=\"tb\">공유기</text><line x1=\"302\" y1=\"70\" x2=\"292\" y2=\"136\" class=\"e2 b2\"/><line x1=\"418\" y1=\"70\" x2=\"362\" y2=\"186\" class=\"e2 b2\"/><line x1=\"430\" y1=\"70\" x2=\"440\" y2=\"136\" class=\"e2 b2\"/><circle cx=\"292\" cy=\"160\" r=\"24\" class=\"n4 b2\"/><text x=\"292\" y=\"165\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b2\">조명</text><circle cx=\"362\" cy=\"212\" r=\"26\" class=\"n4 b2\"/><text x=\"362\" y=\"217\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b2\">플러그</text><circle cx=\"440\" cy=\"160\" r=\"24\" class=\"n4 b2\"/><text x=\"440\" y=\"165\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b2\">조명</text><text x=\"362\" y=\"258\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">기기가 각자 바로 연결</text></svg>",
+     "caption": "**토폴로지(Topology)**는 연결 모양이에요. 왼쪽이 **허브 방식(Hub-based Type)**, 오른쪽이 **논허브 방식(Hubless / Non-Hub Type)**이에요.",
+     "builds": 2
+    },
+    {
+     "kind": "points",
+     "head": "허브 방식: 공간 중심 로컬 자율망",
+     "items": [
+      "**허브 방식(Hub-based Type)**은 집 전체를 한 팀으로 보는 **공간 중심(Space-centric)** 연결이에요.",
+      "전기를 아주 조금 쓰는 센서가 세대 안 전용 **홈 허브(Home Hub)**에 붙어요.",
+      "허브 1대가 기기 100~200개 이상을 안정적으로 관리해요.",
+      "인터넷이 끊겨도 집 안에서 자동화가 계속 돌아요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "논허브 방식: 기기 중심 직결망",
+     "items": [
+      "**논허브 방식(Hubless / Non-Hub Type)**은 기기 하나하나를 따로 잇는 **기기 중심(Device-centric)** 연결이에요.",
+      "기기가 **와이파이(Wi-Fi)** 공유기나 스마트폰 **블루투스(Bluetooth)**에 바로 붙어요.",
+      "Bluetooth 5.0 SIG Mesh 는 블루투스 5.0판의 그물망 규격이에요. 허브 없이 조명을 묶어요.",
+      "두 방식은 대등한 선택지예요. 공간 크기와 목적에 맞춰 골라요."
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "허브 안에서 한 바퀴 도는 자동화",
+     "steps": [
+      "감지: 문 열림 **센서(Sensor)**가 자석이 떨어진 걸 느껴요.",
+      "전달: 신호가 근거리 무선으로 **홈 허브(Home Hub)**에 가요.",
+      "판단: 허브가 '밤이니 불을 켜자' 정해요. 인터넷이 필요 없어요.",
+      "실행: 현관 조명이 켜져요."
+     ],
+     "answer": "네 단계가 모두 집 안에서 끝나요. 이걸 **로컬 1-Loop(Local 1-Loop)**라고 해요.",
+     "given": "밤 11시, 인터넷은 끊긴 상태에서 현관문이 열려요"
+    },
+    {
+     "kind": "compare",
+     "head": "허브 방식 vs 논허브 방식",
+     "cols": [
+      "항목",
+      "허브 방식",
+      "논허브 방식"
+     ],
+     "rows": [
+      [
+       "핵심 생각",
+       "여러 기기를 자동화 하나로 통합",
+       "조명 같은 한 영역에 집중"
+      ],
+      [
+       "연결",
+       "Zigbee, Thread, Z-Wave, Matter → 전용 허브",
+       "Wi-Fi 공유기, 스마트폰에 직결, BLE Mesh"
+      ],
+      [
+       "기기 수",
+       "허브 1대당 100~200개 이상",
+       "너무 많으면 공유기(AP) 느려짐"
+      ],
+      [
+       "배터리",
+       "센서 2~3년 이상",
+       "상시 전원 위주, 잦은 충전"
+      ],
+      [
+       "인터넷 끊김",
+       "집 안 자동화 유지",
+       "클라우드 기능은 멈출 수 있음"
+      ],
+      [
+       "비용",
+       "허브 값이 들지만 확장 쉬움",
+       "허브 값 없음, 고급 조명이면 총비용 비슷"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "그래서 어떤 집에 무엇을?",
+     "items": [
+      "보안 센서, 도어락, 조명을 엮는 자동화가 필요하면 **허브 방식(Hub-based Type)** 투자가 필수예요.",
+      "자동화 없이 조명 품질과 개별 제어만 원하면 **논허브 방식(Hubless / Non-Hub Type)**으로 충분해요.",
+      "스위치를 바로 누르는 논허브 연결에는 '판단' 단계가 없어요.",
+      "그래서 슬라이드는 논허브 스위치를 '리모컨의 연장'이라고 불러요."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "**허브 방식(Hub-based Type)**의 설명으로 맞는 것은?",
+     "choices": [
+      "기기가 공유기에 각자 바로 붙는다",
+      "**공간 중심(Space-centric)** 로컬 자율망이다",
+      "'판단' 단계가 없다",
+      "허브 1대에 기기 10개까지만 붙는다"
+     ],
+     "a": 1,
+     "why": "1번과 3번은 **논허브 방식(Hubless / Non-Hub Type)**의 설명이에요. 허브 1대는 100~200개 이상을 받아요."
+    },
+    {
+     "kind": "check",
+     "q": "**기기 중심(Device-centric)**의 뜻은?",
+     "choices": [
+      "집 전체를 한 팀으로 묶는 생각",
+      "기기 하나하나를 따로 연결하는 생각",
+      "집 안에서 한 바퀴 도는 자동화",
+      "기기들이 이어진 모양"
+     ],
+     "a": 1,
+     "why": "1번은 **공간 중심(Space-centric)**, 3번은 **로컬 1-Loop(Local 1-Loop)**, 4번은 **토폴로지(Topology)**예요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "배터리 2~3'년'은 **허브 방식(Hub-based Type)** 센서예요. '개월'과 섞지 마세요.",
+      "**논허브 방식(Hubless / Non-Hub Type)**이 늘 싸진 않아요. 고급 조명을 고르면 총비용이 비슷해져요.",
+      "인터넷이 끊겨도 도는 건 허브 안의 판단 덕분이에요. 클라우드가 아니에요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "**허브 방식(Hub-based Type)**은 **공간 중심(Space-centric)**, 반장인 **홈 허브(Home Hub)**가 판단해요.",
+      "**논허브 방식(Hubless / Non-Hub Type)**은 **기기 중심(Device-centric)**, 기기가 공유기나 스마트폰에 바로 붙어요.",
+      "허브 1대 100~200개 이상, 센서 배터리 2~3년.",
+      "인터넷이 끊겨도 **로컬 1-Loop(Local 1-Loop)**는 집 안에서 돌아요.",
+      "오늘의 용어: 홈 허브(Home Hub), 허브 방식(Hub-based Type), 논허브 방식(Hubless / Non-Hub Type), 공간 중심(Space-centric), 기기 중심(Device-centric), 로컬 1-Loop(Local 1-Loop), 토폴로지(Topology)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w3-2",
+   "title": "느리지만 오래 가는 무선: WPAN",
+   "goal": "**WPAN(Wireless Personal Area Network)**의 뜻과 규격 번호, 빠른 와이파이 대신 WPAN 을 쓰는 까닭, 무선 범위 순서를 말할 수 있어요.",
+   "terms": [
+    {
+     "ko": "WPAN",
+     "en": "Wireless Personal Area Network",
+     "say": "느리지만 전기를 아주 조금 쓰는 근거리 무선망이에요."
+    },
+    {
+     "ko": "",
+     "en": "IEEE 802.15",
+     "say": "WPAN의 규칙책 번호예요."
+    },
+    {
+     "ko": "물리적 트레이드오프",
+     "en": "Trade-off",
+     "say": "하나를 주고 다른 하나를 받는 것이에요."
+    },
+    {
+     "ko": "WLAN",
+     "en": "Wireless Local Area Network",
+     "say": "집 안의 빠른 무선 인터넷망이에요."
+    },
+    {
+     "ko": "WMAN",
+     "en": "Wireless Metropolitan Area Network",
+     "say": "도시 하나 크기를 덮는 무선망이에요."
+    },
+    {
+     "ko": "WWAN",
+     "en": "Wireless Wide Area Network",
+     "say": "휴대폰 기지국으로 나라 전체를 잇는 무선망이에요."
+    },
+    {
+     "ko": "도달 거리",
+     "en": "Range",
+     "say": "전파가 얼마나 멀리 가는지예요."
+    },
+    {
+     "ko": "전송 속도",
+     "en": "Data Rate",
+     "say": "데이터를 얼마나 빨리 보내는지예요."
+    },
+    {
+     "ko": "통신 분업 설계",
+     "en": "Communication Division Design",
+     "say": "일을 잘하는 친구에게 맞는 일을 나눠 주는 설계예요."
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "느리지만 오래 가는 무선",
+     "sub": "WPAN 과 물리적 트레이드오프"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**WPAN(Wireless Personal Area Network)**의 뜻과 규칙책 번호를 말해요.",
+      "빠른 **와이파이(Wi-Fi)** 대신 느린 무선을 쓰는 까닭을 말해요.",
+      "범위 순서 WPAN < WLAN < WMAN < WWAN 을 외워요(기출 19번)."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞 단원에서 이어서",
+     "items": [
+      "앞에서 **허브 방식(Hub-based Type)**은 센서가 반장인 **홈 허브(Home Hub)**에 무선으로 붙는다고 했죠.",
+      "그 센서와 허브 사이의 가까운 무선이 오늘의 주인공이에요.",
+      "질문 하나: 빠른 **와이파이(Wi-Fi)**가 있는데 왜 느린 무선을 쓸까요?"
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "스마트폰과 손목시계",
+     "scene": "스마트폰은 영상도 보고 게임도 하느라 하루만 지나도 충전기를 찾아요. 시간만 알려 주는 손목시계는 동전만 한 배터리 하나로 몇 년을 버텨요. 두 물건을 다 가진 사람은 영상은 폰으로, 시간은 시계로 나눠 봐요.",
+     "map": [
+      [
+       "매일 충전하는 스마트폰",
+       "빠르지만 전기를 많이 먹는 **와이파이(Wi-Fi)**"
+      ],
+      [
+       "몇 년 가는 손목시계",
+       "느리지만 오래 가는 **WPAN(Wireless Personal Area Network)**"
+      ],
+      [
+       "할 일을 줄이고 오래 버티기",
+       "**물리적 트레이드오프(Trade-off)**"
+      ],
+      [
+       "폰은 폰대로, 시계는 시계대로",
+       "**통신 분업 설계(Communication Division Design)**"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저, 이름은 그다음",
+     "items": [
+      "사람이나 집 한 채를 중심으로, 수 m 에서 수십 m 안의 기기를 전기 조금 써서 잇는 무선망이 있어요.",
+      "이걸 **WPAN(Wireless Personal Area Network)**이라고 해요. P 는 Personal, '개인 곁'이라는 뜻이에요.",
+      "이 무선의 공식 규칙책 번호가 **IEEE 802.15**예요.",
+      "IEEE 는 '아이 트리플 이', 통신 규격에 번호를 붙이는 국제 학회예요. 802.15 는 '팔공이 점 일오'라고 읽어요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "와이파이 센서 vs WPAN 센서",
+     "cols": [
+      "항목",
+      "와이파이 센서",
+      "WPAN 센서"
+     ],
+     "rows": [
+      [
+       "배터리",
+       "2~3개월마다 충전",
+       "24~36개월 지속"
+      ],
+      [
+       "크기",
+       "배터리 때문에 두껍고 투박",
+       "부피가 크게 줄어듦"
+      ],
+      [
+       "인테리어",
+       "눈에 띄어 인테리어를 해침",
+       "눈에 안 띄게 매립(Invisibility)"
+      ],
+      [
+       "속도와 전기",
+       "빠름, 전기 소모 매우 큼",
+       "느림, 전기 아주 조금"
+      ]
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "손계산 1: 배터리는 몇 배 오래 갈까?",
+     "steps": [
+      "짧은 쪽끼리 비교해요. 24개월 ÷ 2개월 = 12.",
+      "긴 쪽끼리도 비교해요. 36개월 ÷ 3개월 = 12.",
+      "12개월은 1년이라서 24~36개월은 2~3년이에요."
+     ],
+     "answer": "**WPAN(Wireless Personal Area Network)** 센서가 약 12배 오래 가요. 동전 배터리 1개로 2~3년이에요.",
+     "given": "와이파이 센서 2~3개월, WPAN 센서 24~36개월"
+    },
+    {
+     "kind": "points",
+     "head": "속도를 양보하고 생명력을 얻다",
+     "items": [
+      "하나를 내주고 다른 하나를 받는 걸 **물리적 트레이드오프(Trade-off)**라고 해요.",
+      "**WPAN(Wireless Personal Area Network)**은 빠르기를 내줘요.",
+      "대신 동전 배터리 1개로 2~3년 가는 아주 작은 센서를 얻어요.",
+      "센서가 작아지니 벽이나 가구 속에 숨겨 달 수 있어요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "도달 거리와 전송 속도 지도",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"50\" y1=\"30\" x2=\"50\" y2=\"235\" class=\"e\"/><line x1=\"50\" y1=\"235\" x2=\"470\" y2=\"235\" class=\"e\"/><text x=\"58\" y=\"24\" font-size=\"14\" text-anchor=\"start\" class=\"tm\">전송 속도 ↑</text><text x=\"470\" y=\"258\" font-size=\"14\" text-anchor=\"end\" class=\"tm\">도달 거리 →</text><circle cx=\"66\" cy=\"222\" r=\"7\" class=\"n4 b1\"/><text x=\"80\" y=\"214\" font-size=\"14\" text-anchor=\"start\" class=\"t b1\">NFC 수 cm</text><circle cx=\"110\" cy=\"160\" r=\"8\" class=\"n4 b1\"/><text x=\"124\" y=\"152\" font-size=\"14\" text-anchor=\"start\" class=\"t b1\">UWB 수 m</text><rect x=\"160\" y=\"180\" width=\"190\" height=\"48\" rx=\"2\" class=\"n3 b2\"/><text x=\"255\" y=\"200\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b2\">WPAN 10~50m</text><text x=\"255\" y=\"220\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b2\">250kbps, 배터리 3년</text><rect x=\"285\" y=\"40\" width=\"185\" height=\"66\" rx=\"2\" class=\"box2 b3\"/><text x=\"377\" y=\"66\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">WLAN: Wi-Fi 5/6/7</text><text x=\"377\" y=\"92\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">50~100m, 최대 9.6Gbps</text><text x=\"377\" y=\"130\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">실제로는 벽 때문에 20m 내외</text></svg>",
+     "caption": "오른쪽일수록 **도달 거리(Range)**가 길고, 위일수록 **전송 속도(Data Rate)**가 빨라요. WPAN 은 아래, WLAN 은 오른쪽 위예요.",
+     "builds": 3
+    },
+    {
+     "kind": "steps",
+     "head": "손계산 2: 속도 차이는 얼마나?",
+     "steps": [
+      "kbps 는 1초에 천 비트, Gbps 는 1초에 십억 비트예요.",
+      "250kbps = 250 × 1,000 = 250,000 비트예요.",
+      "9.6Gbps = 9.6 × 1,000,000,000 = 9,600,000,000 비트예요.",
+      "9,600,000,000 ÷ 250,000 = 38,400 이에요."
+     ],
+     "answer": "최신 **와이파이(Wi-Fi)**가 약 38,400배 빨라요. 그래도 센서는 짧은 숫자만 보내니 **WPAN(Wireless Personal Area Network)**으로 충분해요.",
+     "given": "Zigbee 250kbps, Wi-Fi 7 최대 9.6Gbps"
+    },
+    {
+     "kind": "points",
+     "head": "그래서 나눠 써요",
+     "items": [
+      "빠른 **WLAN(Wireless Local Area Network)**은 홈캠 영상, 스마트폰, OTT 처럼 큰 데이터를 맡아요.",
+      "느린 **WPAN(Wireless Personal Area Network)**은 온도, 문 열림 같은 짧은 센서 값을 맡아요.",
+      "이렇게 용도에 맞게 일을 나누는 걸 **통신 분업 설계(Communication Division Design)**라고 해요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "통신 범위는 개인 → 건물 → 도시 → 나라",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"20\" y=\"40\" width=\"440\" height=\"215\" rx=\"2\" class=\"box\"/><text x=\"240\" y=\"64\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b4\">WWAN 광역, 나라 (150km 이상)</text><rect x=\"55\" y=\"80\" width=\"370\" height=\"165\" rx=\"2\" class=\"box\"/><text x=\"240\" y=\"104\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">WMAN 도시 (50km 이내)</text><rect x=\"95\" y=\"120\" width=\"290\" height=\"115\" rx=\"2\" class=\"box\"/><text x=\"240\" y=\"144\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b2\">WLAN 건물 (1~5km)</text><rect x=\"145\" y=\"160\" width=\"190\" height=\"65\" rx=\"2\" class=\"box2\"/><text x=\"240\" y=\"185\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">WPAN 개인</text><text x=\"240\" y=\"210\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">(10m 이내)</text></svg>",
+     "caption": "안쪽부터 WPAN < WLAN < **WMAN(Wireless Metropolitan Area Network)** < WWAN 이에요. 가운데 글자 P, L, M, W 순서로 넓어져요.",
+     "builds": 4
+    },
+    {
+     "kind": "check",
+     "q": "무선 네트워크의 통신 범위를 작은 것부터 바르게 나열한 것은? (기출 19번)",
+     "choices": [
+      "WPAN < WLAN < WMAN < WWAN",
+      "WLAN < WPAN < WMAN < WWAN",
+      "WPAN < WMAN < WLAN < WWAN",
+      "WPAN < WLAN < WWAN < WMAN"
+     ],
+     "a": 0,
+     "why": "개인(WPAN) → 건물(WLAN) → 도시(WMAN) → 나라(**WWAN(Wireless Wide Area Network)**) 순서예요."
+    },
+    {
+     "kind": "english",
+     "head": "외울 답안 문장",
+     "en": "WPAN 은 IEEE 802.15 기반 근거리 저전력 무선망으로, 속도를 양보하는 대신 동전 배터리로 2~3년 작동하는 초소형 센서를 가능하게 한다.",
+     "ko": "**WPAN(Wireless Personal Area Network)**은 느린 대신 오래 가요. 이게 **물리적 트레이드오프(Trade-off)**예요.",
+     "tip": "'느리게, 작게, 오래' 세 낱말을 먼저 떠올려요."
+    },
+    {
+     "kind": "check",
+     "q": "**전송 속도(Data Rate)**의 뜻은?",
+     "choices": [
+      "전파가 얼마나 멀리 가는지",
+      "데이터를 얼마나 빨리 보내는지",
+      "하나를 주고 하나를 받는 것",
+      "용도별로 나눠 쓰는 설계"
+     ],
+     "a": 1,
+     "why": "1번은 **도달 거리(Range)**, 3번은 **물리적 트레이드오프(Trade-off)**, 4번은 **통신 분업 설계(Communication Division Design)**예요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "WPAN 센서 24~36'개월', 와이파이 센서 2~3'개월'이에요. 단위를 꼭 봐요.",
+      "**WLAN(Wireless Local Area Network)**이 WPAN 보다 넓어요. IEEE 802.11 이 보이면 와이파이(기출 14번)예요.",
+      "와이파이 100m 는 이론값이에요. 벽이 있는 집에서는 20m 내외예요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "**WPAN(Wireless Personal Area Network)**은 **IEEE 802.15** 기반, 수 m~수십 m, 전기 아주 조금.",
+      "**물리적 트레이드오프(Trade-off)**: 속도를 내주고 2~3년 배터리를 받아요.",
+      "**도달 거리(Range)**와 **전송 속도(Data Rate)**를 보고 **통신 분업 설계(Communication Division Design)**를 해요.",
+      "범위 순서: WPAN < WLAN < WMAN < **WWAN(Wireless Wide Area Network)**.",
+      "오늘의 용어: WPAN(Wireless Personal Area Network), IEEE 802.15, 물리적 트레이드오프(Trade-off), WLAN(Wireless Local Area Network), WMAN(Wireless Metropolitan Area Network), WWAN(Wireless Wide Area Network), 도달 거리(Range), 전송 속도(Data Rate), 통신 분업 설계(Communication Division Design)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w3-3",
+   "title": "허브가 하는 세 가지 일과 네트워크 3대 장비",
+   "goal": "**홈 허브(Home Hub)**의 뜻과 3대 역할, 공유기(AP)와 허브와 라우터의 차이를 말할 수 있어요.",
+   "terms": [
+    {
+     "ko": "프로토콜",
+     "en": "Protocol",
+     "say": "기기끼리 대화할 때 지키는 말의 규칙이에요."
+    },
+    {
+     "ko": "프로토콜 번역",
+     "en": "Protocol Translation",
+     "say": "센서의 말을 인터넷의 말로 바꿔 주는 통역이에요."
+    },
+    {
+     "ko": "로컬 오케스트레이션",
+     "en": "Local Orchestration",
+     "say": "인터넷이 없어도 집 안에서 지휘하는 역할이에요."
+    },
+    {
+     "ko": "게이트웨이",
+     "en": "Gateway",
+     "say": "다른 네트워크 사이의 문지기예요."
+    },
+    {
+     "ko": "커미셔닝",
+     "en": "Commissioning",
+     "say": "새 기기를 우리 집 시스템에 정식 등록하는 절차"
+    },
+    {
+     "ko": "AP",
+     "en": "Access Point",
+     "say": "무선 인터넷을 뿌려 주는 기지국 상자"
+    },
+    {
+     "ko": "라우터",
+     "en": "Router",
+     "say": "쪽지를 옆 친구에게 건네주는 전달자예요."
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "허브가 하는 세 가지 일",
+     "sub": "번역, 지휘, 보안 관리"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**홈 허브(Home Hub)**의 뜻을 한 줄로 말해요.",
+      "3대 역할의 이름과 부제를 짝지어요.",
+      "**AP(Access Point)**, 허브, **라우터(Router)**를 구별해요(기출 35번, 36번)."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞에서 본 두 낱말",
+     "items": [
+      "**WPAN(Wireless Personal Area Network)**은 느리지만 오래 가는 근거리 무선이었죠.",
+      "**로컬 1-Loop(Local 1-Loop)**는 감지부터 실행까지 집 안에서 한 바퀴 도는 자동화였죠.",
+      "오늘은 이 둘을 잇는 반장, **홈 허브(Home Hub)**의 일을 봐요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "허브는 반장이자 통역사",
+     "scene": "우리 반에 한국어, 영어, 일본어를 쓰는 친구가 섞여 있어요. 반장이 가운데서 말을 옮겨 주니 다 같이 놀이를 정할 수 있어요. 선생님이 출장 가도 반장이 알아서 청소 순서를 지휘하고, 새 전학생이 오면 명단에 올리고 사물함 열쇠도 나눠 줘요.",
+     "map": [
+      [
+       "친구마다 다른 말",
+       "**프로토콜(Protocol)**: 기기마다 쓰는 언어"
+      ],
+      [
+       "가운데서 말 옮겨 주기",
+       "**프로토콜 번역(Protocol Translation)**"
+      ],
+      [
+       "선생님 없이 반 지휘하기",
+       "**로컬 오케스트레이션(Local Orchestration)**"
+      ],
+      [
+       "전학생 등록과 열쇠 나눠 주기",
+       "**커미셔닝(Commissioning)**과 암호화 키 분배"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저, 이름은 그다음",
+     "items": [
+      "기기끼리 대화할 때 지키는 말의 규칙이 있어요. 이게 **프로토콜(Protocol)**이에요.",
+      "센서의 무선 말을 인터넷 말로 옮기는 허브의 일은 **프로토콜 번역(Protocol Translation)**이에요.",
+      "인터넷이 없어도 집 안에서 허브가 직접 판단해 지휘하는 일은 **로컬 오케스트레이션(Local Orchestration)**이에요.",
+      "새 기기를 우리 집 시스템에 정식 등록하는 절차는 **커미셔닝(Commissioning)**이에요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "스마트홈 허브의 정의",
+     "items": [
+      "**홈 허브(Home Hub)**는 집 IoT 의 중앙 제어 장치예요.",
+      "서로 다른 무선 **프로토콜(Protocol)**(Zigbee, Thread, Z-Wave)을 이어 줘요.",
+      "집 안에서 스스로 계산해 센서와 액추에이터 사이 자동화를 총괄해요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "허브의 3대 역할",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"48\" cy=\"60\" r=\"26\" class=\"n3\"/><text x=\"48\" y=\"65\" font-size=\"14\" text-anchor=\"middle\" class=\"tl\">센서</text><rect x=\"185\" y=\"36\" width=\"110\" height=\"50\" rx=\"2\" class=\"box2\"/><text x=\"240\" y=\"68\" font-size=\"18\" text-anchor=\"middle\" class=\"tb\">허브</text><rect x=\"372\" y=\"36\" width=\"96\" height=\"50\" rx=\"2\" class=\"box\"/><text x=\"420\" y=\"67\" font-size=\"16\" text-anchor=\"middle\" class=\"tb\">인터넷</text><line x1=\"76\" y1=\"60\" x2=\"173\" y2=\"60\" class=\"e2 b1\"/><polygon points=\"183.0,60.0 173.0,65.0 173.0,55.0\" class=\"arrow b1\"/><text x=\"128\" y=\"50\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">WPAN</text><line x1=\"297\" y1=\"60\" x2=\"360\" y2=\"60\" class=\"e2 b1\"/><polygon points=\"370.0,60.0 360.0,65.0 360.0,55.0\" class=\"arrow b1\"/><text x=\"334\" y=\"50\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">TCP/IP</text><rect x=\"6\" y=\"120\" width=\"150\" height=\"60\" rx=\"2\" class=\"box b1\"/><text x=\"81\" y=\"146\" font-size=\"14\" text-anchor=\"middle\" class=\"tb b1\">1. 프로토콜 번역</text><text x=\"81\" y=\"164\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">이종 통신 브릿지</text><rect x=\"165\" y=\"120\" width=\"150\" height=\"60\" rx=\"2\" class=\"box b2\"/><text x=\"240\" y=\"146\" font-size=\"14\" text-anchor=\"middle\" class=\"tb b2\">2. 로컬 지휘</text><text x=\"240\" y=\"164\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">1-Loop 로컬 실행</text><rect x=\"324\" y=\"120\" width=\"150\" height=\"60\" rx=\"2\" class=\"box b3\"/><text x=\"399\" y=\"146\" font-size=\"14\" text-anchor=\"middle\" class=\"tb b3\">3. 보안, 기기 관리</text><text x=\"399\" y=\"164\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">네트워크 게이트웨이</text><text x=\"81\" y=\"212\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">센서 말 → 인터넷 말</text><text x=\"240\" y=\"212\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">인터넷 끊겨도 제어</text><text x=\"399\" y=\"212\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">등록, 키 분배</text></svg>",
+     "caption": "센서의 무선 신호를 인터넷 규칙 TCP/IP 로 바꾸는 것이 **프로토콜 번역(Protocol Translation)**이에요. TCP/IP 는 인터넷 기본 규칙이에요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "역할 2와 역할 3 자세히",
+     "items": [
+      "**로컬 오케스트레이션(Local Orchestration)**의 부제는 '1-Loop 로컬 실행'이에요.",
+      "밖의 인터넷이 마비돼도 허브가 센서 값을 판단해 조명, 밸브를 제어해요.",
+      "역할 3 보안 및 디바이스 관리의 부제는 '네트워크 **게이트웨이(Gateway)**'예요.",
+      "**커미셔닝(Commissioning)**, 암호화 키 분배, 상태 맞추기, 펌웨어(기계 속 기본 프로그램) 업데이트를 맡아요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "네트워크 3대 핵심 장비",
+     "cols": [
+      "항목",
+      "공유기(AP)",
+      "스마트홈 허브",
+      "Zigbee/Thread 라우터"
+     ],
+     "rows": [
+      [
+       "별명",
+       "광대역 관문",
+       "지능형홈 두뇌",
+       "전파 징검다리"
+      ],
+      [
+       "기능",
+       "빠르고 큰 인터넷 데이터 길 안내",
+       "WPAN 코디네이터 + 집 안 자동화",
+       "상시 전원으로 메시 패킷 중계"
+      ],
+      [
+       "쓰는 곳",
+       "PC, 스마트폰, OTT, 홈캠",
+       "배터리 센서, 액추에이터 제어",
+       "220V 스마트 스위치, 플러그, 조명"
+      ],
+      [
+       "특징",
+       "전기를 많이 먹어 배터리 센서 직결 불가",
+       "1-Loop '판단'이 일어나는 곳",
+       "벽을 넘으며 약해지는 신호 보완, 망 확장"
+      ]
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "신호가 지나가는 길",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"40\" cy=\"130\" r=\"26\" class=\"n3 b1\"/><text x=\"40\" y=\"135\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b1\">센서</text><line x1=\"68\" y1=\"130\" x2=\"118\" y2=\"130\" class=\"e2 b2\"/><polygon points=\"128.0,130.0 118.0,135.0 118.0,125.0\" class=\"arrow b2\"/><circle cx=\"160\" cy=\"130\" r=\"30\" class=\"n b2\"/><text x=\"160\" y=\"135\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b2\">라우터</text><line x1=\"192\" y1=\"130\" x2=\"242\" y2=\"130\" class=\"e2 b3\"/><polygon points=\"252.0,130.0 242.0,135.0 242.0,125.0\" class=\"arrow b3\"/><circle cx=\"285\" cy=\"130\" r=\"30\" class=\"n2 b3\"/><text x=\"285\" y=\"135\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b3\">허브</text><line x1=\"317\" y1=\"130\" x2=\"362\" y2=\"130\" class=\"e2 b4\"/><polygon points=\"372.0,130.0 362.0,135.0 362.0,125.0\" class=\"arrow b4\"/><circle cx=\"410\" cy=\"130\" r=\"36\" class=\"n b4\"/><text x=\"410\" y=\"135\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b4\">공유기</text><text x=\"40\" y=\"185\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b1\">배터리</text><text x=\"160\" y=\"185\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">징검다리</text><text x=\"285\" y=\"185\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">두뇌</text><text x=\"410\" y=\"185\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b4\">관문</text><text x=\"240\" y=\"60\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b4\">센서 → 라우터 → 허브 → 공유기 → 인터넷</text></svg>",
+     "caption": "**라우터(Router)**는 벽 너머 센서 신호를 이어 주고, 허브가 판단하고, **AP(Access Point)** 공유기가 인터넷으로 내보내요.",
+     "builds": 4
+    },
+    {
+     "kind": "points",
+     "head": "장비마다 한 줄씩",
+     "items": [
+      "**AP(Access Point)**: 집과 인터넷 사이의 넓은 대문. 빠르지만 배터리 센서는 못 붙여요.",
+      "**홈 허브(Home Hub)**: 두뇌. **1-Loop**의 '판단'이 여기서 일어나요.",
+      "**라우터(Router)**: 징검다리. 220V 콘센트 전기가 늘 들어오는 기기가 신호를 이어 줘요.",
+      "외우기: 대문(AP), 두뇌(허브), 징검다리(라우터)."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "집 안과 밖 인터넷 사이 경계에서 트래픽이 넘쳐 모든 기기 인터넷이 느려졌어요. 한계에 닿은 장치는? (기출 35번)",
+     "choices": [
+      "무선 공유기",
+      "월패드",
+      "스마트폰",
+      "스마트 TV"
+     ],
+     "a": 0,
+     "why": "집과 인터넷의 경계에서 모든 데이터를 받아 넘기는 대문은 공유기, 즉 **AP(Access Point)**예요. 나머지는 공유기 뒤에 붙은 기기예요."
+    },
+    {
+     "kind": "check",
+     "q": "허브 또는 **게이트웨이(Gateway)**의 역할로 가장 적절하지 않은 것은? (기출 36번)",
+     "choices": [
+      "다른 통신 방식 기기 사이 연결을 중계한다",
+      "기기 상태를 모아 플랫폼에 전달한다",
+      "플랫폼 명령을 기기에 전달한다",
+      "모든 기기의 통신 규격을 자동으로 똑같이 바꾼다"
+     ],
+     "a": 3,
+     "why": "허브는 통역만 해요. **지그비(Zigbee)** 기기는 계속 지그비 말을 써요. 이게 **프로토콜 번역(Protocol Translation)**이에요."
+    },
+    {
+     "kind": "check",
+     "q": "**커미셔닝(Commissioning)**의 뜻은?",
+     "choices": [
+      "새 기기를 시스템에 정식 등록하는 절차",
+      "신호를 이어 주는 기기",
+      "인터넷 없이 판단하는 일",
+      "집과 인터넷 사이 대문"
+     ],
+     "a": 0,
+     "why": "2번은 **라우터(Router)**, 3번은 **로컬 오케스트레이션(Local Orchestration)**, 4번은 **AP(Access Point)**예요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "허브는 번역하고 중계할 뿐, 기기의 **프로토콜(Protocol)**을 바꾸지 않아요.",
+      "실기 가이드북은 같은 방식끼리 잇는 건 허브, 다른 방식끼리 잇는 건 **게이트웨이(Gateway)**로 나눠요.",
+      "여기서 **라우터(Router)**는 인터넷 공유기가 아니라 Zigbee, Thread 그물망의 중계 기기예요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "허브 3대 역할: **프로토콜 번역(Protocol Translation)**, **로컬 오케스트레이션(Local Orchestration)**, 보안 및 디바이스 관리.",
+      "역할 3의 부제는 네트워크 **게이트웨이(Gateway)**, 기기 등록은 **커미셔닝(Commissioning)**이에요.",
+      "3대 장비: **AP(Access Point)**(대문), 허브(두뇌), **라우터(Router)**(징검다리).",
+      "허브는 통역사예요. **프로토콜(Protocol)**을 바꾸지는 않아요.",
+      "오늘의 용어: 프로토콜(Protocol), 프로토콜 번역(Protocol Translation), 로컬 오케스트레이션(Local Orchestration), 게이트웨이(Gateway), 커미셔닝(Commissioning), AP(Access Point), 라우터(Router)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w3-4",
+   "title": "반장의 자리 정하기: 허브 설치 형태와 배치",
+   "goal": "허브 설치 형태 3가지의 장단점과, 집 안 허브 배치 3대 원칙을 이유와 함께 말할 수 있어요.",
+   "terms": [
+    {
+     "ko": "독립형 전용 허브",
+     "en": "Standalone Hub",
+     "say": "허브만 하는 따로 된 작은 상자예요."
+    },
+    {
+     "ko": "가전/스피커 내장형 허브",
+     "en": "Embedded Hub",
+     "say": "TV나 스피커 안에 숨어 있는 허브예요."
+    },
+    {
+     "ko": "아파트 월패드 연동형 허브",
+     "en": "Wallpad & Bridge Hub",
+     "say": "아파트 월패드와 센서를 이어 주는 다리 허브예요."
+    },
+    {
+     "ko": "세대단말기",
+     "en": "Wall Pad",
+     "say": "현관이나 거실 벽에 붙은 집 조종 화면"
+    },
+    {
+     "ko": "브릿지",
+     "en": "Bridge",
+     "say": "말이 다른 두 기기 사이에 놓는 다리예요."
+    },
+    {
+     "ko": "상시 전원",
+     "en": "Always-on Power",
+     "say": "하루 24시간 절대 꺼지지 않는 전기예요."
+    },
+    {
+     "ko": "금속 차폐",
+     "en": "Metal Shielding",
+     "say": "금속이 전파를 가로막는 것이에요."
+    },
+    {
+     "ko": "음영 지역",
+     "en": "Dead Zone",
+     "say": "전파가 잘 안 닿는 그늘진 곳이에요."
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "반장의 자리 정하기",
+     "sub": "허브 설치 형태 3가지, 배치 3대 원칙"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "허브 설치 형태 3가지를 장점과 약점으로 구별해요.",
+      "허브를 어디에 두면 좋은지, 어디는 안 되는지 말해요.",
+      "**음영 지역(Dead Zone)**이 생기는 까닭을 설명해요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞 단원에서 이어서",
+     "items": [
+      "**홈 허브(Home Hub)**는 번역하고 지휘하는 두뇌라고 했죠.",
+      "**라우터(Router)**는 늘 전기가 들어와 신호를 이어 주는 징검다리였어요.",
+      "두뇌가 아무리 좋아도 자리를 잘못 잡으면 말이 안 들려요.",
+      "오늘은 허브의 모양과 자리를 봐요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "반장은 교실 한가운데에",
+     "scene": "반장이 교실 맨 구석 청소함 안에 들어가 앉았다고 해 봐요. 철문에 막혀 반 친구들 목소리가 반장에게 닿지 않아요. 반장을 교실 한가운데 자리로 옮기니 앞줄도 뒷줄도 말이 잘 들려요. 그리고 반장이 수업 중에 자꾸 조퇴하면 반 전체가 멈춰요.",
+     "map": [
+      [
+       "교실 한가운데 자리",
+       "집의 중심인 거실 중앙, 복도 벽"
+      ],
+      [
+       "철문 달린 청소함",
+       "**금속 차폐(Metal Shielding)**: 금속 분전함, 냉장고 뒤"
+      ],
+      [
+       "목소리가 닿지 않는 구석",
+       "**음영 지역(Dead Zone)**"
+      ],
+      [
+       "조퇴하지 않는 반장",
+       "**상시 전원(Always-on Power)** 콘센트"
+      ]
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "허브 설치 형태 3가지",
+     "cols": [
+      "형태",
+      "좋은 점",
+      "조심할 점"
+     ],
+     "rows": [
+      [
+       "**독립형 전용 허브(Standalone Hub)**",
+       "안테나 성능 좋음, 원하는 자리에 둠",
+       "따로 어댑터 전원과 둘 곳 필요"
+      ],
+      [
+       "**가전/스피커 내장형 허브(Embedded Hub)**",
+       "따로 살 필요 없음, 인테리어 깔끔",
+       "그 가전 전원을 끄면 센서망 전체 마비"
+      ],
+      [
+       "**아파트 월패드 연동형 허브(Wallpad & Bridge Hub)**",
+       "월패드와 집 안 센서를 이어 줌",
+       "허브 내장 월패드가 없어 브릿지 허브 추가"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저, 이름은 그다음",
+     "items": [
+      "허브 일만 하는 작고 따로 된 상자가 **독립형 전용 허브(Standalone Hub)**예요.",
+      "TV, 냉장고, AI 스피커 속에 숨어 있는 허브는 **가전/스피커 내장형 허브(Embedded Hub)**예요.",
+      "아파트 벽의 집 조종 화면이 **세대단말기(Wall Pad)**예요. 흔히 월패드라고 불러요.",
+      "말이 다른 두 기기 사이에 놓는 다리 기기가 **브릿지(Bridge)**예요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "월패드만으로는 왜 안 될까?",
+     "items": [
+      "지금 아파트 **세대단말기(Wall Pad)** 중에는 스마트 허브가 들어 있는 게 없어요.",
+      "그래서 **독립형 전용 허브(Standalone Hub)** 모양의 **브릿지(Bridge)** 허브를 하나 더 달아요.",
+      "이 브릿지가 월패드와 집 안 센서망을 돌아서 이어 줘요.",
+      "이 방식이 **아파트 월패드 연동형 허브(Wallpad & Bridge Hub)**예요."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "TV 속 허브로 센서망을 만들었는데, TV 전원 플러그를 뽑았더니 센서가 모두 멈췄어요. 이 허브 형태는?",
+     "choices": [
+      "**독립형 전용 허브(Standalone Hub)**",
+      "**가전/스피커 내장형 허브(Embedded Hub)**",
+      "**아파트 월패드 연동형 허브(Wallpad & Bridge Hub)**",
+      "**브릿지(Bridge)** 허브"
+     ],
+     "a": 1,
+     "why": "**가전/스피커 내장형 허브(Embedded Hub)**는 본체 가전 전원이 꺼지면 센서망 전체가 마비돼요."
+    },
+    {
+     "kind": "figure",
+     "head": "우리 집 평면도에서 허브 자리 찾기",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"40\" y=\"30\" width=\"400\" height=\"220\" rx=\"2\" class=\"box\"/><line x1=\"240\" y1=\"30\" x2=\"240\" y2=\"250\" class=\"e\"/><line x1=\"40\" y1=\"140\" x2=\"240\" y2=\"140\" class=\"e\"/><text x=\"140\" y=\"110\" font-size=\"15\" text-anchor=\"middle\" class=\"tm\">침실 1</text><text x=\"140\" y=\"228\" font-size=\"15\" text-anchor=\"middle\" class=\"tm\">주방, 다용도실</text><text x=\"380\" y=\"228\" font-size=\"15\" text-anchor=\"middle\" class=\"tm\">거실</text><circle cx=\"70\" cy=\"60\" r=\"16\" class=\"n4 b1\"/><text x=\"70\" y=\"65\" font-size=\"15\" text-anchor=\"middle\" class=\"tl b1\">A</text><text x=\"158\" y=\"65\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">금속 분전함 X</text><circle cx=\"210\" cy=\"200\" r=\"16\" class=\"n4 b1\"/><text x=\"210\" y=\"205\" font-size=\"15\" text-anchor=\"middle\" class=\"tl b1\">C</text><text x=\"160\" y=\"176\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">냉장고 뒤 X</text><circle cx=\"340\" cy=\"140\" r=\"52\" class=\"hl b2\"/><circle cx=\"340\" cy=\"140\" r=\"16\" class=\"n2 b2\"/><text x=\"340\" y=\"145\" font-size=\"15\" text-anchor=\"middle\" class=\"tl b2\">B</text><text x=\"340\" y=\"80\" font-size=\"14\" text-anchor=\"middle\" class=\"tb b2\">거실 중앙 (최적)</text><circle cx=\"240\" cy=\"140\" r=\"16\" class=\"n3 b3\"/><text x=\"240\" y=\"145\" font-size=\"15\" text-anchor=\"middle\" class=\"tl b3\">D</text><text x=\"300\" y=\"216\" font-size=\"14\" text-anchor=\"middle\" class=\"tb b3\">D: 복도 벽 (추천)</text></svg>",
+     "caption": "B 거실 중앙과 D 세대 중심 복도는 좋아요. A 금속 분전함과 C 냉장고 뒤는 **금속 차폐(Metal Shielding)**로 안 돼요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "배치 원칙 1: 집의 한가운데",
+     "items": [
+      "현관 구석 대신 거실 중앙에 두어요.",
+      "그러면 허브를 중심으로 반경 10m, 공처럼 둥근 무선 범위가 생겨요.",
+      "반경은 가운데에서 가장자리까지 거리예요. 끝에서 끝은 그 두 배라서 20m 예요.",
+      "구석에 두면 이 공의 절반이 벽 밖으로 버려져요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "배치 원칙 2, 3: 꺼지지 않는 전기, 금속 피하기",
+     "items": [
+      "하루 24시간 절대 꺼지지 않는 전기를 **상시 전원(Always-on Power)**이라고 해요.",
+      "벽 스위치로 꺼지는 콘센트는 안 돼요. 허브용 콘센트를 따로 잡아요.",
+      "금속이 전파를 튕기고 막는 걸 **금속 차폐(Metal Shielding)**라고 해요.",
+      "금속 분전반 속, 대형 냉장고 뒤는 신호가 막히고 모터 잡음까지 섞여요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "전파 그늘이 생기는 곳",
+     "items": [
+      "금속판이 전파를 튕겨 내고 막으면 그 뒤쪽은 신호가 거의 안 닿아요.",
+      "이렇게 전파가 잘 안 닿는 그늘진 곳을 **음영 지역(Dead Zone)**이라고 해요.",
+      "**음영 지역(Dead Zone)**의 센서는 신호가 끊기고 반응이 늦어져요.",
+      "8단원에서 이 그늘을 숫자로 재는 법을 배워요."
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "체크리스트로 허브 자리 고르기",
+     "steps": [
+      "1. 집의 한가운데인가? 거실장 위와 복도 벽이 남아요.",
+      "2. **상시 전원(Always-on Power)** 콘센트가 있는가? 스위치로 꺼지는 콘센트는 빼요.",
+      "3. 금속이나 큰 가전 뒤가 아닌가? 분전함과 냉장고 뒤는 이미 탈락이에요.",
+      "세 질문을 모두 통과한 곳을 골라요."
+     ],
+     "answer": "거실장 위(B)나 복도 벽(D)이에요. **음영 지역(Dead Zone)**을 만들지 않는 자리예요.",
+     "given": "후보: 금속 분전함 속, 거실장 위, 냉장고 뒤, 복도 벽"
+    },
+    {
+     "kind": "check",
+     "q": "**음영 지역(Dead Zone)**의 뜻은?",
+     "choices": [
+      "전파가 잘 안 닿는 그늘진 곳",
+      "24시간 꺼지지 않는 전기",
+      "허브만 하는 따로 된 상자",
+      "금속이 전파를 막는 현상"
+     ],
+     "a": 0,
+     "why": "2번은 **상시 전원(Always-on Power)**, 3번은 **독립형 전용 허브(Standalone Hub)**, 4번은 **금속 차폐(Metal Shielding)**예요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "원본 11쪽 글은 A 를 '현관 구석'이라 하지만 그림의 A 는 금속 분전함이에요. 핵심은 금속 속이라 안 된다는 거예요.",
+      "**가전/스피커 내장형 허브(Embedded Hub)**는 따로 살 필요는 없지만 본체 전원에 운명이 묶여요.",
+      "허브 콘센트는 **상시 전원(Always-on Power)**이어야 해요. 스위치 콘센트는 탈락이에요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "형태 3가지: 독립형 전용, 가전/스피커 내장형, **아파트 월패드 연동형 허브(Wallpad & Bridge Hub)**.",
+      "**세대단말기(Wall Pad)**에는 허브가 없어서 **브릿지(Bridge)** 허브를 더해요.",
+      "배치 원칙: 집 중앙(반경 10m), **상시 전원(Always-on Power)**, **금속 차폐(Metal Shielding)** 피하기.",
+      "금속 뒤에는 **음영 지역(Dead Zone)**이 생겨요.",
+      "오늘의 용어: 독립형 전용 허브(Standalone Hub), 가전/스피커 내장형 허브(Embedded Hub), 아파트 월패드 연동형 허브(Wallpad & Bridge Hub), 세대단말기(Wall Pad), 브릿지(Bridge), 상시 전원(Always-on Power), 금속 차폐(Metal Shielding), 음영 지역(Dead Zone)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w3-5",
+   "title": "전파의 차선: 2.4GHz 와 900MHz, 그리고 Z-Wave",
+   "goal": "2.4GHz 대역과 Sub-1GHz(900MHz) 대역의 성질 차이, Z-Wave 의 쓰임, 와이파이와 지그비의 채널 간섭 대책을 말할 수 있어요.",
+   "terms": [
+    {
+     "ko": "주파수 대역",
+     "en": "Frequency Band",
+     "say": "전파가 다니는 차선이에요."
+    },
+    {
+     "ko": "2.4GHz 대역",
+     "en": "2.4 GHz Band",
+     "say": "짧은 파장으로 똑바로 달리는, 사람 많은 차선이에요."
+    },
+    {
+     "ko": "",
+     "en": "Sub-1GHz",
+     "say": "긴 파장으로 벽을 잘 넘는 한적한 차선이에요."
+    },
+    {
+     "ko": "ISM 대역",
+     "en": "ISM Band",
+     "say": "면허 없이 누구나 쓸 수 있는 공용 전파 차선이에요."
+    },
+    {
+     "ko": "전파 직진성",
+     "en": "Straightness of Propagation",
+     "say": "전파가 똑바로만 가려는 성질이에요."
+    },
+    {
+     "ko": "회절",
+     "en": "Diffraction",
+     "say": "전파가 장애물을 돌아서 가는 성질이에요."
+    },
+    {
+     "ko": "투과력",
+     "en": "Penetration",
+     "say": "전파가 벽을 뚫고 지나가는 힘이에요."
+    },
+    {
+     "ko": "지웨이브",
+     "en": "Z-Wave",
+     "say": "900MHz로 벽을 잘 넘는 보안 담당 무선이에요."
+    },
+    {
+     "ko": "채널 간섭",
+     "en": "Channel Interference",
+     "say": "같은 길을 쓰는 무선끼리 부딪혀 말이 안 들리는 것"
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "전파의 차선",
+     "sub": "2.4GHz 와 900MHz, 그리고 Z-Wave"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "2.4GHz 와 900MHz 를 소리 내어 읽고 뜻을 말해요.",
+      "파장이 짧은 전파와 긴 전파의 성질을 비교해요.",
+      "와이파이와 지그비가 부딪힐 때 대책을 골라요(기출 25번)."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞에서 이어서",
+     "items": [
+      "**WPAN(Wireless Personal Area Network)**은 느리지만 오래 가는 근거리 무선이었죠.",
+      "앞 단원에서 **금속 차폐(Metal Shielding)**가 전파를 막아 **음영 지역(Dead Zone)**을 만든다고 했어요.",
+      "오늘은 전파가 어떤 '차선'을 달리는지, 차선마다 성질이 어떻게 다른지 봐요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "라디오 채널과 도로 차선",
+     "scene": "라디오를 돌리면 채널마다 다른 방송이 나와요. 같은 채널에 두 방송국이 동시에 틀면 소리가 뒤섞여 아무것도 못 알아들어요. 도시 한복판 큰길은 누구나 달릴 수 있어서 늘 막히고, 시골의 전용 차선은 한적해서 쌩쌩 달려요.",
+     "map": [
+      [
+       "라디오 채널, 도로 차선",
+       "**주파수 대역(Frequency Band)**"
+      ],
+      [
+       "누구나 달리는 도심 큰길",
+       "**ISM 대역(ISM Band)**인 **2.4GHz 대역(2.4 GHz Band)**"
+      ],
+      [
+       "나라가 정해 준 한적한 차선",
+       "**Sub-1GHz** 900MHz 대역"
+      ],
+      [
+       "같은 채널에서 소리가 뒤섞임",
+       "**채널 간섭(Channel Interference)**"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "숫자부터 소리 내어 읽기",
+     "items": [
+      "Hz 는 헤르츠, 1초에 몇 번 출렁이는지 센 수예요.",
+      "2.4GHz 는 '이 점 사 기가헤르츠'. 1초에 24억 번 출렁이는 전파예요.",
+      "900MHz 는 '구백 메가헤르츠'. 1초에 9억 번 출렁여요.",
+      "Sub-1GHz 는 '1GHz 아래'라는 뜻이에요. 900MHz 가 여기에 들어가요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저, 이름은 그다음",
+     "items": [
+      "전파가 다니는 정해진 차선이 있어요. 이게 **주파수 대역(Frequency Band)**이에요.",
+      "면허 없이 전 세계 누구나 쓰는 공용 차선은 **ISM 대역(ISM Band)**이에요. 2.4GHz 가 대표예요.",
+      "Zigbee, BLE, Thread, 와이파이가 함께 쓰는 차선이 **2.4GHz 대역(2.4 GHz Band)**이에요.",
+      "나라마다 따로 정해 주는 900MHz 근처 차선이 **Sub-1GHz**예요."
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "손계산: 파장은 얼마나 길까?",
+     "steps": [
+      "파장은 파도 꼭대기에서 다음 꼭대기까지의 길이예요.",
+      "2.4GHz: 300,000,000 ÷ 2,400,000,000 = 0.125m, 즉 12.5cm 예요.",
+      "920MHz: 300,000,000 ÷ 920,000,000 = 약 0.326m, 즉 약 32.6cm 예요.",
+      "32.6 ÷ 12.5 = 약 2.6 이에요."
+     ],
+     "answer": "900MHz 대 전파의 파장이 약 2.6배 길어요. 주파수가 낮을수록 파장이 길어요.",
+     "given": "전파의 빠르기는 1초에 3억 m. 파장 = 빠르기 ÷ 주파수"
+    },
+    {
+     "kind": "figure",
+     "head": "짧은 파장과 긴 파장이 벽을 만나면",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"226\" y=\"30\" width=\"28\" height=\"220\" rx=\"2\" class=\"n\"/><text x=\"240\" y=\"24\" font-size=\"14\" text-anchor=\"middle\" class=\"tb\">벽</text><text x=\"110\" y=\"50\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">2.4GHz 짧은 파장</text><polyline points=\"20.0,95.0 21.3,89.5 22.5,84.6 23.8,81.0 25.1,79.2 26.3,79.3 27.6,81.4 28.8,85.1 30.1,90.1 31.4,95.6 32.6,101.1 33.9,105.9 35.1,109.3 36.4,110.9 37.7,110.6 38.9,108.3 40.2,104.4 41.5,99.3 42.7,93.7 44.0,88.3 45.2,83.7 46.5,80.5 47.8,79.0 49.0,79.6 50.3,82.1 51.6,86.1 52.8,91.3 54.1,96.9 55.4,102.3 56.6,106.7 57.9,109.8 59.1,111.0 60.4,110.2 61.7,107.6 62.9,103.4 64.2,98.1 65.5,92.5 66.7,87.2 68.0,82.8 69.2,80.0 70.5,79.0 71.8,80.0 73.0,82.8 74.3,87.2 75.5,92.5 76.8,98.1 78.1,103.4 79.3,107.6 80.6,110.2 81.9,111.0 83.1,109.8 84.4,106.7 85.7,102.3 86.9,96.9 88.2,91.3 89.4,86.1 90.7,82.1 92.0,79.6 93.2,79.0 94.5,80.5 95.8,83.7 97.0,88.3 98.3,93.7 99.5,99.3 100.8,104.4 102.1,108.3 103.3,110.6 104.6,110.9 105.8,109.3 107.1,105.9 108.4,101.1 109.6,95.6 110.9,90.1 112.2,85.1 113.4,81.4 114.7,79.3 116.0,79.2 117.2,81.0 118.5,84.6 119.7,89.5 121.0,95.0 122.3,100.5 123.5,105.4 124.8,109.0 126.0,110.8 127.3,110.7 128.6,108.6 129.8,104.9 131.1,99.9 132.4,94.4 133.6,88.9 134.9,84.1 136.2,80.7 137.4,79.1 138.7,79.4 139.9,81.7 141.2,85.6 142.5,90.7 143.7,96.3 145.0,101.7 146.2,106.3 147.5,109.5 148.8,111.0 150.0,110.4 151.3,107.9 152.6,103.9 153.8,98.7 155.1,93.1 156.3,87.7 157.6,83.3 158.9,80.2 160.1,79.0 161.4,79.8 162.7,82.4 163.9,86.6 165.2,91.9 166.4,97.5 167.7,102.8 169.0,107.2 170.2,110.0 171.5,111.0 172.8,110.0 174.0,107.2 175.3,102.8 176.6,97.5 177.8,91.9 179.1,86.6 180.3,82.4 181.6,79.8 182.9,79.0 184.1,80.2 185.4,83.3 186.7,87.7 187.9,93.1 189.2,98.7 190.4,103.9 191.7,107.9 193.0,110.4 194.2,111.0 195.5,109.5 196.8,106.3 198.0,101.7 199.3,96.3 200.5,90.7 201.8,85.6 203.1,81.7 204.3,79.4 205.6,79.1 206.8,80.7 208.1,84.1 209.4,88.9 210.6,94.4 211.9,99.9 213.2,104.9 214.4,108.6 215.7,110.7 216.9,110.8 218.2,109.0 219.5,105.4 220.7,100.5 222.0,95.0\" fill=\"none\" class=\"e2 b1\"/><polyline points=\"258.0,95.0 259.3,93.3 260.5,91.8 261.8,90.6 263.1,90.1 264.3,90.1 265.6,90.7 266.8,91.9 268.1,93.5 269.4,95.2 270.6,96.9 271.9,98.4 273.1,99.5 274.4,100.0 275.7,99.9 276.9,99.2 278.2,97.9 279.5,96.4 280.7,94.6 282.0,92.9 283.2,91.5 284.5,90.5 285.8,90.0 287.0,90.2 288.3,91.0 289.6,92.2 290.8,93.8 292.1,95.6 293.4,97.3 294.6,98.7 295.9,99.6 297.1,100.0 298.4,99.8 299.7,98.9 300.9,97.6 302.2,96.0 303.4,94.2 304.7,92.6 306.0,91.2 307.2,90.3 308.5,90.0 309.8,90.3 311.0,91.2 312.3,92.6 313.6,94.2 314.8,96.0 316.1,97.6 317.3,98.9 318.6,99.8 319.9,100.0 321.1,99.6 322.4,98.7 323.6,97.3 324.9,95.6 326.2,93.8 327.4,92.2 328.7,91.0 330.0,90.2 331.2,90.0 332.5,90.5 333.8,91.5 335.0,92.9 336.3,94.6 337.5,96.4 338.8,97.9 340.1,99.2 341.3,99.9 342.6,100.0 343.9,99.5 345.1,98.4 346.4,96.9 347.6,95.2 348.9,93.5 350.2,91.9 351.4,90.7 352.7,90.1 353.9,90.1 355.2,90.6 356.5,91.8 357.7,93.3 359.0,95.0 360.3,96.7 361.5,98.2 362.8,99.4 364.1,99.9 365.3,99.9 366.6,99.3 367.8,98.1 369.1,96.5 370.4,94.8 371.6,93.1 372.9,91.6 374.1,90.5 375.4,90.0 376.7,90.1 377.9,90.8 379.2,92.1 380.5,93.6 381.7,95.4 383.0,97.1 384.2,98.5 385.5,99.5 386.8,100.0 388.0,99.8 389.3,99.0 390.6,97.8 391.8,96.2 393.1,94.4 394.4,92.7 395.6,91.3 396.9,90.4 398.1,90.0 399.4,90.2 400.7,91.1 401.9,92.4 403.2,94.0 404.4,95.8 405.7,97.4 407.0,98.8 408.2,99.7 409.5,100.0 410.8,99.7 412.0,98.8 413.3,97.4 414.6,95.8 415.8,94.0 417.1,92.4 418.3,91.1 419.6,90.2 420.9,90.0 422.1,90.4 423.4,91.3 424.6,92.7 425.9,94.4 427.2,96.2 428.4,97.8 429.7,99.0 431.0,99.8 432.2,100.0 433.5,99.5 434.8,98.5 436.0,97.1 437.3,95.4 438.5,93.6 439.8,92.1 441.1,90.8 442.3,90.1 443.6,90.0 444.9,90.5 446.1,91.6 447.4,93.1 448.6,94.8 449.9,96.5 451.2,98.1 452.4,99.3 453.7,99.9 454.9,99.9 456.2,99.4 457.5,98.2 458.7,96.7 460.0,95.0\" fill=\"none\" class=\"e b1\"/><text x=\"360\" y=\"132\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">벽 뒤에서 크게 약해짐</text><text x=\"110\" y=\"172\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b2\">900MHz 긴 파장</text><polyline points=\"20.0,215.0 21.3,212.8 22.5,210.7 23.8,208.6 25.1,206.6 26.3,204.8 27.6,203.3 28.8,201.9 30.1,200.7 31.4,199.9 32.6,199.3 33.9,199.0 35.1,199.0 36.4,199.4 37.7,200.0 38.9,200.9 40.2,202.1 41.5,203.5 42.7,205.1 44.0,206.9 45.2,208.9 46.5,211.0 47.8,213.1 49.0,215.3 50.3,217.5 51.6,219.6 52.8,221.7 54.1,223.6 55.4,225.4 56.6,227.0 57.9,228.3 59.1,229.4 60.4,230.2 61.7,230.8 62.9,231.0 64.2,230.9 65.5,230.6 66.7,229.9 68.0,229.0 69.2,227.8 70.5,226.3 71.8,224.7 73.0,222.8 74.3,220.8 75.5,218.7 76.8,216.6 78.1,214.4 79.3,212.2 80.6,210.1 81.9,208.0 83.1,206.1 84.4,204.4 85.7,202.8 86.9,201.5 88.2,200.5 89.4,199.7 90.7,199.2 92.0,199.0 93.2,199.1 94.5,199.5 95.8,200.2 97.0,201.2 98.3,202.4 99.5,203.9 100.8,205.6 102.1,207.5 103.3,209.5 104.6,211.6 105.8,213.7 107.1,215.9 108.4,218.1 109.6,220.2 110.9,222.3 112.2,224.1 113.4,225.9 114.7,227.4 116.0,228.6 117.2,229.7 118.5,230.4 119.7,230.8 121.0,231.0 122.3,230.8 123.5,230.4 124.8,229.7 126.0,228.6 127.3,227.4 128.6,225.9 129.8,224.1 131.1,222.3 132.4,220.2 133.6,218.1 134.9,215.9 136.2,213.7 137.4,211.6 138.7,209.5 139.9,207.5 141.2,205.6 142.5,203.9 143.7,202.4 145.0,201.2 146.2,200.2 147.5,199.5 148.8,199.1 150.0,199.0 151.3,199.2 152.6,199.7 153.8,200.5 155.1,201.5 156.3,202.8 157.6,204.4 158.9,206.1 160.1,208.0 161.4,210.1 162.7,212.2 163.9,214.4 165.2,216.6 166.4,218.7 167.7,220.8 169.0,222.8 170.2,224.7 171.5,226.3 172.8,227.8 174.0,229.0 175.3,229.9 176.6,230.6 177.8,230.9 179.1,231.0 180.3,230.8 181.6,230.2 182.9,229.4 184.1,228.3 185.4,227.0 186.7,225.4 187.9,223.6 189.2,221.7 190.4,219.6 191.7,217.5 193.0,215.3 194.2,213.1 195.5,211.0 196.8,208.9 198.0,206.9 199.3,205.1 200.5,203.5 201.8,202.1 203.1,200.9 204.3,200.0 205.6,199.4 206.8,199.0 208.1,199.0 209.4,199.3 210.6,199.9 211.9,200.7 213.2,201.9 214.4,203.3 215.7,204.8 216.9,206.6 218.2,208.6 219.5,210.7 220.7,212.8 222.0,215.0\" fill=\"none\" class=\"e2 b2\"/><polyline points=\"258.0,215.0 259.3,213.4 260.5,211.7 261.8,210.2 263.1,208.7 264.3,207.4 265.6,206.2 266.8,205.2 268.1,204.3 269.4,203.7 270.6,203.2 271.9,203.0 273.1,203.0 274.4,203.3 275.7,203.7 276.9,204.4 278.2,205.3 279.5,206.3 280.7,207.6 282.0,208.9 283.2,210.4 284.5,212.0 285.8,213.6 287.0,215.2 288.3,216.9 289.6,218.5 290.8,220.0 292.1,221.5 293.4,222.8 294.6,224.0 295.9,225.0 297.1,225.8 298.4,226.4 299.7,226.8 300.9,227.0 302.2,226.9 303.4,226.7 304.7,226.2 306.0,225.5 307.2,224.6 308.5,223.5 309.8,222.2 311.0,220.9 312.3,219.4 313.6,217.8 314.8,216.2 316.1,214.5 317.3,212.9 318.6,211.3 319.9,209.8 321.1,208.3 322.4,207.0 323.6,205.9 324.9,204.9 326.2,204.1 327.4,203.5 328.7,203.1 330.0,203.0 331.2,203.1 332.5,203.4 333.8,203.9 335.0,204.6 336.3,205.6 337.5,206.7 338.8,207.9 340.1,209.3 341.3,210.8 342.6,212.4 343.9,214.1 345.1,215.7 346.4,217.3 347.6,218.9 348.9,220.4 350.2,221.9 351.4,223.1 352.7,224.3 353.9,225.2 355.2,226.0 356.5,226.5 357.7,226.9 359.0,227.0 360.3,226.9 361.5,226.5 362.8,226.0 364.1,225.2 365.3,224.3 366.6,223.1 367.8,221.9 369.1,220.4 370.4,218.9 371.6,217.3 372.9,215.7 374.1,214.1 375.4,212.4 376.7,210.8 377.9,209.3 379.2,207.9 380.5,206.7 381.7,205.6 383.0,204.6 384.2,203.9 385.5,203.4 386.8,203.1 388.0,203.0 389.3,203.1 390.6,203.5 391.8,204.1 393.1,204.9 394.4,205.9 395.6,207.0 396.9,208.3 398.1,209.8 399.4,211.3 400.7,212.9 401.9,214.5 403.2,216.2 404.4,217.8 405.7,219.4 407.0,220.9 408.2,222.2 409.5,223.5 410.8,224.6 412.0,225.5 413.3,226.2 414.6,226.7 415.8,226.9 417.1,227.0 418.3,226.8 419.6,226.4 420.9,225.8 422.1,225.0 423.4,224.0 424.6,222.8 425.9,221.5 427.2,220.0 428.4,218.5 429.7,216.9 431.0,215.2 432.2,213.6 433.5,212.0 434.8,210.4 436.0,208.9 437.3,207.6 438.5,206.3 439.8,205.3 441.1,204.4 442.3,203.7 443.6,203.3 444.9,203.0 446.1,203.0 447.4,203.2 448.6,203.7 449.9,204.3 451.2,205.2 452.4,206.2 453.7,207.4 454.9,208.7 456.2,210.2 457.5,211.7 458.7,213.4 460.0,215.0\" fill=\"none\" class=\"e2 b2\"/><text x=\"360\" y=\"172\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">돌아가고 뚫고 감</text></svg>",
+     "caption": "짧은 파장은 똑바로만 가려다 벽에서 크게 약해져요. 긴 파장은 **회절(Diffraction)**과 **투과력(Penetration)**으로 벽 너머까지 가요.",
+     "builds": 2
+    },
+    {
+     "kind": "points",
+     "head": "세 가지 성질에 이름 붙이기",
+     "items": [
+      "전파가 똑바로만 가려는 성질은 **전파 직진성(Straightness of Propagation)**이에요. 파장이 짧을수록 강해요.",
+      "장애물을 만나면 돌아서 가는 성질은 **회절(Diffraction)**이에요.",
+      "벽을 뚫고 지나가는 힘은 **투과력(Penetration)**이에요.",
+      "900MHz 는 **회절(Diffraction)**과 **투과력(Penetration)**이 좋아요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "2.4GHz 대역 vs 900MHz 대역",
+     "cols": [
+      "항목",
+      "2.4GHz",
+      "900MHz (Sub-1GHz)"
+     ],
+     "rows": [
+      [
+       "쓰는 무선",
+       "Zigbee, BLE Mesh, Thread, Wi-Fi",
+       "Z-Wave"
+      ],
+      [
+       "파장과 성질",
+       "짧음, **전파 직진성(Straightness of Propagation)** 강함, 벽에서 크게 약해짐",
+       "긺, **회절(Diffraction)**과 **투과력(Penetration)** 좋음"
+      ],
+      [
+       "주파수 정책",
+       "전 세계 공용 **ISM 대역(ISM Band)**, 면허 필요 없음",
+       "나라별 전용, 한국 920.9~923.1MHz"
+      ],
+      [
+       "붐비는 정도",
+       "붐빔, 와이파이, 전자레인지와 간섭",
+       "매우 한적, 와이파이 간섭 없음"
+      ],
+      [
+       "집에서 쓰는 곳",
+       "실내 조명, 환경 센서, 스마트 플러그",
+       "도어락, 침입 감지 센서"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "보안 담당 무선: Z-Wave",
+     "items": [
+      "900MHz 근처 **Sub-1GHz**를 쓰는 저전력 무선이 **지웨이브(Z-Wave)**예요.",
+      "벽을 잘 넘고 암호화가 강해서 도어락, 침입 감지 센서, 금고 센서에 써요.",
+      "상시 전원 기기는 **라우터(Router)**처럼 신호를 이어 줘요. 배터리 기기는 중계하지 않아요.",
+      "한국에서는 920.9~923.1MHz 제품인지 꼭 확인해요. 폭은 2.2MHz 예요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "주파수 설계 황금률",
+     "items": [
+      "많은 조명과 환경 센서는 흔한 **2.4GHz 대역(2.4 GHz Band)**의 Zigbee, Thread 로 꾸려요.",
+      "벽을 넘어야 하고 믿음직해야 하는 도어락, 보안 센서는 900MHz **지웨이브(Z-Wave)**로 나눠요.",
+      "다만 **지웨이브(Z-Wave)**는 미국, 유럽 보안 시장 중심이라 국내에서는 비중이 크지 않아요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "붐비는 2.4GHz 차선",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"30\" y1=\"220\" x2=\"450\" y2=\"220\" class=\"e\"/><text x=\"240\" y=\"250\" font-size=\"14\" text-anchor=\"middle\" class=\"tm\">2.4GHz 대역 안의 채널들 →</text><rect x=\"40\" y=\"110\" width=\"170\" height=\"110\" rx=\"2\" class=\"n3 b1\"/><text x=\"125\" y=\"100\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">와이파이 채널</text><rect x=\"170\" y=\"170\" width=\"40\" height=\"50\" rx=\"2\" class=\"n4 b2\"/><text x=\"190\" y=\"160\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">지그비</text><text x=\"125\" y=\"140\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b2\">겹침 = 간섭</text><rect x=\"330\" y=\"170\" width=\"40\" height=\"50\" rx=\"2\" class=\"n2 b3\"/><text x=\"350\" y=\"160\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">지그비</text><text x=\"350\" y=\"60\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">안 겹치는 채널로 이동</text><line x1=\"215\" y1=\"195\" x2=\"315\" y2=\"195\" class=\"e2 b3\"/><polygon points=\"325.0,195.0 315.0,200.0 315.0,190.0\" class=\"arrow b3\"/></svg>",
+     "caption": "지그비 채널이 와이파이 채널과 겹치면 **채널 간섭(Channel Interference)**이 생겨요. 덜 겹치는 채널로 옮기는 게 대책이에요.",
+     "builds": 3
+    },
+    {
+     "kind": "check",
+     "q": "사무실에서 와이파이와 지그비를 함께 쓰는데 지그비 기기가 자꾸 끊겨요. 가장 알맞은 조치는? (기출 25번)",
+     "choices": [
+      "지그비 송신 출력을 항상 최대로",
+      "지그비 기기를 공유기 바로 옆에 설치",
+      "지그비를 모두 없애고 유선 LAN 만 사용",
+      "채널이 겹치는 걸 고려해 간섭이 적은 채널로 조정"
+     ],
+     "a": 3,
+     "why": "둘 다 **2.4GHz 대역(2.4 GHz Band)**을 써서 **채널 간섭(Channel Interference)**이 생겼어요. 출력만 올리거나 공유기 옆에 두면 오히려 더 시끄러워져요."
+    },
+    {
+     "kind": "check",
+     "q": "**회절(Diffraction)**의 뜻은?",
+     "choices": [
+      "전파가 장애물을 돌아서 가는 성질",
+      "전파가 똑바로만 가려는 성질",
+      "면허 없이 쓰는 공용 차선",
+      "벽을 뚫고 지나가는 힘"
+     ],
+     "a": 0,
+     "why": "2번은 **전파 직진성(Straightness of Propagation)**, 3번은 **ISM 대역(ISM Band)**, 4번은 **투과력(Penetration)**이에요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "주파수가 높을수록 파장은 짧아요. 2.4GHz 가 900MHz 보다 파장이 짧아요.",
+      "**ISM 대역(ISM Band)**은 공짜 공용 차선이라 붐벼요. 900MHz 는 나라별 전용이에요.",
+      "원본은 Z-Wave 가 와이파이 간섭이 '없다', 기출 해설은 '적다'고 해요. 900MHz 라 와이파이와 차선이 다르다는 뜻이에요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "**주파수 대역(Frequency Band)**은 전파의 차선. 2.4GHz 는 1초에 24억 번 출렁여요.",
+      "**2.4GHz 대역(2.4 GHz Band)**은 **ISM 대역(ISM Band)**, 붐비고 **전파 직진성(Straightness of Propagation)**이 강해요.",
+      "**Sub-1GHz**는 **회절(Diffraction)**과 **투과력(Penetration)**이 좋아 **지웨이브(Z-Wave)**가 도어락을 맡아요.",
+      "와이파이와 지그비가 겹치면 **채널 간섭(Channel Interference)**, 채널을 옮겨요.",
+      "오늘의 용어: 주파수 대역(Frequency Band), 2.4GHz 대역(2.4 GHz Band), Sub-1GHz, ISM 대역(ISM Band), 전파 직진성(Straightness of Propagation), 회절(Diffraction), 투과력(Penetration), 지웨이브(Z-Wave), 채널 간섭(Channel Interference)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w3-6",
+   "title": "쪽지 릴레이 그물망: Zigbee 와 BLE Mesh",
+   "goal": "Zigbee 의 세 가지 노드와 메시 구조, 자가 치유, 그리고 허브 없는 BLE Mesh 조명을 설명할 수 있어요.",
+   "terms": [
+    {
+     "ko": "지그비",
+     "en": "Zigbee",
+     "say": "전기를 조금 먹고 센서끼리 손잡고 연결하는 무선"
+    },
+    {
+     "ko": "",
+     "en": "IEEE 802.15.4",
+     "say": "Zigbee와 Thread가 함께 쓰는 바닥 규칙이에요."
+    },
+    {
+     "ko": "코디네이터",
+     "en": "Coordinator",
+     "say": "그물망을 처음 만드는 반장이에요."
+    },
+    {
+     "ko": "엔드 디바이스",
+     "en": "End Device",
+     "say": "평소 잠만 자다가 필요할 때만 말하는 배터리 센서예요."
+    },
+    {
+     "ko": "Sleep 상태",
+     "en": "Sleep Mode",
+     "say": "센서가 전기를 아끼려고 자는 상태예요."
+    },
+    {
+     "ko": "메시 네트워크",
+     "en": "Mesh Network",
+     "say": "기기들이 서로 손을 잡고 신호를 이어 주는 그물망"
+    },
+    {
+     "ko": "자가 치유",
+     "en": "Self-Healing",
+     "say": "한 명이 빠져도 알아서 다른 길로 전달하는 능력이에요."
+    },
+    {
+     "ko": "BLE Mesh",
+     "en": "Bluetooth Low Energy Mesh",
+     "say": "허브 없이 스마트폰으로 조명을 켜는 블루투스 그물망이에요."
+    },
+    {
+     "ko": "프로비저닝",
+     "en": "Provisioning",
+     "say": "새 기기에게 우리 집 비밀번호와 열쇠를 알려 주는 일이에요."
+    },
+    {
+     "ko": "패널 동기화",
+     "en": "Panel Sync",
+     "say": "여러 스위치가 서로 상태를 맞추는 것이에요."
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "쪽지 릴레이 그물망",
+     "sub": "Zigbee 와 BLE Mesh"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**지그비(Zigbee)**의 **코디네이터(Coordinator)**, 라우터, **엔드 디바이스(End Device)**를 구별해요.",
+      "**메시 네트워크(Mesh Network)**가 끊겨도 다시 이어지는 까닭을 말해요.",
+      "허브 없이 조명을 묶는 **BLE Mesh(Bluetooth Low Energy Mesh)**를 설명해요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞에서 이어서",
+     "items": [
+      "**2.4GHz 대역(2.4 GHz Band)**은 흔하지만 벽에서 약해지는 차선이었죠.",
+      "**라우터(Router)**는 늘 전기가 들어와 신호를 이어 주는 징검다리였어요.",
+      "오늘은 이 징검다리들이 그물처럼 이어지는 모양을 봐요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "친구끼리 쪽지 릴레이",
+     "scene": "수업 시간에 맨 뒷줄 친구가 앞줄 반장에게 쪽지를 보내요. 너무 멀어서 직접 못 던지니 옆 친구, 그 앞 친구에게 차례로 건네요. 중간에 한 친구가 화장실에 가도 다른 줄 친구를 거쳐 돌아서 쪽지가 도착해요. 졸고 있던 친구는 자기 쪽지만 건네고 남의 쪽지는 안 받아요.",
+     "map": [
+      [
+       "쪽지를 차례로 건네는 교실",
+       "**메시 네트워크(Mesh Network)**"
+      ],
+      [
+       "쪽지를 받는 반장",
+       "**코디네이터(Coordinator)** (허브)"
+      ],
+      [
+       "화장실 간 친구를 돌아서 전달",
+       "**자가 치유(Self-Healing)**"
+      ],
+      [
+       "졸다가 자기 쪽지만 보내는 친구",
+       "**엔드 디바이스(End Device)**"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "Zigbee 의 정의",
+     "items": [
+      "**지그비(Zigbee)**는 **IEEE 802.15.4** 규칙책을 바탕으로 한 저전력 무선이에요.",
+      "802.15.4 는 '팔공이 점 일오 점 사'. 802.15 WPAN 가족 안의 4번 규격이에요.",
+      "**2.4GHz 대역(2.4 GHz Band)**을 쓰고, 기기끼리 그물망을 만들어 신호를 이어요.",
+      "그래서 한 기기의 거리는 짧아도 집 전체를 덮어요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저: 노드 세 가지",
+     "items": [
+      "그물망을 처음 만들고 보안과 길 지도를 총괄하는 중심 장치가 **코디네이터(Coordinator)**예요. 보통 허브예요.",
+      "220V 전기가 늘 들어오는 스위치, 플러그, 조명은 라우터예요. 신호를 중계해요.",
+      "배터리로 도는 센서는 **엔드 디바이스(End Device)**예요. 중계는 안 해요.",
+      "센서가 전기를 아끼려고 평소 자는 상태를 **Sleep 상태(Sleep Mode)**라고 해요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "Zigbee 그물망 모양",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"240\" y1=\"150\" x2=\"120\" y2=\"90\" class=\"e2 b2\"/><line x1=\"240\" y1=\"150\" x2=\"360\" y2=\"90\" class=\"e2 b2\"/><line x1=\"240\" y1=\"150\" x2=\"240\" y2=\"225\" class=\"e2 b2\"/><line x1=\"120\" y1=\"90\" x2=\"360\" y2=\"90\" class=\"e b3\"/><line x1=\"120\" y1=\"90\" x2=\"240\" y2=\"225\" class=\"e b3\"/><line x1=\"360\" y1=\"90\" x2=\"240\" y2=\"225\" class=\"e b3\"/><circle cx=\"240\" cy=\"150\" r=\"30\" class=\"n2 b1\"/><text x=\"240\" y=\"155\" font-size=\"16\" text-anchor=\"middle\" class=\"tl b1\">ZC</text><text x=\"20\" y=\"250\" font-size=\"14\" text-anchor=\"start\" class=\"tb b1\">ZC: 코디네이터(허브)</text><circle cx=\"120\" cy=\"90\" r=\"24\" class=\"n b2\"/><text x=\"120\" y=\"95\" font-size=\"15\" text-anchor=\"middle\" class=\"tl b2\">ZR</text><circle cx=\"360\" cy=\"90\" r=\"24\" class=\"n b2\"/><text x=\"360\" y=\"95\" font-size=\"15\" text-anchor=\"middle\" class=\"tl b2\">ZR</text><circle cx=\"240\" cy=\"225\" r=\"24\" class=\"n b2\"/><text x=\"240\" y=\"230\" font-size=\"15\" text-anchor=\"middle\" class=\"tl b2\">ZR</text><text x=\"120\" y=\"50\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">스위치</text><text x=\"360\" y=\"50\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">플러그</text><text x=\"320\" y=\"238\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">조명</text><circle cx=\"40\" cy=\"60\" r=\"12\" class=\"n3 b4\"/><circle cx=\"40\" cy=\"140\" r=\"12\" class=\"n3 b4\"/><circle cx=\"440\" cy=\"60\" r=\"12\" class=\"n3 b4\"/><circle cx=\"440\" cy=\"140\" r=\"12\" class=\"n3 b4\"/><line x1=\"52\" y1=\"64\" x2=\"98\" y2=\"82\" class=\"e b4\"/><line x1=\"52\" y1=\"136\" x2=\"98\" y2=\"98\" class=\"e b4\"/><line x1=\"428\" y1=\"64\" x2=\"382\" y2=\"82\" class=\"e b4\"/><line x1=\"428\" y1=\"136\" x2=\"382\" y2=\"98\" class=\"e b4\"/><text x=\"58\" y=\"180\" font-size=\"14\" text-anchor=\"middle\" class=\"t b4\">배터리 센서 (ED)</text></svg>",
+     "caption": "ZC 는 **코디네이터(Coordinator)**, ZR 은 상시 전원 라우터, ED 는 배터리 센서인 **엔드 디바이스(End Device)**예요. 라우터끼리도 서로 이어져요.",
+     "builds": 4
+    },
+    {
+     "kind": "points",
+     "head": "끊겨도 다시 잇는 힘",
+     "items": [
+      "라우터끼리 서로 직접 이어져 있어서 길이 여러 개예요.",
+      "라우터 하나가 꺼져도 다른 길로 돌아서 전달해요.",
+      "이렇게 알아서 다른 길을 찾는 능력이 **자가 치유(Self-Healing)**예요. 영어로 Self-Healing 이에요.",
+      "이런 그물망 전체를 **메시 네트워크(Mesh Network)**라고 해요."
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "안방 센서 신호가 허브까지 가는 길",
+     "steps": [
+      "센서는 **엔드 디바이스(End Device)**고 **Sleep 상태(Sleep Mode)**에서 깨어나 값을 보내요.",
+      "벽 때문에 허브까지 바로 못 가요. 안방 스마트 스위치(라우터)가 받아요.",
+      "스위치가 복도 스마트 플러그(라우터)에게 건네요.",
+      "플러그가 거실 허브, 즉 **코디네이터(Coordinator)**에게 전달해요."
+     ],
+     "answer": "상시 전원 라우터가 중계해 거리를 늘리고, 센서는 계속 전기를 아껴요(3.2강 점검 2번).",
+     "given": "안방 온습도 센서, 거실 허브, 사이에 콘크리트 벽"
+    },
+    {
+     "kind": "check",
+     "q": "**지그비(Zigbee)** 그물망에서 라우터 하나가 꺼져도 통신이 이어지는 까닭은? (3.2강 점검 3번)",
+     "choices": [
+      "코디네이터가 두 대라서",
+      "라우터끼리 이어져 다른 길로 돌아가서",
+      "센서가 직접 인터넷에 붙어서",
+      "와이파이로 자동 전환해서"
+     ],
+     "a": 1,
+     "why": "라우터끼리 연결되어 우회해요. 이게 **자가 치유(Self-Healing)**예요."
+    },
+    {
+     "kind": "points",
+     "head": "허브 없는 조명 그물망: BLE Mesh",
+     "items": [
+      "BLE 는 Bluetooth Low Energy, 전기를 조금 쓰는 블루투스예요.",
+      "BLE 를 그물망으로 엮은 표준이 **BLE Mesh(Bluetooth Low Energy Mesh)**예요. Bluetooth 5.0 SIG Mesh 라고도 불러요.",
+      "전용 허브 없이 스마트폰으로 수백 개 조명을 한꺼번에 제어해요.",
+      "상업 공간과 집의 스마트 다운라이트, 감성 조명에 써요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저: 가입과 맞추기",
+     "items": [
+      "새 기기에게 우리 집 암호 열쇠를 넣어 주고 그물망에 참여시키는 일이 **프로비저닝(Provisioning)**이에요. 스마트폰 앱으로 해요.",
+      "스위치 패널 여러 개가 중심 장치 없이 서로 상태를 맞추는 건 **패널 동기화(Panel Sync)**예요.",
+      "거실 입구와 안쪽, 두 곳에서 같은 전등을 켜고 끄는 3로 스위치를 무선으로 만든 셈이에요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "BLE Mesh 패널 동기화",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"130\" y1=\"70\" x2=\"350\" y2=\"70\" class=\"e2 b2\"/><line x1=\"130\" y1=\"70\" x2=\"240\" y2=\"140\" class=\"e2 b2\"/><line x1=\"350\" y1=\"70\" x2=\"240\" y2=\"140\" class=\"e2 b2\"/><line x1=\"240\" y1=\"140\" x2=\"240\" y2=\"205\" class=\"e b3\"/><circle cx=\"130\" cy=\"70\" r=\"30\" class=\"n2 b1\"/><text x=\"130\" y=\"75\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b1\">패널1</text><circle cx=\"350\" cy=\"70\" r=\"30\" class=\"n2 b1\"/><text x=\"350\" y=\"75\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b1\">패널2</text><circle cx=\"240\" cy=\"140\" r=\"30\" class=\"n2 b1\"/><text x=\"240\" y=\"145\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b1\">패널3</text><rect x=\"150\" y=\"205\" width=\"180\" height=\"45\" rx=\"2\" class=\"n3 b3\"/><text x=\"240\" y=\"233\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">LED 드라이버 + 조명</text><text x=\"240\" y=\"58\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">Sync: 서로 상태 맞춤</text><text x=\"70\" y=\"150\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b1\">허브 없음</text><text x=\"410\" y=\"150\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b3\">폰 앱으로 가입</text></svg>",
+     "caption": "패널끼리 직접 상태를 맞추는 **패널 동기화(Panel Sync)**예요. 가운데 허브 없이 **BLE Mesh(Bluetooth Low Energy Mesh)**가 조명을 움직여요.",
+     "builds": 3
+    },
+    {
+     "kind": "compare",
+     "head": "Zigbee vs BLE Mesh",
+     "cols": [
+      "항목",
+      "Zigbee",
+      "BLE Mesh"
+     ],
+     "rows": [
+      [
+       "규격",
+       "**IEEE 802.15.4**",
+       "Bluetooth SIG"
+      ],
+      [
+       "주파수",
+       "2.4GHz (ISM)",
+       "2.4GHz (ISM)"
+      ],
+      [
+       "거리",
+       "10~20m",
+       "10~15m"
+      ],
+      [
+       "최대 연결",
+       "65,000+ (메시)",
+       "수백+ 노드"
+      ],
+      [
+       "특징",
+       "허브(코디네이터) 중심, 센서, 조명 그물망 표준",
+       "허브 없이 스마트폰 직접, 조명 다중 제어"
+      ]
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "**엔드 디바이스(End Device)**의 뜻은?",
+     "choices": [
+      "그물망을 처음 만드는 중심 장치",
+      "평소 자다가 필요할 때만 말하는 배터리 센서",
+      "신호를 중계하는 상시 전원 기기",
+      "새 기기에게 열쇠를 넣어 주는 일"
+     ],
+     "a": 1,
+     "why": "1번은 **코디네이터(Coordinator)**, 3번은 라우터, 4번은 **프로비저닝(Provisioning)**이에요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "배터리 센서(**엔드 디바이스(End Device)**)는 중계하지 않아요. 중계는 상시 전원 라우터 몫이에요.",
+      "원본 표는 Zigbee 최대 연결 65,000+ 인데, 필기 가이드북은 한 네트워크에 250개라고 적어요. 보기 문장을 잘 읽어요.",
+      "**BLE Mesh(Bluetooth Low Energy Mesh)**는 허브가 없어요. 가입은 스마트폰 앱 **프로비저닝(Provisioning)**으로 해요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "**지그비(Zigbee)**는 **IEEE 802.15.4**, 2.4GHz 저전력 **메시 네트워크(Mesh Network)**예요.",
+      "**코디네이터(Coordinator)**는 허브, 라우터는 중계, **엔드 디바이스(End Device)**는 **Sleep 상태(Sleep Mode)** 센서.",
+      "라우터가 끊겨도 돌아가는 힘이 **자가 치유(Self-Healing)**예요.",
+      "**BLE Mesh(Bluetooth Low Energy Mesh)**는 허브 없이 **프로비저닝(Provisioning)**과 **패널 동기화(Panel Sync)**로 조명을 묶어요.",
+      "오늘의 용어: 지그비(Zigbee), IEEE 802.15.4, 코디네이터(Coordinator), 엔드 디바이스(End Device), Sleep 상태(Sleep Mode), 메시 네트워크(Mesh Network), 자가 치유(Self-Healing), BLE Mesh(Bluetooth Low Energy Mesh), 프로비저닝(Provisioning), 패널 동기화(Panel Sync)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w3-7",
+   "title": "톡 대기와 cm 재기: NFC, UWB 와 WPAN 비교표",
+   "goal": "NFC 와 UWB 의 거리, 원리, 쓰임을 구별하고, 주요 WPAN 여섯 가지를 규격, 주파수, 거리로 비교할 수 있어요.",
+   "terms": [
+    {
+     "ko": "NFC",
+     "en": "Near Field Communication",
+     "say": "10cm 안에서 톡 대야 통하는 무선이에요."
+    },
+    {
+     "ko": "전자기 유도",
+     "en": "Electromagnetic Induction",
+     "say": "코일 두 개를 아주 가까이 대면 자기장으로 신호와 전기가 옮겨 가는 현상이에요."
+    },
+    {
+     "ko": "스니핑",
+     "en": "Sniffing",
+     "say": "남의 대화를 몰래 엿듣는 것이에요."
+    },
+    {
+     "ko": "카드 에뮬레이션",
+     "en": "Card Emulation",
+     "say": "휴대폰이 교통카드나 출입카드인 척하는 NFC 동작 모드예요."
+    },
+    {
+     "ko": "RFID",
+     "en": "Radio Frequency Identification",
+     "say": "물건 이름표를 전파로 읽는 기술"
+    },
+    {
+     "ko": "UWB",
+     "en": "Ultra-Wideband",
+     "say": "cm 단위로 위치를 정확히 재는 무선이에요."
+    },
+    {
+     "ko": "릴레이 공격",
+     "en": "Relay Attack",
+     "say": "멀리 있는 열쇠 신호를 몰래 이어 붙여 문을 여는 속임수예요."
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "톡 대기와 cm 재기",
+     "sub": "NFC, UWB 와 WPAN 비교표"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "**NFC(Near Field Communication)**와 **UWB(Ultra-Wideband)**를 거리와 쓰임으로 구별해요.",
+      "**NFC(Near Field Communication)**의 세 가지 동작 모드를 말해요(기출 20번).",
+      "WPAN 여섯 가지를 표 한 장으로 비교해요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞에서 이어서",
+     "items": [
+      "**지그비(Zigbee)**와 **BLE Mesh(Bluetooth Low Energy Mesh)**는 수십 m 를 그물망으로 잇는 무선이었죠.",
+      "**WPAN(Wireless Personal Area Network)**은 개인 곁 수 m~수십 m 의 무선망이었어요.",
+      "오늘은 그보다 훨씬 가까운 cm 세계의 무선을 봐요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "귓속말과 줄자",
+     "scene": "비밀 이야기는 친구 귀에 입을 딱 붙이고 속삭여요. 그러면 옆자리 친구는 한 글자도 못 엿들어요. 한편 목수는 줄자를 쭉 펴서 책상이 벽에서 몇 cm 떨어졌는지 딱 재요. 누가 멀리서 '나 지금 바로 앞에 있어' 하고 거짓말해도 줄자 눈금은 못 속여요.",
+     "map": [
+      [
+       "귀에 대고 하는 귓속말",
+       "**NFC(Near Field Communication)**: 10cm 안에서 톡"
+      ],
+      [
+       "옆에서 몰래 엿듣기",
+       "**스니핑(Sniffing)**"
+      ],
+      [
+       "눈금으로 정확히 재는 줄자",
+       "**UWB(Ultra-Wideband)**: cm 단위 거리 재기"
+      ],
+      [
+       "멀리서 가까운 척 속이기",
+       "**릴레이 공격(Relay Attack)**"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저: 톡 대는 무선",
+     "items": [
+      "10cm 안에서 톡 대야만 데이터를 주고받는 무선이 있어요. 이게 **NFC(Near Field Communication)**예요.",
+      "13.56MHz 는 '십삼 점 오륙 메가헤르츠'. 1초에 1,356만 번 출렁여요.",
+      "코일 두 개를 아주 가까이 대면 자기장으로 신호가 옮겨 가요. 이 현상이 **전자기 유도(Electromagnetic Induction)**예요.",
+      "**NFC(Near Field Communication)**는 이 **전자기 유도(Electromagnetic Induction)**를 써서 거리가 아주 짧아요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "NFC 의 뿌리와 장점",
+     "items": [
+      "물건 태그의 정보를 전파로 읽는 기술이 **RFID(Radio Frequency Identification)**예요. 택배, 출입 태그에 써요.",
+      "**NFC(Near Field Communication)**는 13.56MHz **RFID(Radio Frequency Identification)**를 발전시킨 기술이에요.",
+      "남의 대화를 몰래 엿듣는 걸 **스니핑(Sniffing)**이라고 해요.",
+      "거리가 손 닿는 정도라서 **스니핑(Sniffing)**을 원천 차단해요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "NFC 동작 모드 3가지",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"15\" y=\"60\" width=\"140\" height=\"110\" rx=\"2\" class=\"n3 b1\"/><text x=\"85\" y=\"102\" font-size=\"16\" text-anchor=\"middle\" class=\"tb b1\">P2P 모드</text><text x=\"85\" y=\"121\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">폰과 폰이</text><text x=\"85\" y=\"140\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">서로 주고받기</text><rect x=\"170\" y=\"60\" width=\"140\" height=\"110\" rx=\"2\" class=\"n3 b2\"/><text x=\"240\" y=\"102\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b2\">읽기/쓰기 모드</text><text x=\"240\" y=\"120\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">태그 정보를</text><text x=\"240\" y=\"140\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">읽거나 쓰기</text><rect x=\"325\" y=\"60\" width=\"140\" height=\"110\" rx=\"2\" class=\"n2 b3\"/><text x=\"395\" y=\"102\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">카드 에뮬레이션</text><text x=\"395\" y=\"120\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">폰이 카드인 척</text><text x=\"395\" y=\"140\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">교통, 출입</text><text x=\"240\" y=\"215\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b3\">P2P, Reader/Writer, Card Emulation</text><text x=\"240\" y=\"36\" font-size=\"16\" text-anchor=\"middle\" class=\"tb\">NFC 13.56MHz, 10cm 이내, 양방향</text></svg>",
+     "caption": "NFC 는 P2P, 읽기/쓰기, 카드 에뮬레이션 세 모드예요. 폰이 교통카드인 척하는 게 **카드 에뮬레이션(Card Emulation)**이에요.",
+     "builds": 3
+    },
+    {
+     "kind": "check",
+     "q": "RFID 를 발전시켜 수 cm 에서 양방향 통신하고 Reader/Writer, P2P, Card Emulation 모드를 가진 기술은? (기출 20번)",
+     "choices": [
+      "Bluetooth",
+      "Beacon",
+      "NFC",
+      "Z-Wave"
+     ],
+     "a": 2,
+     "why": "세 가지 모드와 '수 cm' 는 **NFC(Near Field Communication)**예요. 블루투스와 비콘은 수 m 이상, Z-Wave 는 900MHz 그물망이에요."
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저: cm 를 재는 무선",
+     "items": [
+      "아주 넓은 주파수 폭(500MHz 이상)과 나노초 짧은 펄스로 거리와 방향을 재는 무선이 있어요.",
+      "이게 **UWB(Ultra-Wideband)**예요. Ultra Wide Band, '아주 넓은 띠'라는 뜻이에요.",
+      "나노초는 1초를 10억 조각 낸 하나예요. 그만큼 짧게 '톡' 쏘고 돌아오는 시간을 재요.",
+      "오차는 5~10cm 수준이에요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "UWB 가 막는 속임수",
+     "items": [
+      "도둑이 멀리 있는 자동차 키 신호를 몰래 받아 문 앞으로 이어 붙이는 수법이 있어요.",
+      "이걸 **릴레이 공격(Relay Attack)**이라고 해요.",
+      "**UWB(Ultra-Wideband)**는 신호가 오간 시간으로 진짜 거리를 재서 **릴레이 공격(Relay Attack)**을 막아요.",
+      "그래서 주머니 속 폰이나 키 태그로 저절로 열리는 핸즈프리 도어락에 써요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "NFC vs UWB",
+     "cols": [
+      "항목",
+      "NFC",
+      "UWB"
+     ],
+     "rows": [
+      [
+       "주파수",
+       "13.56MHz",
+       "3.1~10.6GHz, 폭 500MHz 이상"
+      ],
+      [
+       "거리",
+       "10cm 이내",
+       "수 m~10m"
+      ],
+      [
+       "원리",
+       "**전자기 유도(Electromagnetic Induction)**",
+       "나노초 펄스로 거리, 방향 측정"
+      ],
+      [
+       "보안 장점",
+       "**스니핑(Sniffing)** 원천 차단",
+       "**릴레이 공격(Relay Attack)** 차단, 오차 5~10cm"
+      ],
+      [
+       "집에서",
+       "도어락 카드키, 월패드 출입 인증",
+       "핸즈프리 자동 출입 도어락"
+      ]
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "손계산: UWB 는 NFC 보다 몇 배 멀리?",
+     "steps": [
+      "단위를 맞춰요. 1m 는 100cm 예요.",
+      "10m = 10 × 100 = 1,000cm 예요.",
+      "1,000cm ÷ 10cm = 100 이에요."
+     ],
+     "answer": "**UWB(Ultra-Wideband)**는 **NFC(Near Field Communication)**보다 약 100배 먼 거리까지 재요. 그래도 둘 다 방 하나 안쪽의 근거리 무선이에요.",
+     "given": "NFC 10cm, UWB 최대 10m"
+    },
+    {
+     "kind": "compare",
+     "head": "주요 WPAN 규격 한눈에",
+     "cols": [
+      "이름",
+      "규격",
+      "주파수",
+      "거리",
+      "최대 연결"
+     ],
+     "rows": [
+      [
+       "Zigbee",
+       "IEEE 802.15.4",
+       "2.4GHz (ISM)",
+       "10~20m",
+       "65,000+ (메시)"
+      ],
+      [
+       "Z-Wave",
+       "Z-Wave Alliance",
+       "Sub-1GHz (920MHz)",
+       "30m 이상",
+       "232 노드"
+      ],
+      [
+       "BLE Mesh",
+       "Bluetooth SIG",
+       "2.4GHz (ISM)",
+       "10~15m",
+       "수백+ 노드"
+      ],
+      [
+       "Thread",
+       "Thread Group",
+       "2.4GHz (IPv6)",
+       "10~30m",
+       "250+ 노드"
+      ],
+      [
+       "NFC",
+       "ISO/IEC 18092",
+       "13.56MHz",
+       "10cm 이내",
+       "1:1 페어링"
+      ],
+      [
+       "UWB",
+       "IEEE 802.15.4z",
+       "3.1~10.6GHz",
+       "수 m~10m",
+       "다중 측위"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "시험에 이렇게 나와요",
+     "items": [
+      "기출 20번: 세 모드(P2P, 읽기/쓰기, **카드 에뮬레이션(Card Emulation)**) + 수 cm = **NFC(Near Field Communication)**.",
+      "기출 21번 모양: 태그, 리더로 물건을 알아보는 건 **RFID(Radio Frequency Identification)**. NFC 와 헷갈리게 내요.",
+      "기출 14번: IEEE 802.11 이 보이면 와이파이, 802.15.4 는 Zigbee 와 Thread 예요.",
+      "숫자 짝: NFC 13.56MHz, Z-Wave 232, UWB 3.1~10.6GHz."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "**스니핑(Sniffing)**의 뜻은?",
+     "choices": [
+      "남의 대화를 몰래 엿듣기",
+      "먼 신호를 이어 붙여 문 열기",
+      "폰이 카드인 척하기",
+      "태그를 전파로 읽기"
+     ],
+     "a": 0,
+     "why": "2번은 **릴레이 공격(Relay Attack)**, 3번은 카드 에뮬레이션, 4번은 **RFID(Radio Frequency Identification)**예요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "UWB 규격 802.15.4z 는 Zigbee 의 802.15.4 에 z 가 붙은 다른 규격이에요.",
+      "**NFC(Near Field Communication)**는 읽기만 하는 **RFID(Radio Frequency Identification)**와 달리 쓰기와 양방향도 돼요.",
+      "원본 19쪽 지도는 NFC 속도 424kbps, UWB 약 27Mbps 로 적어요. 둘 다 거리는 짧아요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "**NFC(Near Field Communication)**는 13.56MHz **전자기 유도(Electromagnetic Induction)**로 10cm 안에서 톡, 엿듣기를 막아요.",
+      "NFC 모드: P2P, 읽기/쓰기, **카드 에뮬레이션(Card Emulation)**. 뿌리는 **RFID(Radio Frequency Identification)**예요.",
+      "**UWB(Ultra-Wideband)**는 cm 단위로 거리를 재서 **릴레이 공격(Relay Attack)**을 막아요.",
+      "Zigbee 802.15.4, Z-Wave 920MHz 232 노드, Thread IPv6.",
+      "오늘의 용어: NFC(Near Field Communication), 전자기 유도(Electromagnetic Induction), 스니핑(Sniffing), 카드 에뮬레이션(Card Emulation), RFID(Radio Frequency Identification), UWB(Ultra-Wideband), 릴레이 공격(Relay Attack)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w3-8",
+   "title": "하나의 공용어를 찾아서: 표준 계보, Matter, Thread, HCA",
+   "goal": "스마트홈 통신 표준 4세대 흐름과 Matter 의 4층 구조, Thread 와 보더 라우터, Matter 와 HCA 의 차이를 말할 수 있어요.",
+   "terms": [
+    {
+     "ko": "",
+     "en": "RS-485",
+     "say": "월패드와 설비를 잇는 옛날식 유선 줄"
+    },
+    {
+     "ko": "파편화",
+     "en": "Fragmentation",
+     "say": "회사마다 말이 달라 조각조각 흩어진 상태예요."
+    },
+    {
+     "ko": "OCF",
+     "en": "Open Connectivity Foundation",
+     "say": "가전 회사들이 먼저 시도했던 공통 규칙 모임이에요."
+    },
+    {
+     "ko": "CSA",
+     "en": "Connectivity Standards Alliance",
+     "say": "Matter를 만든 회사들의 연합이에요."
+    },
+    {
+     "ko": "매터",
+     "en": "Matter",
+     "say": "회사가 달라도 기기끼리 말이 통하게 해 주는 공통 약속"
+    },
+    {
+     "ko": "HCA",
+     "en": "Home Connectivity Alliance",
+     "say": "큰 가전 회사들이 서버끼리 연결하려고 만든 연합이에요."
+    },
+    {
+     "ko": "C2C",
+     "en": "Cloud to Cloud",
+     "say": "회사 서버끼리 인터넷으로 손잡는 연결이에요."
+    },
+    {
+     "ko": "프로토콜 스택",
+     "en": "Protocol Stack",
+     "say": "통신 규칙을 층층이 쌓은 탑이에요."
+    },
+    {
+     "ko": "스레드",
+     "en": "Thread",
+     "say": "Matter 기기들이 쓰는 저전력 무선 그물망"
+    },
+    {
+     "ko": "보더 라우터",
+     "en": "Thread Border Router",
+     "say": "Thread 동네와 Wi-Fi 동네 사이의 국경 문이에요."
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "하나의 공용어를 찾아서",
+     "sub": "표준 계보, Matter, Thread, HCA"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "표준 4세대를 순서대로 말해요. **RS-485**는 유선이에요(기출 18번).",
+      "**매터(Matter)**의 4층 구조와 **스레드(Thread)**의 특징을 말해요(기출 23번).",
+      "**매터(Matter)**와 **HCA(Home Connectivity Alliance)**의 연결 방식 차이를 말해요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞에서 이어서",
+     "items": [
+      "**프로토콜(Protocol)**은 기기들이 서로 쓰는 언어라고 했죠.",
+      "**게이트웨이(Gateway)**는 말이 다른 네트워크 사이의 통역사였어요.",
+      "언어가 회사마다 다르면 통역사가 끝없이 늘어나요. 오늘은 공용어를 만드는 역사예요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "나라마다 다른 콘센트",
+     "scene": "해외여행을 가면 나라마다 콘센트 모양이 달라서 가방에 어댑터가 한가득이에요. 어댑터 하나를 잃어버리면 그 나라에서는 충전을 못 해요. 그래서 여러 나라가 모여 '이제 콘센트 모양 하나로 통일하자' 하고 약속을 만들었어요.",
+     "map": [
+      [
+       "나라마다 다른 콘센트 모양",
+       "회사마다 다른 **프로토콜(Protocol)**, **파편화(Fragmentation)**"
+      ],
+      [
+       "가방 속 어댑터 여러 개",
+       "제조사마다 따로 산 전용 허브"
+      ],
+      [
+       "모여서 통일하자는 모임",
+       "**CSA(Connectivity Standards Alliance)**"
+      ],
+      [
+       "하나로 정한 콘센트 모양",
+       "**매터(Matter)**: 스마트홈 공용어"
+      ]
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "스마트홈 통신 표준 4세대",
+     "cols": [
+      "세대",
+      "기술",
+      "특징"
+     ],
+     "rows": [
+      [
+       "1세대 (2000년대)",
+       "**RS-485** 유선 직렬 버스",
+       "건설사 독점 폐쇄형 월패드"
+      ],
+      [
+       "2세대 (2010년대)",
+       "Zigbee, Z-Wave, 개별 Wi-Fi",
+       "제조사마다 전용 허브 난립, **파편화(Fragmentation)**"
+      ],
+      [
+       "2.5세대 (과도기)",
+       "**OCF(Open Connectivity Foundation)** (이후 AllJoyn 과 통합)",
+       "가전사 중심 시도, 빅테크 참여 부진으로 정체"
+      ],
+      [
+       "3세대 (2022년~)",
+       "**매터(Matter)** (**CSA(Connectivity Standards Alliance)**) vs **HCA(Home Connectivity Alliance)**",
+       "로컬 공용어 vs 가전사 클라우드 연합"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저, 이름은 그다음",
+     "items": [
+      "월패드와 설비를 두 가닥 꼬인 전선으로 잇는 옛날식 유선 규격이 **RS-485**예요. '알에스 사팔오'라고 읽어요.",
+      "회사마다 말이 달라 조각조각 흩어진 상태는 **파편화(Fragmentation)**예요.",
+      "가전 회사들이 먼저 시도했던 공통 규칙 모임이 **OCF(Open Connectivity Foundation)**예요.",
+      "Zigbee Alliance 가 Apple, Google, Amazon, Samsung 을 모아 이름을 바꾼 연합이 **CSA(Connectivity Standards Alliance)**예요."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "다음 중 지능형 홈 무선 통신 기술에 해당하지 않는 것은? (기출 18번)",
+     "choices": [
+      "Thread",
+      "Z-Wave",
+      "RS-485",
+      "Zigbee"
+     ],
+     "a": 2,
+     "why": "**RS-485**는 유선 직렬 통신이에요. 1세대 월패드 연동에 쓰였어요. 나머지는 모두 무선 그물망이에요."
+    },
+    {
+     "kind": "points",
+     "head": "Matter 는 어떤 약속?",
+     "items": [
+      "**CSA(Connectivity Standards Alliance)**가 2022년에 내놓은 IP 기반 스마트홈 공용어가 **매터(Matter)**예요.",
+      "애플, 구글, 아마존, 삼성 앱에서 같은 기기를 동시에 제어해요.",
+      "집 안에서 기기를 직접 제어해 클라우드 의존을 줄이고 보안을 높이는 게 목표예요.",
+      "처음 1.0판은 조명, 플러그, 센서 위주였고 지금은 카메라, 로봇청소기까지 넓혀 가요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "Matter 프로토콜 스택",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"20\" y=\"20\" width=\"440\" height=\"40\" rx=\"2\" class=\"box b1\"/><text x=\"240\" y=\"46\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">1. 생태계: Apple, Google, Alexa, SmartThings</text><rect x=\"20\" y=\"70\" width=\"110\" height=\"50\" rx=\"2\" class=\"n b2\"/><text x=\"75\" y=\"100\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">Zigbee 브릿지</text><rect x=\"140\" y=\"70\" width=\"200\" height=\"50\" rx=\"2\" class=\"n2 b2\"/><text x=\"240\" y=\"102\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b2\">2. Matter 앱 계층</text><rect x=\"350\" y=\"70\" width=\"110\" height=\"50\" rx=\"2\" class=\"n b2\"/><text x=\"405\" y=\"100\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">BLE 간편등록</text><rect x=\"140\" y=\"130\" width=\"95\" height=\"55\" rx=\"2\" class=\"n3 b3\"/><text x=\"187.5\" y=\"154\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">Thread</text><text x=\"187.5\" y=\"172\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">IPv6 저전력</text><rect x=\"245\" y=\"130\" width=\"95\" height=\"55\" rx=\"2\" class=\"n3 b3\"/><text x=\"292.5\" y=\"154\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">Wi-Fi, 유선</text><text x=\"292.5\" y=\"172\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">IPv6 대용량</text><text x=\"80\" y=\"162\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">3. 네트워크</text><rect x=\"140\" y=\"195\" width=\"95\" height=\"45\" rx=\"2\" class=\"box b4\"/><text x=\"187.5\" y=\"223\" font-size=\"15\" text-anchor=\"middle\" class=\"t b4\">802.15.4</text><rect x=\"245\" y=\"195\" width=\"95\" height=\"45\" rx=\"2\" class=\"box b4\"/><text x=\"292.5\" y=\"223\" font-size=\"15\" text-anchor=\"middle\" class=\"t b4\">802.11</text><rect x=\"350\" y=\"195\" width=\"110\" height=\"45\" rx=\"2\" class=\"box b4\"/><text x=\"405\" y=\"222\" font-size=\"14\" text-anchor=\"middle\" class=\"t b4\">블루투스 칩</text><text x=\"80\" y=\"224\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b4\">4. 물리 계층</text></svg>",
+     "caption": "통신 규칙을 층층이 쌓은 탑이 **프로토콜 스택(Protocol Stack)**이에요. 센서는 **스레드(Thread)**로, 대용량 가전은 와이파이로 나눠요.",
+     "builds": 4
+    },
+    {
+     "kind": "points",
+     "head": "Thread 의 정의",
+     "items": [
+      "**스레드(Thread)**는 지그비와 같은 **IEEE 802.15.4**, 같은 **2.4GHz 대역(2.4 GHz Band)**을 써요.",
+      "다른 점은 모든 기기에 각자의 **IPv6(Internet Protocol version 6)** 인터넷 주소를 붙인다는 거예요.",
+      "IPv6 는 '아이피 브이 식스', 기기마다 넉넉히 붙이는 새 인터넷 주소 체계예요.",
+      "그래서 번역 없이 인터넷 쪽과 바로 말이 통하는 저전력 그물망이에요. **매터(Matter)**에 딱 맞춰졌어요."
+     ]
+    },
+    {
+     "kind": "figure",
+     "head": "Thread 그물망과 보더 라우터",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"20\" y=\"30\" width=\"290\" height=\"220\" rx=\"2\" class=\"box\"/><text x=\"165\" y=\"54\" font-size=\"15\" text-anchor=\"middle\" class=\"tb\">Thread 그물망</text><line x1=\"165\" y1=\"140\" x2=\"80\" y2=\"95\" class=\"e2 b1\"/><line x1=\"165\" y1=\"140\" x2=\"250\" y2=\"95\" class=\"e2 b1\"/><line x1=\"80\" y1=\"95\" x2=\"250\" y2=\"95\" class=\"e b1\"/><line x1=\"165\" y1=\"140\" x2=\"90\" y2=\"215\" class=\"e b2\"/><line x1=\"165\" y1=\"140\" x2=\"240\" y2=\"215\" class=\"e b2\"/><circle cx=\"80\" cy=\"95\" r=\"26\" class=\"n b1\"/><text x=\"80\" y=\"100\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b1\">라우터</text><circle cx=\"250\" cy=\"95\" r=\"26\" class=\"n b1\"/><text x=\"250\" y=\"100\" font-size=\"14\" text-anchor=\"middle\" class=\"tl b1\">라우터</text><circle cx=\"165\" cy=\"150\" r=\"30\" class=\"n2 b1\"/><text x=\"165\" y=\"155\" font-size=\"16\" text-anchor=\"middle\" class=\"tl b1\">BR</text><text x=\"165\" y=\"200\" font-size=\"14\" text-anchor=\"middle\" class=\"tb b1\">보더 라우터</text><circle cx=\"90\" cy=\"225\" r=\"10\" class=\"n3 b2\"/><circle cx=\"240\" cy=\"225\" r=\"10\" class=\"n3 b2\"/><text x=\"62\" y=\"210\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">센서</text><text x=\"275\" y=\"210\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">센서</text><line x1=\"312\" y1=\"150\" x2=\"340\" y2=\"150\" class=\"e2 b3\"/><polygon points=\"350.0,150.0 340.0,155.0 340.0,145.0\" class=\"arrow b3\"/><rect x=\"352\" y=\"120\" width=\"118\" height=\"60\" rx=\"2\" class=\"box2 b3\"/><text x=\"411\" y=\"146\" font-size=\"14\" text-anchor=\"middle\" class=\"tb b3\">와이파이 공유기</text><text x=\"411\" y=\"164\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">→ 인터넷</text><text x=\"410\" y=\"105\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">IPv6 직결</text></svg>",
+     "caption": "**보더 라우터(Thread Border Router)**가 Thread 동네와 와이파이 동네 사이 국경 문이에요. IPv6 패킷을 번역 없이 그대로 건네요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "보더 라우터 자세히",
+     "items": [
+      "Thread 동네와 와이파이 동네 사이에서 패킷을 바로 건네는 국경 문이 **보더 라우터(Thread Border Router)**예요.",
+      "따로 산 상자가 아니라 HomePod mini, Nest Hub, Echo, Aqara Hub M2/M3 같은 허브, 스피커 속 기능이에요.",
+      "집에 **보더 라우터(Thread Border Router)**가 둘 이상이면 하나가 꺼져도 다른 하나가 바로 이어 줘요. 이것도 자가 치유예요.",
+      "앞으로 기기를 살 때 'Matter over Thread' 지원 표시를 확인해요."
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "**매터(Matter)** 환경의 **스레드(Thread)** 특징으로 가장 적절하지 않은 것은? (기출 23번)",
+     "choices": [
+      "IPv6 를 기반으로 동작한다",
+      "저전력 메시 네트워크를 지원한다",
+      "VPN 기반의 암호화 무선 통신 기술이다",
+      "Zigbee 처럼 IEEE 802.15.4 를 기반으로 한다"
+     ],
+     "a": 2,
+     "why": "VPN(가상 사설망)은 인터넷 위에 비밀 터널을 만드는 보안 기술이에요. **스레드(Thread)**를 설명하는 말이 아니에요."
+    },
+    {
+     "kind": "points",
+     "head": "Matter 의 경쟁자: HCA",
+     "items": [
+      "LG, Electrolux, Haier 같은 큰 가전 회사가 주도권을 지키려고 만든 연합이 **HCA(Home Connectivity Alliance)**예요.",
+      "HDC(건설사), S-1(보안 회사), LH(공공기관)도 들어 있어요.",
+      "회사 서버끼리 인터넷으로 손잡는 연결을 **C2C(Cloud to Cloud)**라고 해요. Cloud to Cloud 예요.",
+      "**HCA(Home Connectivity Alliance)**는 **C2C(Cloud to Cloud)**, **매터(Matter)**는 집 안 로컬 직접 통신이에요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "Matter vs HCA",
+     "cols": [
+      "항목",
+      "Matter",
+      "HCA"
+     ],
+     "rows": [
+      [
+       "만든 곳",
+       "**CSA(Connectivity Standards Alliance)** (옛 Zigbee Alliance)",
+       "대형 가전 제조사 연합"
+      ],
+      [
+       "연결 방식",
+       "집 안 기기끼리 로컬 직접",
+       "제조사 서버를 거치는 **C2C(Cloud to Cloud)**"
+      ],
+      [
+       "인터넷이 끊기면",
+       "집 안에서 계속 작동",
+       "서버를 못 거쳐 제한"
+      ],
+      [
+       "잘 맞는 곳",
+       "센서, 조명 같은 작은 기기",
+       "대형 가전 제어"
+      ]
+     ]
+    },
+    {
+     "kind": "english",
+     "head": "외울 답안 문장",
+     "en": "Thread 는 IEEE 802.15.4 기반 2.4GHz 저전력 메시로, 모든 기기에 IPv6 주소를 주고 보더 라우터로 IP 네트워크와 직접 통신한다.",
+     "ko": "**스레드(Thread)**는 지그비와 바닥 규칙이 같지만 **IPv6(Internet Protocol version 6)** 주소가 있어요.",
+     "tip": "'802.15.4, IPv6, 메시, 보더 라우터' 네 낱말. VPN 은 없어요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "**RS-485**는 무선이 아니라 유선이에요. 1세대 월패드 줄이에요.",
+      "**CSA(Connectivity Standards Alliance)**는 새 단체가 아니라 Zigbee Alliance 가 이름을 바꾼 거예요.",
+      "**매터(Matter)**는 앱 계층 공용어, **스레드(Thread)**는 그 말을 나르는 저전력 길이에요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "1세대 **RS-485** 유선 → 2세대 **파편화(Fragmentation)** → 2.5세대 OCF → 3세대 **매터(Matter)** vs HCA.",
+      "**CSA(Connectivity Standards Alliance)**가 2022년 **매터(Matter)**를 냈고, 4층 **프로토콜 스택(Protocol Stack)**이에요.",
+      "**스레드(Thread)**는 802.15.4 + IPv6 메시, **보더 라우터(Thread Border Router)**가 와이파이와 이어요.",
+      "**HCA(Home Connectivity Alliance)**는 서버끼리 **C2C(Cloud to Cloud)**, 매터는 로컬 직접.",
+      "오늘의 용어: RS-485, 파편화(Fragmentation), OCF(Open Connectivity Foundation), CSA(Connectivity Standards Alliance), 매터(Matter), HCA(Home Connectivity Alliance), C2C(Cloud to Cloud), 프로토콜 스택(Protocol Stack), 스레드(Thread), 보더 라우터(Thread Border Router)"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "w3-9",
+   "title": "전파 건강검진: 신호 감쇠와 네 가지 진단 지표",
+   "goal": "마감재가 전파를 약하게 만드는 까닭과 대책, RSSI, LQI, SNR, 패킷 재전송률의 뜻과 기준 숫자를 말하고 조치를 고를 수 있어요.",
+   "terms": [
+    {
+     "ko": "신호 감쇠",
+     "en": "Attenuation",
+     "say": "전파가 벽이나 물건을 만나 힘이 빠지는 것이에요."
+    },
+    {
+     "ko": "경로 손실",
+     "en": "Path Loss",
+     "say": "전파가 가는 길에서 잃어버리는 힘이에요."
+    },
+    {
+     "ko": "dB",
+     "en": "Decibel",
+     "say": "신호가 얼마나 줄었는지, 몇 배인지 나타내는 단위예요."
+    },
+    {
+     "ko": "dBm",
+     "en": "Decibel-milliwatts",
+     "say": "받은 신호 세기를 나타내는 마이너스 숫자 단위예요."
+    },
+    {
+     "ko": "RSSI",
+     "en": "Received Signal Strength Indicator",
+     "say": "받은 신호의 목소리 크기예요."
+    },
+    {
+     "ko": "LQI",
+     "en": "Link Quality Indicator",
+     "say": "말이 얼마나 또렷하게 들리는지 나타내는 점수예요."
+    },
+    {
+     "ko": "SNR",
+     "en": "Signal to Noise Ratio",
+     "say": "시끄러운 곳에서 내 목소리가 얼마나 큰지 비율이에요."
+    },
+    {
+     "ko": "노이즈 플로어",
+     "en": "Noise Floor",
+     "say": "주변에 늘 깔려 있는 전파 잡음이에요."
+    },
+    {
+     "ko": "패킷 재전송률",
+     "en": "Packet Retry Rate",
+     "say": "'뭐라고?' 해서 다시 보낸 비율이에요."
+    },
+    {
+     "ko": "중계기",
+     "en": "Repeater",
+     "say": "약한 신호를 받아 다시 힘차게 보내 주는 기기예요."
+    }
+   ],
+   "slides": [
+    {
+     "kind": "title",
+     "big": "전파 건강검진",
+     "sub": "신호 감쇠와 네 가지 진단 지표"
+    },
+    {
+     "kind": "goal",
+     "items": [
+      "벽, 금속, 거울, 물이 전파에 주는 영향과 대책을 말해요.",
+      "**dB(Decibel)**와 **dBm(Decibel-milliwatts)**을 소리 내어 읽고 손으로 계산해요.",
+      "RSSI, LQI, SNR, **패킷 재전송률(Packet Retry Rate)** 기준으로 조치를 골라요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "앞에서 이어서",
+     "items": [
+      "**금속 차폐(Metal Shielding)**가 전파를 막아 **음영 지역(Dead Zone)**을 만든다고 했죠.",
+      "**2.4GHz 대역(2.4 GHz Band)**은 파장이 짧아 벽에서 크게 약해지는 차선이었어요.",
+      "상시 전원 **라우터(Router)**가 중계해 거리를 늘린다고 했어요.",
+      "오늘은 '얼마나' 약해졌는지 숫자로 재 봐요."
+     ]
+    },
+    {
+     "kind": "analogy",
+     "head": "시끄러운 운동장에서 친구 부르기",
+     "scene": "운동장 건너편 친구를 부르는데 사이에 체육관 벽이 있으면 목소리가 작아져서 닿아요. 주변에서 다른 반이 응원가까지 부르면 내 목소리가 묻혀서 친구가 '뭐라고?' 하고 되물어요. 되물을 때마다 다시 말하느라 목이 쉬어요. 그래서 중간에 다른 친구를 세워 말을 전해 달라고 해요.",
+     "map": [
+      [
+       "벽을 지나며 작아진 목소리",
+       "**신호 감쇠(Attenuation)**"
+      ],
+      [
+       "주변의 응원가 소리",
+       "**노이즈 플로어(Noise Floor)**"
+      ],
+      [
+       "'뭐라고?' 하고 다시 말한 비율",
+       "**패킷 재전송률(Packet Retry Rate)**"
+      ],
+      [
+       "중간에 세운 친구",
+       "**중계기(Repeater)**: 상시 전원 라우터"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "뜻 먼저, 이름은 그다음",
+     "items": [
+      "전파가 벽이나 물건을 만나 힘이 빠지는 걸 **신호 감쇠(Attenuation)**라고 해요.",
+      "전파가 가는 길 전체에서 잃어버리는 힘은 **경로 손실(Path Loss)**이에요. 영어로 Path Loss 예요.",
+      "약한 신호를 받아 다시 힘차게 보내는 기기는 **중계기(Repeater)**예요.",
+      "집에서는 상시 전원 스위치, 플러그가 **중계기(Repeater)** 노릇을 해요."
+     ]
+    },
+    {
+     "kind": "compare",
+     "head": "마감재가 만드는 **경로 손실(Path Loss)** (2.4GHz)",
+     "cols": [
+      "마감재",
+      "무슨 일이?",
+      "설계 대책"
+     ],
+     "rows": [
+      [
+       "철근 콘크리트 내력벽",
+       "강하게 차단 (10~15dB 감쇠)",
+       "벽 너머 방마다 상시 전원 라우터"
+      ],
+      [
+       "금속 중문, 가전 외판",
+       "거의 통과 못 하고 반사",
+       "냉장고, 세탁기 뒤에 센서 매립 피하기"
+      ],
+      [
+       "대형 거울 (은막 코팅)",
+       "뒷면 금속 코팅이 반사, 차단",
+       "드레스룸, 욕실 거울 뒤 매립 피하기"
+      ],
+      [
+       "대형 수족관, 플랜테리어",
+       "물 분자가 전파를 직접 흡수",
+       "수족관을 돌아가는 라우터 배치"
+      ]
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "dB 소리 내어 읽기",
+     "items": [
+      "**dB(Decibel)**는 데시벨, 신호가 몇 배 커지거나 줄었는지 나타내는 단위예요.",
+      "10dB 줄면 힘이 10분의 1, 20dB 줄면 100분의 1이에요.",
+      "**dBm(Decibel-milliwatts)**은 디비엠, 1밀리와트(mW)를 0으로 놓고 잰 신호 세기예요.",
+      "집 안에서 받는 신호는 1mW 보다 훨씬 약해서 -50dBm 처럼 마이너스로 나와요."
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "손계산 1: 콘크리트 벽 하나 지나면?",
+     "steps": [
+      "10dB 는 10을 1번 곱한 배, 즉 10배 약해진다는 뜻이에요.",
+      "15dB 는 10을 1.5번 곱한 배라서 약 31.6배예요.",
+      "그러니 벽을 지나면 힘이 10분의 1에서 약 32분의 1로 줄어요.",
+      "벽이 두 개면 감쇠 dB 를 더해요. 10 + 10 = 20dB, 100분의 1이에요."
+     ],
+     "answer": "**신호 감쇠(Attenuation)**가 이렇게 커서 벽 너머 방마다 상시 전원 라우터를 둬요.",
+     "given": "철근 콘크리트 내력벽 10~15dB 감쇠"
+    },
+    {
+     "kind": "figure",
+     "head": "받은 신호 세기 RSSI 눈금",
+     "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"40\" y1=\"110\" x2=\"440\" y2=\"110\" class=\"e\"/><rect x=\"40\" y=\"90\" width=\"110\" height=\"40\" rx=\"2\" class=\"n4 b2\"/><rect x=\"150\" y=\"90\" width=\"150\" height=\"40\" rx=\"2\" class=\"n b2\"/><rect x=\"300\" y=\"90\" width=\"140\" height=\"40\" rx=\"2\" class=\"n3 b1\"/><text x=\"40\" y=\"155\" font-size=\"14\" text-anchor=\"middle\" class=\"tm\">-90</text><text x=\"150\" y=\"155\" font-size=\"14\" text-anchor=\"middle\" class=\"tb\">-75</text><text x=\"300\" y=\"155\" font-size=\"14\" text-anchor=\"middle\" class=\"tb\">-50</text><text x=\"440\" y=\"155\" font-size=\"14\" text-anchor=\"end\" class=\"tm\">-30dBm</text><text x=\"370\" y=\"70\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b1\">우수, 쾌적</text><text x=\"370\" y=\"190\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">-50dBm 이상</text><text x=\"95\" y=\"70\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b2\">음영 지역</text><text x=\"95\" y=\"190\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">-75dBm 이하</text><text x=\"225\" y=\"70\" font-size=\"15\" text-anchor=\"middle\" class=\"tm b2\">중간</text><line x1=\"120\" y1=\"240\" x2=\"120\" y2=\"146\" class=\"e2 b3\"/><polygon points=\"120.0,136.0 125.0,146.0 115.0,146.0\" class=\"arrow b3\"/><text x=\"250\" y=\"245\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b3\">-80dBm: 라우터 추가!</text></svg>",
+     "caption": "오른쪽(0에 가까울수록)이 강한 신호예요. **RSSI(Received Signal Strength Indicator)**가 -75dBm 이하면 **음영 지역(Dead Zone)**이에요.",
+     "builds": 3
+    },
+    {
+     "kind": "points",
+     "head": "지표 1, 2: RSSI 와 LQI",
+     "items": [
+      "허브와 센서 사이 전파의 물리적 세기를 **RSSI(Received Signal Strength Indicator)**라고 해요. 받은 목소리 크기예요.",
+      "**RSSI(Received Signal Strength Indicator)** -50dBm 이상은 우수, -75dBm 이하는 음영 지역이고 패킷을 잃어요.",
+      "잡음 속에서 데이터가 얼마나 깨끗하게 받아지는지 점수가 **LQI(Link Quality Indicator)**예요. 0~255 점이에요.",
+      "**LQI(Link Quality Indicator)** 200 이상은 안정, 100 이하는 에러와 반응 지연이 잦아요."
+     ]
+    },
+    {
+     "kind": "points",
+     "head": "지표 3, 4: SNR 과 재전송률",
+     "items": [
+      "주변에 늘 깔린 전파 잡음이 **노이즈 플로어(Noise Floor)**예요.",
+      "잡음에 비해 내 신호가 얼마나 큰지 비율이 **SNR(Signal to Noise Ratio)**이에요. 20dB 이상 양호, 10dB 이하 간섭 심각이에요.",
+      "통신 에러로 데이터를 다시 보낸 비율은 **패킷 재전송률(Packet Retry Rate)**이에요.",
+      "재전송률 5% 미만 정상, 15% 이상이면 지연과 배터리 조기 방전이라 라우터를 더해요."
+     ]
+    },
+    {
+     "kind": "steps",
+     "head": "손계산 2: SNR 20dB 와 10dB",
+     "steps": [
+      "20dB 는 10을 2번 곱한 배, 즉 100배예요.",
+      "SNR 20dB 면 내 신호가 잡음의 100배라서 또렷해요.",
+      "10dB 는 10배예요. 전자레인지, 공유기 잡음이 커지면 여기까지 떨어져요."
+     ],
+     "answer": "**SNR(Signal to Noise Ratio)** 20dB 이상은 양호, 10dB 이하는 간섭 심각이에요.",
+     "given": "잡음 세기를 1이라고 해요"
+    },
+    {
+     "kind": "steps",
+     "head": "손계산 3: 재전송률 판정",
+     "steps": [
+      "재전송률 = 다시 보낸 수 ÷ 보낸 수 × 100 이에요.",
+      "18 ÷ 120 = 0.15 예요.",
+      "0.15 × 100 = 15% 예요.",
+      "기준표에서 15% 이상은 '지연, 배터리 조기 방전'이에요."
+     ],
+     "answer": "**패킷 재전송률(Packet Retry Rate)** 15%, 근처에 상시 전원 라우터를 더해야 해요.",
+     "given": "센서가 한 시간에 패킷 120개를 보냈고, 18개를 다시 보냈어요"
+    },
+    {
+     "kind": "compare",
+     "head": "네 가지 진단 지표 한 장 정리",
+     "cols": [
+      "지표",
+      "무엇을 재나",
+      "좋음",
+      "나쁨"
+     ],
+     "rows": [
+      [
+       "**RSSI(Received Signal Strength Indicator)**",
+       "전파의 세기",
+       "-50dBm 이상",
+       "-75dBm 이하"
+      ],
+      [
+       "**LQI(Link Quality Indicator)**",
+       "깨끗하게 받는 정도 (0~255)",
+       "200 이상",
+       "100 이하"
+      ],
+      [
+       "**SNR(Signal to Noise Ratio)**",
+       "잡음 대비 신호 크기",
+       "20dB 이상",
+       "10dB 이하"
+      ],
+      [
+       "**패킷 재전송률(Packet Retry Rate)**",
+       "다시 보낸 비율",
+       "5% 미만",
+       "15% 이상"
+      ]
+     ]
+    },
+    {
+     "kind": "check",
+     "q": "현장에서 **RSSI(Received Signal Strength Indicator)**가 -80dBm 으로 나왔어요. 알맞은 조치는? (3.3강 점검 6번)",
+     "choices": [
+      "아주 강한 신호라 그대로 둔다",
+      "음영 지역으로 보고 근처에 상시 전원 라우터를 더한다",
+      "허브 전원을 스위치 콘센트로 옮긴다",
+      "센서를 금속 분전함 속에 넣는다"
+     ],
+     "a": 1,
+     "why": "-80 은 -75 보다 더 작아서(더 약해서) **음영 지역(Dead Zone)**이에요. **중계기(Repeater)** 역할의 라우터를 더해요."
+    },
+    {
+     "kind": "check",
+     "q": "**노이즈 플로어(Noise Floor)**의 뜻은?",
+     "choices": [
+      "주변에 늘 깔린 전파 잡음",
+      "받은 신호의 세기",
+      "다시 보낸 비율",
+      "전파가 벽에서 힘이 빠지는 것"
+     ],
+     "a": 0,
+     "why": "2번은 **RSSI(Received Signal Strength Indicator)**, 3번은 재전송률, 4번은 **신호 감쇠(Attenuation)**예요."
+    },
+    {
+     "kind": "warn",
+     "head": "헷갈리기 쉬운 점",
+     "items": [
+      "**dBm(Decibel-milliwatts)**은 마이너스라서 숫자가 0에 가까울수록 강해요. -50 이 -80 보다 강해요.",
+      "**LQI(Link Quality Indicator)**는 높을수록 좋고, **패킷 재전송률(Packet Retry Rate)**은 낮을수록 좋아요.",
+      "원본 28쪽 '벽의 재질에 따른 감쇠 정도'는 그림이 비어 있어요. 27쪽 표로 공부해요."
+     ]
+    },
+    {
+     "kind": "recap",
+     "items": [
+      "벽, 금속, 거울, 물이 **신호 감쇠(Attenuation)**와 **경로 손실(Path Loss)**을 만들어요. 콘크리트는 10~15dB.",
+      "**dB(Decibel)**는 몇 배, **dBm(Decibel-milliwatts)**은 1mW 기준 세기. 10dB 는 10배예요.",
+      "위험 신호: RSSI -75dBm 이하, **LQI(Link Quality Indicator)** 100 이하, SNR 10dB 이하.",
+      "**패킷 재전송률(Packet Retry Rate)** 15% 이상이면 **중계기(Repeater)** 라우터를 더해요. **노이즈 플로어(Noise Floor)**가 높으면 SNR 이 떨어져요.",
+      "오늘의 용어: 신호 감쇠(Attenuation), 경로 손실(Path Loss), dB(Decibel), dBm(Decibel-milliwatts), RSSI(Received Signal Strength Indicator), LQI(Link Quality Indicator), SNR(Signal to Noise Ratio), 노이즈 플로어(Noise Floor), 패킷 재전송률(Packet Retry Rate), 중계기(Repeater)"
+     ]
+    }
+   ]
+  }
+ ]
+}
