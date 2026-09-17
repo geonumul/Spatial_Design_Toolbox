@@ -2,7 +2,7 @@
 """가리고 설명하기 데이터 만들기: 강의 슬라이드에서 가릴 말(1, 2, 3단계)과 소단원 목록을 뽑는다.
 
 사용: python tools/recall_build.py <과목> [덱 ...] [--png 쪽,쪽] [--png-dir 폴더] [--ocr]
-  과목: iot-smart-home 또는 gnn
+  과목: iot-smart-home, eco-architecture 또는 gnn
   --png 3,10,20   가린 칸을 슬라이드 그림 위에 그린 확인용 PNG 를 만든다 (빨강 1단계, 파랑 2단계, 초록 3단계)
   --png-dir 폴더  확인용 PNG 를 둘 곳 (없으면 recall/_check/)
   --ocr           글자 층이 없는 PDF 의 OCR 을 다시 한다 (없으면 캐시 사용)
@@ -57,7 +57,35 @@ def _gnn():
     }
 
 
-PROFILES = {"iot-smart-home": _iot, "gnn": _gnn}
+def _eco():
+    w = ROOT / "work" / "eco-architecture"
+    cfg = json.loads((w / "subject.json").read_text(encoding="utf-8"))
+    return {
+        "name": "eco-architecture",
+        "decks": {k: v["pdf"] for k, v in cfg["decks"].items()},
+        "lesson": str(w / "lesson" / "{deck}_*.json"),
+        "glossary": [],
+        # 레슨이 없어서 정리 슬라이드 단원 용어, 주차 용어집을 용어로 쓴다
+        "glossary_units": [str(w / "notes" / "slides_w*.json"), str(w / "terms" / "*.json")],
+        "corpus": [str(w / "bank" / "*.json")],
+        "out": w / "recall",
+        "img": ROOT / "subjects" / "eco-architecture" / "img",
+        "layout": "a4",
+        # PDF 글자 층의 인코딩이 깨져 있어서 (한글이 엉뚱한 글자로 나온다) 늘 OCR 을 쓴다
+        "force_ocr": True,
+        # 1주차 정리 슬라이드 단원이 다루는 쪽 (build_slides_w1.py 의 단원과 같이 고친다)
+        "unit_pages": {"E1": {"w1-1": [1, 2], "w1-2": [3, 15], "w1-3": [16, 18], "w1-4": [19, 25], "w1-5": [26, 26],
+                              "w1-6": [27, 28], "w1-7": [29, 30], "w1-8": [31, 41], "w1-9": [42, 45], "w1-10": [46, 46]}},
+        # 슬라이드 그림과 _src/E1.txt 로 확인한 오독만
+        "ocr_fix": [("진환경", "친환경"), ("센환경겐축", "친환경건축"), ("제계", "체계"), ("건죽", "건축"), ("초고증", "초고층"),
+                    ("대제", "대체"), ("재택", "채택"), ("실전", "실천"), ("생물제간", "생물체간"), ("페기", "폐기"),
+                    ("토양증", "토양층"), ("에코로듸", "에코로드'"), ("170/0", "17%"), ("재저리", "재처리"), ("파해", "파력,")],
+        "ocr_word_fix": {"자이": "차이", "1자": "1차", "2자": "2차", "4자": "4차", "저음으로": "처음으로", "자제를": "자체를",
+                         "자제도": "자체도", "전제": "전체", "급丈": "값"},
+    }
+
+
+PROFILES = {"iot-smart-home": _iot, "gnn": _gnn, "eco-architecture": _eco}
 
 HANGUL = "가-힣"
 JOSA = sorted("""은 는 이 가 을 를 의 에 에서 에게 에는 에서는 으로 로 으로는 로는 으로의 로의 와 과 와의 과의 도 만 까지 부터 보다 처럼 이나 나 이며 며
@@ -412,6 +440,19 @@ def build_deck(prof, deck, args, corpus, gloss_entries):
     for f, d in load_json_glob(prof["lesson"].format(deck=deck)):
         for s in d.get("slides", []):
             slides[s["p"]] = s
+    # 레슨이 없는 과목: 정리 슬라이드 단원 용어를 그 단원이 다루는 쪽의 용어로 쓴다 (profile "unit_pages": {단원 id: [첫 쪽, 끝 쪽]})
+    upages = prof.get("unit_pages", {}).get(deck, {})
+    if upages:
+        for pat in prof.get("glossary_units", []):
+            for f, d in load_json_glob(pat):
+                for u in (d.get("units", []) if isinstance(d, dict) else []):
+                    if u.get("id") not in upages:
+                        continue
+                    a, b = upages[u["id"]]
+                    keys = [(t.get("en") or t.get("ko") or "").strip().lower() for t in u.get("terms", []) if isinstance(t, dict)]
+                    for p in range(a, b + 1):
+                        s = slides.setdefault(p, {})
+                        s["terms"] = list(s.get("terms", [])) + [k for k in keys if k]
     # 용어 사전: 키(en 또는 ko 소문자) -> 모양들
     keyforms = defaultdict(set)
     for g in gloss_entries:
@@ -424,14 +465,22 @@ def build_deck(prof, deck, args, corpus, gloss_entries):
         for f in fs:
             pats.append(("g:" + key, form_regex(f), len(f)))
     # 쪽 글자
-    has_text = sum(len(p.get_text("words")) for p in doc) > len(doc) * 3
+    has_text = not prof.get("force_ocr") and sum(len(p.get_text("words")) for p in doc) > len(doc) * 3
     if has_text:
         raw = [chars_from_pdf(p) for p in doc]
     else:
         cache = prof["out"] / "_ocr" / f"{deck}.json"
         if args.get("ocr") and cache.exists():
             cache.unlink()
-        raw = [chars_from_ocr(pg) for pg in ocr_pages(pdf, cache)]
+        ocr = ocr_pages(pdf, cache)
+        fix, word_fix = prof.get("ocr_fix", []), prof.get("ocr_word_fix", {})
+        for pg in ocr:                              # 과목별로 확인한 OCR 오독 고치기 (캐시는 그대로 둔다)
+            for ln in pg["lines"]:
+                for w in ln:
+                    w[0] = word_fix.get(w[0], w[0])
+                    for a, b in fix:
+                        w[0] = w[0].replace(a, b)
+        raw = [chars_from_ocr(pg) for pg in ocr]
     pages = [classify(r, prof["layout"]) for r in raw]
     N = len(pages)
     cands = [find_candidates(pg, pats, slides.get(i + 1, {}).get("terms", []), corpus) for i, pg in enumerate(pages)]
@@ -572,6 +621,12 @@ def main():
     base_gloss = []
     for g in prof["glossary"]:
         base_gloss += json.loads(pathlib.Path(g).read_text(encoding="utf-8"))
+    for pat in prof.get("glossary_units", []):      # 정리 슬라이드 {"units": [{"terms"}]} 또는 용어집 [{ko, en}] / {"terms": [...]}
+        for f, d in load_json_glob(pat):
+            if isinstance(d, dict) and "units" in d:
+                base_gloss += [t for u in d["units"] for t in u.get("terms", []) if isinstance(t, dict)]
+            else:
+                base_gloss += [t for t in (d if isinstance(d, list) else d.get("terms", [])) if isinstance(t, dict)]
     for deck in prof["decks"]:                      # 모든 덱 레슨의 용어도 같이 쓴다
         for f, d in load_json_glob(prof["lesson"].format(deck=deck)):
             base_gloss += [g for g in d.get("glossary", []) if isinstance(g, dict)]

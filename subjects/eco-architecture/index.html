@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+<!-- flat-restyle v1 -->
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>친환경건축 회독 스터디</title>
-<meta name="description" content="친환경건축: 강의 회독, 정리 슬라이드, 용어 카드, 필기, 문제은행">
+<meta name="description" content="친환경건축: 강의 회독, 정리 슬라이드, 용어 카드, 문제은행">
 <meta name="theme-color" content="#F7F7FB" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#101120" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,24 +15,25 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-<link rel="stylesheet" href="../../engine/app.css?v=202609151622">
-<link rel="stylesheet" href="../../engine/site.css?v=202609151622">
+<link rel="stylesheet" href="../../engine/app.css?v=202609171524">
+<link rel="stylesheet" href="../../engine/site.css?v=202609171524">
+<link rel="stylesheet" href="../../assets/pet/pet.css?v=202609171524">
 </head>
 <body>
 <header id="hdr">
   <div class="hwrap">
-    <a class="brand" href="#/" aria-label="홈으로">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><line x1="10" y1="21" x2="22" y2="11" stroke="var(--accent-ink)" stroke-width="3"/><circle cx="10" cy="21" r="4.5" fill="var(--accent-ink)"/><circle cx="22" cy="11" r="4.5" fill="var(--accent-ink)"/></svg>
+    <a class="hubback" href="../../index.html#subjects" aria-label="전체 과목으로">전체 과목</a>
+    <a class="brand" href="#/" aria-label="과목 홈으로">
+      
       <span>친환경건축 회독</span>
     </a>
     <nav id="nav" aria-label="주요 메뉴">
-      <a class="tab" href="../../index.html">과목</a>
       <a class="tab" data-nav="home" href="#/">홈</a>
       <a class="tab" data-nav="wb" href="#/week/b">기초 다지기</a>
       <a class="tab" data-nav="w1" href="#/week/1">1주차</a>
       <a class="tab" data-nav="quiz" href="#/quiz">문제</a>
       <a class="tab" data-nav="wrong" href="#/wrong">오답노트 <span id="wrongBadge" class="badge"></span></a>
-      <a class="tab" data-nav="note" href="#/notebook">필기 노트</a>
+      <a class="tab" data-nav="game" href="#/game">용어 게임</a>
       <a class="tab" data-nav="exams" href="#/exams">기출 분석</a>
       <a class="tab" data-nav="tips" href="#/tips">답안 팁</a>
       <a class="tab" data-nav="set" href="#/settings">설정</a>
@@ -42,15 +44,20 @@
 <main id="app"><div class="empty"><b>불러오는 중</b>잠시만요.</div></main>
 <button class="top" id="topBtn" type="button">맨 위로</button>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="../../assets/firebase-config.js?v=202609151622"></script>
-<script src="../../assets/sync.js?v=202609151622"></script>
+<script src="../../assets/firebase-config.js?v=202609171524"></script>
+<script src="../../assets/sync.js?v=202609171524"></script>
+<!-- 이용권 검사: 로그인과 이용권이 없으면 과목 화면을 가린다 (assets/access.js) -->
+<script src="../../assets/access-config.js?v=202609171524"></script>
+<script src="../../assets/access.js?v=202609171524" data-gate="subject"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" defer></script>
-<script src="data/meta.js?v=202609151622" defer></script>
-<script src="data/terms.js?v=202609151622" defer></script>
-<script src="data/bank.js?v=202609151622" defer></script>
-<script src="data/pages.js?v=202609151622" defer></script>
-<script src="../../engine/ink.js?v=202609151622" defer></script>
-<script src="../../engine/app.js?v=202609151622" defer></script>
+<script src="data/meta.js?v=202609171524" defer></script>
+<script src="data/terms.js?v=202609171524" defer></script>
+<script src="data/bank.js?v=202609171524" defer></script>
+<script src="data/pages.js?v=202609171524" defer></script>
+<script src="../../engine/ink.js?v=202609171524" defer></script>
+<script src="../../engine/app.js?v=202609171524" defer></script>
+<script src="../../assets/pet/pet.js?v=202609171524" defer></script>
+<script src="../../assets/footer.js?v=202609171524"></script>
 </body>
 </html>
