@@ -10,7 +10,7 @@ const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const hash = s => { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
-const norm = s => String(s || '').toLowerCase().replace(/[\s.,()[\]{}\-~'"`:;!?/\\$·–—’”]/g, '');
+const norm = s => String(s || '').toLowerCase().replace(/[\s.,()[\]{}\-~'"`:;!?/\\$\u00b7\u2013\u2014’”]/g, '');
 const pad3 = n => String(n).padStart(3, '0');
 const META = window.SDT_META || { weeks: [], decks: {}, units: {}, prereq: {} };
 const INK = () => window.SDTInk || null;
@@ -514,7 +514,7 @@ function toggleInk() {
   const on = !P.ink.enabled;
   P.ink.setEnabled(on);
   const c = $('#inkChip'); c.classList.toggle('on', on); c.textContent = on ? '필기 중' : '필기';
-  $('#phint').textContent = on ? '필기 중이에요. 넘길 때는 다음, 이전 버튼을 쓰거나, 펜만 필기로 두고 손가락으로 넘겨요.' : '화면을 누르면 다음, 왼쪽 가장자리를 누르면 이전. 옆으로 밀어도 넘어가요.';
+  $('#phint').textContent = on ? '필기 중이에요. 펜슬로만 쓰기를 켜면 손가락으로 넘겨요. 두 손가락으로 톡 치면 되돌리기.' : '화면을 누르면 다음, 왼쪽 가장자리를 누르면 이전. 옆으로 밀어도 넘어가요.';
   if (on) { INK().Toolbar.attach(P.ink, toggleInk); if (!P.ink.key) toast('이 장면에는 필기할 수 없어요'); }
   else INK().Toolbar.detach();
   schedule();
@@ -534,7 +534,14 @@ function pShow(i, dir) {
   countTerms(el);
   void el.offsetWidth;
   el.classList.remove('noanim');
-  if (dir === 'next' || dir === 'prev') el.classList.add(dir === 'next' ? 'in-next' : 'in-prev');
+  if (dir === 'next' || dir === 'prev') {
+    el.classList.add(dir === 'next' ? 'in-next' : 'in-prev');
+    const st = el.closest('.stage');
+    if (st && typeof window.scrollBy === 'function') {
+      const r = st.getBoundingClientRect(), top = viewTop();
+      if (r.top < top - 4 || r.top > window.innerHeight * 0.45) { try { window.scrollBy({ top: r.top - top }); } catch (e) { /* 무시 */ } }
+    }
+  }
   $('#ptitle').innerHTML = P.opts.title(f, i);
   $('#pcount').textContent = (i + 1) + ' / ' + P.frames.length;
   $('#sprogBar').style.width = Math.round((i + 1) / P.frames.length * 100) + '%';
@@ -543,15 +550,37 @@ function pShow(i, dir) {
   P.opts.onProgress(i);
   schedule();
 }
-function pApply() {
+function pApply(fromUser) {
   const el = $('#pslide');
   $$('[data-s]', el).forEach(e => { e.classList.toggle('hide', +e.dataset.s > P.step); });
   if (P.r && P.r.onStep) P.r.onStep(P.step, el);
+  if (fromUser) {
+    const fresh = $$('[data-s="' + P.step + '"]', el);
+    const target = $('#cnow', el) || fresh[fresh.length - 1];
+    setTimeout(() => keepVisible(target), 60);
+  }
+}
+/* 새로 나타난 내용이 화면 밖이면 그만큼만 스크롤 (머리글과 필기 막대 아래, 화면 아래 사이에 오게) */
+function viewTop() {
+  const hdr = $('#hdr'), bar = $('.inkbar');
+  let t = 0;
+  if (hdr) t = Math.max(t, hdr.getBoundingClientRect().bottom);
+  if (bar && !bar.hidden) t = Math.max(t, bar.getBoundingClientRect().bottom);
+  return Math.max(0, t) + 10;
+}
+function keepVisible(t) {
+  if (!t || !t.getBoundingClientRect || typeof window.scrollBy !== 'function') return;
+  const r = t.getBoundingClientRect(); if (!r.height) return;
+  const top = viewTop(), bottom = window.innerHeight - 14;
+  let dy = 0;
+  if (r.bottom > bottom) dy = r.bottom - bottom;
+  if (r.top - dy < top) dy = r.top - top;
+  if (Math.abs(dy) > 4) { try { window.scrollBy({ top: dy, behavior: 'smooth' }); } catch (e) { /* 스크롤 불가 환경 */ } }
 }
 function pNext() {
   if (!P) return;
   closePop();
-  if (P.step < P.steps) { P.step++; pApply(); schedule(); return; }
+  if (P.step < P.steps) { P.step++; pApply(true); schedule(); return; }
   if (P.i < P.frames.length - 1) { pShow(P.i + 1, 'next'); return; }
   P.opts.onEnd();
 }
@@ -682,17 +711,28 @@ function renderFrame(f, st) {
       const ls = String(f.code || '').split('\n');
       const says = f.lines || [];
       return {
-        html: '<div class="codewrap">' + head(f.head) + '<div class="cfile">' + esc(f.file) + '</div><pre class="code" id="pcode">'
+        html: '<div class="codewrap">' + head(f.head) + '<div class="cfile">' + esc(f.file) + (ls.length > 14 ? '<span class="chint">코드 칸은 따로 스크롤돼요</span>' : '') + '</div><pre class="code" id="pcode">'
           + ls.map((l, i) => '<span class="cl" data-l="' + (i + 1) + '">' + (esc(l) || ' ') + '</span>').join('') + '</pre>'
+          + '<div class="cnow" id="cnow"></div>'
           + (f.link ? '<div class="clink">' + fmt(f.link) + '</div>' : '')
-          + '<ol class="csay">' + says.map((x, i) => S(i + 1, '<span class="ln">' + x.from + (x.to !== x.from ? '~' + x.to : '') + '줄</span>' + fmt(x.say), 'li')).join('') + '</ol></div>',
+          + '<details class="call"><summary>줄 설명 전체 보기 (' + says.length + '개)</summary><ol class="csay">' + says.map((x, i) => '<li><span class="ln">' + x.from + (x.to !== x.from ? '~' + x.to : '') + '줄</span>' + fmt(x.say) + '</li>').join('') + '</ol></details></div>',
         steps: says.length,
         onStep: (s, el) => {
-          const pre = $('#pcode', el), cur = says[s - 1];
+          const pre = $('#pcode', el), cur = says[s - 1], cn = $('#cnow', el);
           pre.classList.toggle('focus', !!cur);
           $$('.cl', pre).forEach(c => { const n = +c.dataset.l; c.classList.toggle('hl', !!cur && n >= cur.from && n <= cur.to); });
           $$('.csay li', el).forEach((li, i) => li.classList.toggle('cur', i + 1 === s));
-          if (cur) { const first = $('.cl.hl', pre); if (first) pre.scrollTop = Math.max(0, first.offsetTop - 40); }
+          cn.innerHTML = cur ? '<span class="ln">' + cur.from + (cur.to !== cur.from ? '~' + cur.to : '') + '줄 (' + s + ' / ' + says.length + ')</span>' + fmt(cur.say)
+            : '<span class="muted">화면을 누를 때마다 코드의 줄 묶음이 하나씩 밝아지고 여기에 설명이 나와요.</span>';
+          renderMath(cn);
+          const hl = $$('.cl.hl', pre);
+          let top = 0;
+          if (hl.length) {
+            const a = hl[0].offsetTop, b = hl[hl.length - 1].offsetTop + hl[hl.length - 1].offsetHeight;
+            top = b - a > pre.clientHeight - 24 ? a - 8 : (a + b) / 2 - pre.clientHeight / 2;
+          }
+          top = Math.max(0, top);
+          if (typeof pre.scrollTo === 'function') { try { pre.scrollTo({ top, behavior: 'smooth' }); } catch (e) { pre.scrollTop = top; } } else pre.scrollTop = top;
         },
       };
     }
@@ -886,7 +926,7 @@ function paperPage(opts) {
     + '<div class="pbar2"><a class="btn' + (opts.prev ? '' : ' disabled') + '" href="' + esc(opts.prev || '#') + '">이전 쪽</a><span class="pcount num" style="flex:1;text-align:center">' + esc(opts.count || '') + '</span><a class="btn primary' + (opts.next ? '' : ' disabled') + '" href="' + esc(opts.next || '#') + '">다음 쪽</a></div>';
   APP().innerHTML = h;
   if (!I) { toast('이 브라우저에서는 필기를 쓸 수 없어요'); return; }
-  const layer = new I.Layer($('#paper'), { scrollOnFinger: true });
+  const layer = new I.Layer($('#paper'), { scrollOnFinger: true, zoomable: true });
   layer.setEnabled(true);
   layer.setKey(opts.key);
   I.Toolbar.attach(layer, () => { location.hash = opts.back; });
@@ -986,7 +1026,7 @@ async function pageSettings() {
     for (const k of Object.keys(all)) { if (await I.Sync.push('ink:' + k, all[k])) n++; }
     msg('기록과 필기 ' + n + '쪽을 맞췄어요');
   });
-  $('#fingerChip').addEventListener('click', () => { if (!I) return; I.tool.fingerNav = !I.tool.fingerNav; try { localStorage.setItem('gnn_ink_tool', JSON.stringify(I.tool)); } catch (e) { /* 무시 */ } pageSettings(); });
+  $('#fingerChip').addEventListener('click', () => { if (!I) return; I.tool.fingerNav = !I.tool.fingerNav; if (I.saveTool) I.saveTool(); pageSettings(); });
   $('#expAll').addEventListener('click', async () => {
     const data = JSON.stringify({ app: KEY, at: new Date().toISOString(), store: progressData(), extra: store.extra, ink: I ? await I.all() : {} });
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = (META.name || '공부') + '_기록_' + new Date().toISOString().slice(0, 10) + '.json';

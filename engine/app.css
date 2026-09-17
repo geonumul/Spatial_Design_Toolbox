@@ -134,7 +134,7 @@ main{max-width:980px;margin:0 auto;padding-block:0 120px}
 .lvl.hard{border-color:var(--coral);color:var(--coral)}
 .mocklbl{display:inline-block;padding:3px 10px;border-radius:4px;background:var(--ink);color:var(--ground);font-weight:700;font-size:12px;margin-right:6px}
 .qtext{font-size:19px;font-weight:700;line-height:1.6;margin:4px 0 14px}
-.qtext.en{font-weight:600;font-size:17px;word-break:normal}
+.qtext.en{font-weight:600;font-size:17px}
 .qko{background:var(--surface-2);border-radius:var(--r-md);padding:10px 14px;margin:0 0 14px;font-size:15px;color:var(--ink-2)}
 .qko .lbl{font-weight:800;color:var(--accent-deep);font-size:12px;margin-right:8px}
 .figbox{margin:6px 0 14px;border:1px solid var(--line);border-radius:var(--r-md);padding:10px;background:var(--surface);text-align:center;overflow-x:auto}
@@ -298,7 +298,7 @@ ol.steps li::before{content:counter(st);position:absolute;left:14px;top:12px;wid
 .stbl th,.stbl td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .stbl th{font-size:14px;color:var(--sub);font-weight:700;border-bottom:2px solid var(--line-2)}
 .stbl td:first-child{font-weight:700}
-.sen{font-size:24px;line-height:1.5;font-weight:650;word-break:normal;border-left:5px solid var(--accent);padding:4px 0 4px 18px}
+.sen{font-size:24px;line-height:1.5;font-weight:650;border-left:5px solid var(--accent);padding:4px 0 4px 18px}
 .sko{font-size:19px;color:var(--ink-2)}
 .stip{font-size:16px;color:var(--sub)}
 .sq{font-size:23px;font-weight:750;line-height:1.45}
@@ -311,7 +311,7 @@ ol.steps li::before{content:counter(st);position:absolute;left:14px;top:12px;wid
 .swarn li::before{border-color:var(--amber)}
 .review .rcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .rcard{border:1.5px solid var(--line-2);border-radius:var(--r-lg);padding:14px 16px;background:var(--surface);text-align:left;min-height:108px;display:flex;flex-direction:column;gap:6px}
-.rcard .ren{font-size:21px;font-weight:800;word-break:normal}
+.rcard .ren{font-size:21px;font-weight:800}
 .rcard .rko{font-size:16.5px;color:var(--ink-2)}
 .rcard .rko.hide{visibility:hidden}
 .term{background:var(--term-bg);color:var(--term-ink);border-radius:6px;padding:0 4px;font-weight:700;cursor:pointer;box-decoration-break:clone;-webkit-box-decoration-break:clone}
@@ -334,7 +334,7 @@ ol.steps li::before{content:counter(st);position:absolute;left:14px;top:12px;wid
 /* flashcards */
 .flash{perspective:1200px}
 .fcard{position:relative;min-height:300px;border-radius:6px;background:var(--stage-bg);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:30px;text-align:center;cursor:pointer}
-.fcard .fen{font-size:40px;font-weight:850;letter-spacing:-.03em;word-break:normal}
+.fcard .fen{font-size:40px;font-weight:850;letter-spacing:-.03em}
 .fcard .fko{font-size:24px;font-weight:700;color:var(--accent-deep)}
 .fcard .fsay{font-size:18px;color:var(--ink-2);max-width:36ch}
 .fcard .funit{font-size:13px;color:var(--sub)}

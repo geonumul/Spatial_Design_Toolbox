@@ -2,6 +2,7 @@
 """과목 회독 사이트 빌드: work/<slug>/ -> subjects/<slug>/ (GitHub Pages 정적 사이트)
 
 사용: python tools/build_site.py <slug> [--skip wb,w3]   (덜 된 정리 슬라이드 파일은 --skip 으로 뺀다)
+     --no-home 을 붙이면 저장소 루트 index.html 의 과목 카드는 고치지 않는다
 
 입력 (work/<slug>/)
   subject.json               과목 설정: 이름, 저장 키, 주차(weeks), 덱(decks), 회독 단계(passes), 모의고사 구성(mock)
@@ -47,7 +48,7 @@ def tid(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:40] or hashlib.md5(s.encode()).hexdigest()[:8]
 
 
-def main(slug, skip):
+def main(slug, skip, home=True):
     W, SITE = ROOT / "work" / slug, ROOT / "subjects" / slug
     cfg = load(W / "subject.json")
     ver = datetime.datetime.now().strftime("%Y%m%d%H%M")
@@ -228,7 +229,10 @@ def main(slug, skip):
             print(f"  경고: {p.name} 금지 문자 {bad}")
 
     # 7) 홈 카드
-    update_home(slug, cfg, meta, real, cnt)
+    if home:
+        update_home(slug, cfg, meta, real, cnt)
+    else:
+        print("  --no-home: 홈 index.html 과목 카드는 건드리지 않음")
     size = sum(f.stat().st_size for f in SITE.rglob("*") if f.is_file())
     print(f"완료 subjects/{slug}  버전 {ver}, {size / 1e6:.1f} MB")
 
@@ -274,4 +278,4 @@ if __name__ == "__main__":
     sk = set()
     if "--skip" in args:
         sk = set(args[args.index("--skip") + 1].split(","))
-    main(args[0], sk)
+    main(args[0], sk, home="--no-home" not in args)
