@@ -32,21 +32,23 @@ nav{display:flex;gap:4px;margin-left:8px}
 .hright{margin-left:auto;font-size:13px;color:var(--sub);white-space:nowrap}
 
 /* hero */
-.hero{background:linear-gradient(180deg,#E9E7FF 0%,#F3F2FF 55%,#FFFFFF 100%);text-align:center;padding:84px 24px 70px;position:relative;overflow:hidden}
-.hero::before{content:"";position:absolute;left:50%;top:-40px;width:560px;height:560px;transform:translateX(-50%) rotate(18deg);border-radius:6px;background:rgba(255,255,255,.55);pointer-events:none}
-.hero>*{position:relative}
-.hero .eyebrow{color:var(--primary);font-weight:600;font-size:17px;margin:0 0 12px}
-.hero h1{font-size:48px;line-height:1.2;letter-spacing:-1.4px;margin:0 0 16px;font-weight:800}
-.hero p{font-size:19px;color:#50506A;margin:0 0 34px;word-break:keep-all}
+.hero{position:relative;overflow:hidden;text-align:center;color:#fff;background:#1B1640;padding:96px 24px 64px;min-height:min(82svh,700px);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hero .bgv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(16,12,48,.66) 0%,rgba(34,24,98,.5) 48%,rgba(16,12,48,.74) 100%)}
+.hero>*:not(.bgv){position:relative;z-index:2}
+.hero .eyebrow{color:#D6D0FF;font-weight:700;font-size:17px;margin:0 0 14px;letter-spacing:.2px}
+.hero h1{font-size:56px;line-height:1.18;letter-spacing:-1.6px;margin:0 0 18px;font-weight:850;text-shadow:0 2px 28px rgba(0,0,0,.35);word-break:keep-all;text-wrap:balance}
+.hero p{font-size:19px;color:rgba(255,255,255,.9);margin:0 0 34px;word-break:keep-all;text-shadow:0 1px 12px rgba(0,0,0,.3)}
+.vtoggle{position:absolute!important;right:18px;bottom:16px;z-index:3;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.4);background:rgba(10,8,30,.35);color:#fff;font-size:13px;font-weight:800;cursor:pointer;backdrop-filter:blur(6px)}
 .hero .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:15px 30px;border-radius:4px;font-size:17px;font-weight:700;transition:transform .12s,box-shadow .12s}
 .pill.white{background:#fff;color:var(--ink);box-shadow:0 2px 10px rgba(50,40,140,.08)}
 .pill.solid{background:var(--primary);color:#fff}
 .pill:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(78,63,229,.18)}
 .hstats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:40px}
-.hstats div{background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:6px;padding:12px 22px;min-width:130px}
-.hstats b{display:block;font-size:26px;letter-spacing:-.6px;line-height:1.2}
-.hstats span{font-size:13px;color:var(--sub)}
+.hstats div{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:12px 22px;min-width:130px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hstats b{display:block;font-size:26px;letter-spacing:-.6px;line-height:1.2;color:#fff}
+.hstats span{font-size:13px;color:rgba(255,255,255,.82);white-space:nowrap}
 
 main{max-width:1120px;margin:0 auto;padding:0 24px 100px}
 .sechead{margin:60px 0 22px}
@@ -94,11 +96,12 @@ footer a{color:var(--primary);font-weight:600}
   .hwrap{padding:12px 16px;gap:14px;flex-wrap:wrap}
   .hright{display:none}
   nav{margin-left:0;width:100%;overflow-x:auto}
-  .hero{padding:52px 18px 44px}
-  .hero h1{font-size:31px;letter-spacing:-.8px}
+  .hero{padding:60px 18px 56px;min-height:min(78svh,600px)}
+  .hero h1{font-size:34px;letter-spacing:-.9px}
   .hero p{font-size:16px}
   .pill{padding:13px 22px;font-size:15px}
-  .hstats div{min-width:0;flex:1;padding:10px 8px}
+  .hstats div{min-width:0;flex:1;padding:10px 6px}
+  .hstats span{font-size:11.5px}
   .hstats b{font-size:21px}
   main{padding:0 16px 80px}
   .sechead{margin-top:44px}
@@ -121,7 +124,9 @@ footer a{color:var(--primary);font-weight:600}
 </div></header>
 
 <div class="hero">
-  <p class="eyebrow">공간디자인 수업 문제은행</p>
+  <video class="bgv" id="heroVideo" autoplay muted loop playsinline preload="metadata" poster="assets/media/hero.jpg" aria-hidden="true"><source src="assets/media/hero.mp4" type="video/mp4"></video>
+  <button class="vtoggle" id="vtoggle" type="button" aria-label="배경 영상 멈춤">II</button>
+  <p class="eyebrow">수업별 회독 스터디</p>
   <h1>과목을 고르고,<br>정리부터 시험까지 한 번에</h1>
   <p>과목에 들어가면 길잡이가 지금 할 일을 하나씩 알려 줘요.<br>회독으로 여러 번 읽고, 문제로 확인하고, 틀린 건 오답노트에 쌓여요.</p>
   <div class="cta">
@@ -168,7 +173,34 @@ footer a{color:var(--primary);font-weight:600}
    이름(name), 부제(sub), 설명(desc), 순서는 여기서 직접 고친다. key 는 과목 파일의 저장 키와 같아야 진행 기록이 보인다. */
 var SUBJECTS = /*SUBJECTS_START*/[
  {
-  "no": "01",
+  "href": "subjects/gnn/index.html",
+  "name": "그래프 신경망 (GNN)",
+  "sub": "Graph Neural Networks, 2026 가을",
+  "desc": "기초 다지기와 코딩 기초부터, 슬라이드를 보며 1~4회독, 정리 슬라이드, 직접 짜 보는 코딩 실습, 기출 스타일 문제까지.",
+  "key": "gnn2026_site_v1",
+  "count": 549,
+  "types": {
+   "mcq": 138,
+   "ox": 140,
+   "short": 99,
+   "essay": 84,
+   "calc": 88
+  },
+  "units": 54,
+  "features": [
+   "회독 레슨",
+   "정리 슬라이드",
+   "코딩 실습 218개",
+   "필기"
+  ],
+  "ready": true,
+  "passTotal": 15,
+  "unitTotal": 54,
+  "engine": 2,
+  "no": "01"
+ },
+ {
+  "no": "02",
   "name": "근현대 공간디자인",
   "sub": "근대건축 디자인사",
   "desc": "미술공예운동, 아르누보와 아르데코, 시카고 학파, 빈 분리파까지. 중간고사 범위 정리노트와 연표가 들어 있습니다.",
@@ -190,7 +222,7 @@ var SUBJECTS = /*SUBJECTS_START*/[
   "engine": 2
  },
  {
-  "no": "02",
+  "no": "03",
   "name": "실내디자인시공과실무",
   "sub": "",
   "desc": "강의자료를 받는 대로 정리노트와 문제를 채울 예정입니다.",
@@ -212,7 +244,7 @@ var SUBJECTS = /*SUBJECTS_START*/[
   "engine": 2
  },
  {
-  "no": "03",
+  "no": "04",
   "name": "식품영양의 이론과실제",
   "sub": "",
   "desc": "강의자료를 받는 대로 정리노트와 문제를 채울 예정입니다.",
@@ -234,7 +266,7 @@ var SUBJECTS = /*SUBJECTS_START*/[
   "engine": 2
  },
  {
-  "no": "04",
+  "no": "05",
   "name": "IoT 스마트홈",
   "sub": "",
   "desc": "강의자료를 받는 대로 정리노트와 문제를 채울 예정입니다.",
@@ -258,22 +290,24 @@ var SUBJECTS = /*SUBJECTS_START*/[
   "engine": 2
  },
  {
-  "no": "05",
+  "no": "06",
   "name": "친환경건축",
   "sub": "",
   "desc": "1단원 친환경건축의 개념 및 정의부터. 매주 강의자료가 올라오는 대로 단원이 추가됩니다.",
   "href": "subjects/eco-architecture/index.html",
   "key": "sdt_eco_v1",
-  "count": 348,
+  "count": 472,
   "types": {
-   "mcq": 147,
-   "ox": 91,
-   "short": 76,
-   "essay": 24,
-   "calc": 10
+   "mcq": 196,
+   "ox": 117,
+   "short": 98,
+   "essay": 39,
+   "calc": 22
   },
   "units": 1,
-  "features": [],
+  "features": [
+   "기출 15문항"
+  ],
   "ready": true,
   "passTotal": 0,
   "unitTotal": 0,
@@ -355,6 +389,14 @@ if(window.SDT){
 /* 과목 페이지에서 뒤로 왔을 때 기록 다시 읽기 */
 window.addEventListener("pageshow", function(ev){ if(ev.persisted) renderSubjects(); });
 window.addEventListener("scroll", function(){ $("#hdr").classList.toggle("scrolled", window.scrollY>8); });
+/* 배경 영상: 움직임 줄이기 설정이면 멈춘 채로, 버튼으로 멈춤과 재생 */
+(function(){
+  var v=$("#heroVideo"), b=$("#vtoggle"); if(!v||!b) return;
+  function sync(){ b.textContent=v.paused?"▶":"II"; b.setAttribute("aria-label", v.paused?"배경 영상 재생":"배경 영상 멈춤"); }
+  if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches){ v.removeAttribute("autoplay"); v.pause(); }
+  b.addEventListener("click", function(){ if(v.paused){ var p=v.play(); if(p&&p.catch) p.catch(function(){}); } else v.pause(); });
+  v.addEventListener("play", sync); v.addEventListener("pause", sync); sync();
+})();
 </script>
 </body>
 </html>
