@@ -1236,9 +1236,12 @@ function launchDesktop(extra) {
   const s = load();
   const who = window.SDT && SDT.user ? '&uid=' + encodeURIComponent(SDT.user.uid) + (SDT.user.refreshToken ? '&rt=' + encodeURIComponent(SDT.user.refreshToken) : '') : '';
   // 펫이 없으면 프로그램의 내 펫 탭을 연다 (프로그램에서 데려올 수도 있음)
-  const url = s.adopted
+  // ping: 1.4.1 이상 프로그램은 받으면 users/{uid}/stores/petapp__info 에 {ver, ping} 을 적는다 (예전 프로그램은 모르는 칸이라 무시)
+  const ping = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+  lastPing = ping;
+  const url = (s.adopted
     ? 'tsgpet://toggle?sp=' + encodeURIComponent(s.sp) + '&name=' + encodeURIComponent(s.name || '') + '&wear=' + encodeURIComponent(JSON.stringify(s.wear || {})) + who + (extra || '')
-    : 'tsgpet://show?open=pet' + who;
+    : 'tsgpet://show?open=pet' + who) + '&ping=' + ping;
   let left = false;
   const onLeave = () => { left = true; };
   const onVis = () => { if (document.hidden) left = true; };
@@ -1249,9 +1252,41 @@ function launchDesktop(extra) {
   setTimeout(() => {
     window.removeEventListener('blur', onLeave);
     document.removeEventListener('visibilitychange', onVis);
-    if (left) { appMark('launched'); appCardRender(); return; }
+    if (left) { appMark('launched'); appCardRender(); appVersionCheck(ping); return; }
     if (!appCardMsg('프로그램이 안 열리면 먼저 설치해 주세요. 설치했는데도 안 열리면 브라우저의 "TSG 펫 열기" 창에서 열기를 눌러 주세요.')) note('펫 프로그램이 아직 없으면 한 번만 설치해 주세요', true);
   }, 2000);
+}
+// 프로그램이 열린 뒤: 답(ping)이 오면 버전을 보고, 안 오면 예전 버전(1.4.0 이하는 답을 안 적음)일 수 있다고 알려 준다
+let lastPing = '';
+const APP_POLL_MS = 1000, APP_POLL_N = 8;
+const verNum = v => { const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(v || '')); return m ? [+m[1], +m[2], +m[3]] : null; };
+const verCmp = (a, b) => { const x = verNum(a), y = verNum(b); if (!x || !y) return (x ? 1 : 0) - (y ? 1 : 0); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i]; return 0; };
+async function latestInfo() {
+  try {
+    const r = await window.fetch(DOWNLOAD.replace(/download\.html$/, 'latest.json') + '?t=' + now(), { cache: 'no-store' });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return verNum(j.version) ? j : null;
+  } catch (e) { return null; }
+}
+async function appVersionCheck(ping) {
+  const OLD = '펫 프로그램이 옛날 버전이에요. 1.3.1 이하는 스스로 업데이트를 못 해요. 한 번만 새로 설치해 주세요. 펫과 설정은 그대로예요.';
+  if (!(window.SDT && SDT.user)) {
+    appCardMsg('펫 프로그램이 열렸어요. 친구 기능이 안 되면 옛날 버전일 수 있어요. 1.3.1 이하라면 한 번만 새로 설치해 주세요.', true);
+    return;
+  }
+  let info = null;
+  for (let i = 0; i < APP_POLL_N && !info; i++) {
+    await new Promise(r => setTimeout(r, APP_POLL_MS));
+    if (lastPing !== ping) return;   // 그 사이 한 번 더 눌렀다
+    try { const v = await SDT.get('petapp__info'); if (v && v.ping === ping && verNum(v.ver)) info = v; } catch (e) { /* 다시 */ }
+  }
+  if (lastPing !== ping) return;
+  if (!info) { appCardMsg(OLD + ' (1.3.2 이상이면 프로그램의 트레이 메뉴에서 "업데이트 확인" 을 눌러도 돼요)', true); return; }
+  const latest = await latestInfo();
+  if (latest && verCmp(info.ver, latest.minVersion) < 0) { appCardMsg(OLD, true); return; }
+  if (latest && verCmp(info.ver, latest.version) < 0) { appCardMsg('새 버전(' + latest.version + ')이 나왔어요. 펫 프로그램의 업데이트 창(또는 트레이 메뉴의 업데이트 확인)에서 설치해 주세요. 지금 버전 ' + info.ver, false); return; }
+  appCardMsg('최신 버전(' + info.ver + ')이에요. 잘 켜졌어요!', false, true);
 }
 // 내 펫 페이지 맨 위: 1. 펫 프로그램 설치, 2. 노트북 화면에 띄우기. 한 번 설치했거나 켜 본 사람은 띄우기가 먼저, 설치는 접힘
 function appCardRender() {
@@ -1267,10 +1302,12 @@ function appCardRender() {
   host.innerHTML = '<section class="pet-sheet pa" id="app"><div class="pa-head"><b>노트북 화면에서 같이 지내기</b><p>펫 프로그램을 설치하면 펫이 브라우저 밖 화면 위를 걸어 다니고, 친구와 채팅해요.</p></div>'
     + (seen ? step2 + step1 : step1 + step2) + '<p class="pa-msg" id="paMsg" hidden></p></section>';
 }
-function appCardMsg(text) {
+function appCardMsg(text, withInstall, ok) {
   const m = $('#paMsg'); if (!m) return false;
+  if (withInstall === undefined) withInstall = true;
   m.hidden = !text;
-  m.innerHTML = text ? esc(text) + ' <a class="pet-btn main" href="' + DOWNLOAD.replace(/download\.html$/, 'TSG-Pet-Setup.exe') + '" download data-pa="install">설치 파일 받기</a>' : '';
+  m.classList.toggle('ok', !!ok);
+  m.innerHTML = text ? esc(text) + (withInstall ? ' <a class="pet-btn main" href="' + DOWNLOAD.replace(/download\.html$/, 'TSG-Pet-Setup.exe') + '" download data-pa="install">설치 파일 받기</a>' : '') : '';
   return true;
 }
 function appCardBoot() {
@@ -1302,7 +1339,7 @@ const DOWNLOAD = (function () {
 const PET_PAGE = DOWNLOAD.replace(/desktop-pet\/download\.html$/, 'pet/index.html');
 
 /* ---------- 시작 ---------- */
-window.SDTPet = { onAnswer, onUndo, canStart, onSetEnd, onRead, openPanel, startBoss, petSvg, SPECIES, launchDesktop, care: { state: () => load(), tick: () => tick(load()), save, needAsk, needs: () => careNeeds(load(), now()) } };
+window.SDTPet = { onAnswer, onUndo, canStart, onSetEnd, onRead, openPanel, startBoss, petSvg, SPECIES, launchDesktop, care: { lastPing: () => lastPing, state: () => load(), tick: () => tick(load()), save, needAsk, needs: () => careNeeds(load(), now()) } };
 window.addEventListener('sdt:read', e => onRead(e.detail && e.detail.id));
 function bootPage(pg) {
   if (load().adopted) { fillPanel(pg); return; }

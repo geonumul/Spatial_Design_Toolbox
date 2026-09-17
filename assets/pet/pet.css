@@ -270,3 +270,4 @@ body.playing .pet-hud,body.inking .pet-hud,body.paper .pet-hud,body.pet-open .pe
 .pet-hud .pet-ask{position:absolute;right:0;bottom:calc(100% + 8px);width:260px}
 .pet-hud .pet-ask{pointer-events:auto}
 .pet-room{position:relative}
+.pa-msg.ok{background:#EFFAF4;color:#2F7A56}
