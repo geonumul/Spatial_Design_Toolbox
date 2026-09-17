@@ -50,6 +50,24 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
 .pick:hover td{background:var(--soft)}
 .uid{font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all}
 [hidden]{display:none!important}
+ .cf-step{display:flex;flex-direction:column;gap:6px;margin:0 0 18px}
+.cf-step>b{font-size:15px;font-weight:600}
+.cf-help{font-size:13px;color:var(--sub,#6B6B84)}
+.cf-coderow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cf-coderow input{flex:1 1 220px;font-size:17px}
+.cf-presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.cf-card{position:relative;display:block;cursor:pointer}
+.cf-card input{position:absolute;opacity:0;pointer-events:none}
+.cf-card span{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1.5px solid var(--line,#E7E6F3);border-radius:8px;background:#fff}
+.cf-card span b{font-weight:600;font-size:15px}
+.cf-card span small{color:var(--sub,#6B6B84);font-size:13px}
+.cf-card input:checked+span{border-color:var(--primary,#4E3FE5);background:#F3F2FF}
+.cf-card input:focus-visible+span{outline:3px solid rgba(78,63,229,.35)}
+.cf-subj{margin-top:8px}
+.cf-more{margin:0 0 16px;font-size:14px}
+.cf-more summary{cursor:pointer;color:var(--sub,#6B6B84)}
+.cf-more .row{margin-top:10px}
+.cf-go{min-height:46px;padding:0 26px;font-size:16px}
 </style>
 </head>
 <body>
@@ -86,23 +104,33 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
 
   <section class="panel">
     <h2>이벤트 코드 만들기</h2>
-    <p>코드는 추측하기 어렵게 무작위로 만들어 두었어요. 직접 바꿔도 되지만 짧고 쉬운 코드는 다른 사람이 맞힐 수 있어요.</p>
+    <p>친구들에게 알려 줄 코드와, 코드로 열어 줄 범위만 고르면 돼요.</p>
     <form id="codeForm">
-      <div class="row">
-        <label>코드 (영문 대문자, 숫자 6~32자)<input class="wide" name="code" required pattern="[A-Za-z0-9]{6,32}" autocomplete="off"></label>
-        <button type="button" class="line" id="newCode">다시 만들기</button>
+      <label class="cf-step"><b>1. 코드</b><span class="cf-help">영문, 숫자, 느낌표로 6~32자. 대소문자는 구분하지 않아요.</span>
+        <span class="cf-coderow"><input class="wide" name="code" required autocomplete="off" placeholder="예: catholic!!" spellcheck="false"><button type="button" class="line" id="newCode">무작위로 만들기</button></span></label>
+      <div class="cf-step"><b>2. 무엇을 열어 줄까요</b>
+        <div class="cf-presets">
+          <label class="cf-card"><input type="radio" name="kind" value="year" checked><span><b>모든 과목 1년</b><small>연간 프리패스, 365일</small></span></label>
+          <label class="cf-card"><input type="radio" name="kind" value="month"><span><b>모든 과목 한 달</b><small>월간 프리패스, 30일</small></span></label>
+          <label class="cf-card"><input type="radio" name="kind" value="subject"><span><b>과목 하나</b><small>과목 이용권, 60일</small></span></label>
+        </div>
+        <label data-subj hidden class="cf-subj">어떤 과목<select name="scope" data-subjects></select></label>
       </div>
-      <div class="row">
-        <label>종류<select name="kind" data-kind></select></label>
-        <label data-subj>과목<select name="scope" data-subjects></select></label>
-        <label>기간(일)<input class="num" type="number" name="days" min="1" max="400" required></label>
-        <label>쓸 수 있는 인원<input class="num" type="number" name="uses" min="1" value="1" required></label>
-        <label>코드 마감일<input type="date" name="until" required></label>
+      <div class="cf-step"><b>3. 몇 명이 쓸 수 있나요</b>
+        <div class="cf-presets small">
+          <label class="cf-card"><input type="radio" name="usesPreset" value="1000" checked><span><b>여러 명이 같이</b><small>1000명까지</small></span></label>
+          <label class="cf-card"><input type="radio" name="usesPreset" value="1"><span><b>한 명만</b><small>1명</small></span></label>
+        </div>
       </div>
-      <div class="row">
-        <label>메모 (나만 봐요)<input class="wide" name="note" maxlength="100"></label>
-        <button type="submit">코드 만들기</button>
-      </div>
+      <details class="cf-more"><summary>자세히 정하기 (안 건드려도 돼요)</summary>
+        <div class="row">
+          <label>열어 주는 기간(일)<input class="num" type="number" name="days" min="1" max="400" required></label>
+          <label>쓸 수 있는 인원<input class="num" type="number" name="uses" min="1" value="1000" required></label>
+          <label>코드를 넣을 수 있는 마지막 날<input type="date" name="until" required></label>
+        </div>
+        <div class="row"><label>메모 (나만 봐요)<input class="wide" name="note" maxlength="100"></label></div>
+      </details>
+      <button type="submit" class="cf-go">코드 만들기</button>
     </form>
     <p class="msg" id="codeMsg"></p>
   </section>
@@ -171,7 +199,7 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
     document.querySelectorAll("[data-subjects]").forEach(function(s){
       s.innerHTML = (C.subjects || []).map(function(x){ return '<option value="' + esc(x.key) + '">' + esc(x.name) + '</option>'; }).join("");
     });
-    ["#grantForm", "#codeForm"].forEach(function(id){
+    ["#grantForm"].forEach(function(id){
       var f = $(id);
       function sync(){
         var k = KINDS.filter(function(x){ return x[0] === f.kind.value; })[0];
@@ -193,8 +221,17 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
   function build(){
     fillSelects();
     var cf = $("#codeForm");
-    cf.code.value = randCode();
-    var d = new Date(Date.now() + 30 * DAY);
+    var d = new Date(Date.now() + 365 * DAY);
+    var KDAYS = {year: 365, month: 30, subject: 60};
+    function cfSync(){
+      var k = cf.kind.value;
+      cf.querySelector("[data-subj]").hidden = k !== "subject";
+      cf.days.value = KDAYS[k] || 365;
+      cf.days.readOnly = k === "month" || k === "year";
+      cf.uses.value = cf.usesPreset.value;
+    }
+    cf.addEventListener("change", function(e){ if(e.target.name === "kind" || e.target.name === "usesPreset") cfSync(); });
+    cfSync();
     cf.until.value = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
     $("#newCode").addEventListener("click", function(){ cf.code.value = randCode(); });
 
@@ -264,7 +301,7 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
           createdAt: firebase.firestore.FieldValue.serverTimestamp(), createdBy: SDT.user.uid
         }).then(function(){
           say(msg, id + " 코드를 만들었어요. " + grantText(kind, scope, days) + ", " + uses + "명까지.", true);
-          cf.code.value = randCode(); cf.note.value = ""; loadCodes();
+          cf.code.value = ""; cf.note.value = ""; loadCodes();
         });
       }).catch(function(err){ fail(msg, err); }).then(function(){ btn.disabled = false; });
     });

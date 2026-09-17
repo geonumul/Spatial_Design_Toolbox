@@ -32,6 +32,8 @@ header.scrolled{border-color:var(--line)}
 nav{display:flex;gap:4px;margin-left:8px}
 .tab{padding:8px 14px;border-radius:4px;font-weight:400;color:#3A3A52;font-size:14.5px}
 .tab:hover{background:var(--soft)}
+.adminbtn{margin-left:auto;color:var(--primary);border:1px solid var(--primary-mid);white-space:nowrap}
+.adminbtn[hidden]{display:none}
 .hright{margin-left:auto;font-size:13px;color:var(--sub);white-space:nowrap}
 
 /* hero */
@@ -163,7 +165,7 @@ footer.site .flegal{display:flex;gap:18px}
 <a class="tab" href="#pass">이용권</a>
 <a class="tab" href="pet/index.html">내 펫</a>
 </nav>
-<div class="hright" id="hstat"></div>
+<a class="tab adminbtn" id="adminBtn" href="admin/index.html" hidden>관리자</a><div class="hright" id="hstat"></div>
 </div></header>
 
 <div class="hero">
@@ -476,6 +478,8 @@ function cardBadge(s, ready){
   }
   return '<span class="badge '+(ready?'ready">공부 가능':'wait">준비 중')+'</span>';
 }
+/* 관리자 계정(Firestore admins 에 등록된 계정)으로 로그인했을 때만 머리글에 관리자 버튼 */
+(function(){ var A=window.SDTAccess; if(!A) return; A.onChange(function(st){ var b=document.getElementById("adminBtn"); if(b) b.hidden=!(st.user&&st.admin); }); })();
 function renderPass(){
   var A=window.SDTAccess; if(!A) return;
   A.addCSS();
