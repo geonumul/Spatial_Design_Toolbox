@@ -35,6 +35,11 @@ def main():
     page = page.replace('<a class="brand" href="#/"',
                         '<a class="hubback" href="../../index.html" aria-label="전체 과목으로">전체 과목</a>\n    <a class="brand" href="#/"', 1)
     (DST / "index.html").write_text(page, encoding="utf-8")
+    # Colab 링크가 이 저장소(github.io 로 쓰는 곳)의 노트북을 열게
+    mj = DST / "data" / "meta.js"
+    mj.write_text(mj.read_text(encoding="utf-8").replace('"repo":"geonumul/Graph-Neural-Networks-Fall-2026"', '"repo":"geonumul/Spatial_Design_Toolbox"'), encoding="utf-8")
+    aj = DST / "assets" / "app.js"
+    aj.write_text(aj.read_text(encoding="utf-8").replace("'/blob/main/practice/'", "'/blob/main/subjects/gnn/practice/'"), encoding="utf-8")
 
     meta = load_js(SRC / "data" / "meta.js", "GNN_META")
     bank = load_js(SRC / "data" / "bank.js", "GNN_BANK")
