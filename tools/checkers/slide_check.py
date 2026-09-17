@@ -10,7 +10,7 @@ REQ = {
     "title": ["big", "sub"], "goal": ["items"], "points": ["head", "items"], "analogy": ["head", "scene", "map"],
     "formula": ["head", "tex", "parts", "whole"], "steps": ["head", "steps", "answer"],
     "figure": ["head", "svg", "caption", "builds"], "compare": ["head", "cols", "rows"],
-    "english": ["head", "en", "ko"], "check": ["q", "choices", "a", "why"], "warn": ["head", "items"], "recap": ["items"],
+    "english": ["head", "en", "ko"], "check": ["q", "choices", "a", "why"], "viz": ["viz", "head"], "warn": ["head", "items"], "recap": ["items"],
 }
 EMOJI = re.compile("[\U0001F300-\U0001FAFF☀-➿]")
 
@@ -24,6 +24,18 @@ def strings(o):
         for k, v in o.items():
             if k != "svg":
                 yield from strings(v)
+
+def viz_names(path):
+    """움직이는 그림 등록 이름: JSON 파일 위쪽 폴더에서 engine/viz/*.js 나 viz/*.js 를 찾는다 (README.md 참고)"""
+    import pathlib
+    for d in pathlib.Path(path).resolve().parents:
+        for cand in (d / "engine" / "viz", d / "viz"):
+            if (cand / "viz.js").exists():
+                names = set()
+                for f in cand.glob("*.js"):
+                    names.update(re.findall(r"V\.add\('([a-z0-9_]+\.[a-z0-9_]+)'", f.read_text(encoding="utf-8")))
+                return names
+    return None
 
 def main(path):
     errs, warns = [], []
@@ -74,6 +86,15 @@ def main(path):
             k = s.get("kind")
             if k not in REQ:
                 errs.append(f"{where}: 모르는 kind"); continue
+            if k == "viz":
+                reg = viz_names(path)
+                if reg is None:
+                    errs.append(f"{where}: engine/viz/viz.js 를 못 찾음")
+                elif s.get("viz") not in reg:
+                    errs.append(f"{where}: 등록 안 된 그림 '{s.get('viz')}'")
+                for key in ("params", "caps"):
+                    if key in s and not isinstance(s[key], dict if key == "params" else list):
+                        errs.append(f"{where}: {key} 모양")
             for f in REQ[k]:
                 if s.get(f) in (None, "", []):
                     errs.append(f"{where}: '{f}' 없음")

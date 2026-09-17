@@ -650,7 +650,7 @@ function schedule() {
   const vis = $$('[data-s]', el).filter(e => +e.dataset.s === P.step);
   const text = vis.length ? vis.map(e => e.textContent).join(' ') : el.textContent;
   const ms = (clamp(1500 + text.length * 60, 2200, 11000) + (f.kind === 'slideimg' || f.kind === 'walk' || f.kind === 'walksum' ? 1500 : 0)) * (+store.pref.speed || 1);
-  P.timer = setTimeout(pNext, ms);
+  P.timer = setTimeout(pNext, ms + (f.kind === 'viz' ? 1800 : 0));   // 움직이는 그림은 움직임이 끝날 시간만큼 더
 }
 function drawTrail() {
   const svg = $('#trail'); if (!svg || !P) return;
@@ -790,6 +790,11 @@ function renderFrame(f, st) {
     }
     case 'figure':
       return { html: head(f.head) + '<div class="sfig">' + (f.svg || '') + '<div class="cap">' + fmt(f.caption) + '</div></div>', steps: f.builds > 1 ? f.builds : (/\bb1\b/.test(f.svg || '') ? 1 : 0), after: prepSvg };
+    case 'viz': {   /* 움직이는 개념 그림: engine/viz/viz.js 의 SDTViz 에 등록된 그림 (설명은 engine/viz/README.md) */
+      if (!window.SDTViz) return { html: head(f.head) + '<div class="sfig"><div class="cap">' + fmt(f.caption || '움직이는 그림을 불러오지 못했어요.') + '</div></div>', steps: 0 };
+      const r = window.SDTViz.frame(f, { S, fmt, esc, renderMath, go: n => { if (!P || P.r !== r) return; P.step = clamp(n, 0, P.steps); pApply(true); schedule(); } });
+      return r;
+    }
     case 'compare':
       return { html: head(f.head) + '<div class="stbl"><table><thead><tr>' + (f.cols || []).map(c => '<th>' + fmt(c) + '</th>').join('') + '</tr></thead><tbody>'
         + (f.rows || []).map((r, i) => S(i + 1, r.map(c => '<td>' + fmt(c) + '</td>').join(''), 'tr')).join('') + '</tbody></table></div>', steps: (f.rows || []).length };

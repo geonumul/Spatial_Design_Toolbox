@@ -1131,6 +1131,25 @@
      "builds": 3
     },
     {
+     "kind": "viz",
+     "viz": "iot.wave",
+     "head": "움직여 보기: 파장과 벽 감쇠",
+     "caption": "2.4GHz 벽 하나 12dB 는 손계산 3 숫자예요. 900MHz 벽 하나 6dB 와 허브 옆 -40dBm 은 비교를 돕는 가정 숫자예요. 벽 개수 막대를 움직여 봐요.",
+     "vp": "iot-wave-wb4"
+    },
+    {
+     "kind": "check",
+     "q": "허브 옆에서 -40dBm 이던 2.4GHz 신호가 콘크리트 벽 세 장(한 장에 12dB)을 지나 -76dBm 이 됐어요. 판정은?",
+     "choices": [
+      "우수 (-50dBm 이상)",
+      "중간",
+      "음영 지역 (-75dBm 이하)"
+     ],
+     "a": 2,
+     "why": "12dB 씩 세 번이면 36dB, -40 - 36 = -76dBm 이에요. -75dBm 이하라서 **신호 감쇠(Attenuation)** 때문에 라우터를 더 둬야 해요.",
+     "vp": "iot-wave-wb4"
+    },
+    {
      "kind": "check",
      "q": "신호가 잡음보다 100배 크면 **SNR(Signal to Noise Ratio)**은 몇 dB 일까요?",
      "choices": [
@@ -1641,6 +1660,25 @@
      ]
     },
     {
+     "kind": "viz",
+     "viz": "iot.topology",
+     "head": "움직여 보기: 노드 하나가 고장 나면",
+     "caption": "빨간 X 가 고장 난 노드예요. 한 단계씩 넘기면 세 모양에서 소식이 어디까지 가는지 보여요.",
+     "vp": "iot-topology-wb6"
+    },
+    {
+     "kind": "check",
+     "q": "거실 허브 한 대가 고장 나자 집 안 센서가 모두 멈췄어요. 이 집의 연결 모양은?",
+     "choices": [
+      "스타형",
+      "메시",
+      "트리형의 맨 아래 가지"
+     ],
+     "a": 0,
+     "why": "모두가 가운데 하나에 붙은 **스타형(Star Topology)**은 가운데가 멈추면 전부 멈춰요. **메시 네트워크(Mesh Network)**는 다른 길로 돌아가요.",
+     "vp": "iot-topology-wb6"
+    },
+    {
      "kind": "steps",
      "head": "손계산 1: 연결선은 몇 개?",
      "steps": [
@@ -1682,6 +1720,13 @@
      ],
      "answer": "**메시 네트워크(Mesh Network)**는 징검다리를 놓아 **도달 거리(Range)**를 늘려요.",
      "given": "**지그비(Zigbee)** 한 번에 10~20m, 센서 → 라우터 → 라우터 → 허브"
+    },
+    {
+     "kind": "viz",
+     "viz": "iot.zigbee",
+     "head": "움직여 보기: 징검다리를 건너는 패킷",
+     "caption": "한 번 건너는 것이 1홉이에요. 플러그가 꺼지면 조명 쪽으로 돌아가요(3강 셀프 힐링).",
+     "vp": "iot-zigbee-wb6"
     },
     {
      "kind": "points",
@@ -1964,6 +2009,25 @@
      ],
      "answer": "**IPv6(Internet Protocol version 6)**는 모든 기기에 **IP 주소(IP Address)**를 넉넉히 붙여 줘요.",
      "given": "IPv4 주소는 약 43억 개"
+    },
+    {
+     "kind": "viz",
+     "viz": "iot.nat",
+     "head": "움직여 보기: 공유기가 주소를 바꿔 주는 길",
+     "caption": "203.0.113.7 과 198.51.100.20 은 예시용 주소예요. 공유기가 주소를 바꾸는 일을 NAT(Network Address Translation)라고 불러요.",
+     "vp": "iot-nat-wb7"
+    },
+    {
+     "kind": "check",
+     "q": "공유기가 폰의 192.168.0.12:5000 을 203.0.113.7:40001 로 바꿔서 내보내요. 왜 그럴까요?",
+     "choices": [
+      "바깥 주소 하나로 집 안 기기 여럿이 인터넷을 쓰려고",
+      "폰의 MAC 주소를 지우려고",
+      "데이터를 암호화하려고"
+     ],
+     "a": 0,
+     "why": "IPv4 **IP 주소(IP Address)**는 모자라요. 그래서 공유기가 **포트 번호(Port Number)**로 기기를 구별하며 바깥 주소 하나를 나눠 써요.",
+     "vp": "iot-nat-wb7"
     },
     {
      "kind": "points",
@@ -2268,6 +2332,25 @@
      "given": "가정 숫자: 집 안 구간 10ms, 허브와 클라우드 사이 편도 50ms, 클라우드 판단 20ms"
     },
     {
+     "kind": "viz",
+     "viz": "iot.packet",
+     "head": "움직여 보기: 집 안 25ms, 클라우드 140ms",
+     "caption": "숫자는 손계산 1, 2 의 가정 숫자예요. 재생을 누르면 두 길을 차례로 따라가요.",
+     "vp": "iot-packet-wb8"
+    },
+    {
+     "kind": "check",
+     "q": "밤에 인터넷이 끊겼어요. 움직임 센서를 보고 현관 불을 켤 수 있는 길은?",
+     "choices": [
+      "센서, 허브, 전구로 도는 집 안 길",
+      "허브, 공유기, 클라우드를 다녀오는 길",
+      "둘 다 멈춰요"
+     ],
+     "a": 0,
+     "why": "집 안 한 바퀴는 인터넷 밖으로 나가지 않아요. 그래서 **엣지 컴퓨팅(Edge Computing)** 쪽 **로컬 1-Loop(Local 1-Loop)**는 계속 돌아요.",
+     "vp": "iot-packet-wb8"
+    },
+    {
      "kind": "compare",
      "head": "2강 표로 보는 엣지와 클라우드",
      "cols": [
@@ -2504,6 +2587,13 @@
      "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><text x=\"15\" y=\"75\" font-size=\"16\" text-anchor=\"start\" class=\"tb b1\">상태</text><circle cx=\"80\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><circle cx=\"120\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><circle cx=\"160\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><circle cx=\"200\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><circle cx=\"240\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><circle cx=\"280\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><circle cx=\"320\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><circle cx=\"360\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><circle cx=\"400\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><circle cx=\"440\" cy=\"70\" r=\"5\" class=\"n3 b1\"/><text x=\"260\" y=\"100\" font-size=\"14\" text-anchor=\"middle\" class=\"t b1\">10분마다 꾸준히: 23도, 23도, 24도</text><text x=\"15\" y=\"150\" font-size=\"16\" text-anchor=\"start\" class=\"tb b2\">이벤트</text><line x1=\"150\" y1=\"160\" x2=\"150\" y2=\"128\" class=\"e2 b2\"/><circle cx=\"150\" cy=\"125\" r=\"6\" class=\"n4 b2\"/><line x1=\"330\" y1=\"160\" x2=\"330\" y2=\"128\" class=\"e2 b2\"/><circle cx=\"330\" cy=\"125\" r=\"6\" class=\"n4 b2\"/><line x1=\"80\" y1=\"160\" x2=\"440\" y2=\"160\" class=\"e b2\"/><text x=\"260\" y=\"182\" font-size=\"14\" text-anchor=\"middle\" class=\"t b2\">그 순간 한 번: 문 열림!</text><text x=\"15\" y=\"222\" font-size=\"16\" text-anchor=\"start\" class=\"tb b3\">시계열</text><rect x=\"80\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><rect x=\"116\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><rect x=\"152\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><rect x=\"188\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><rect x=\"224\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><rect x=\"260\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><rect x=\"296\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><rect x=\"332\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><rect x=\"368\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><rect x=\"404\" y=\"203\" width=\"30\" height=\"25\" rx=\"2\" class=\"box b3\"/><text x=\"260\" y=\"258\" font-size=\"14\" text-anchor=\"middle\" class=\"t b3\">시간 순서로 쌓인 기록 → 패턴이 보여요</text></svg>",
      "caption": "**상태 데이터(State Data)**는 점점이 꾸준히, **이벤트 데이터(Event Data)**는 뾰족하게 한 번, **시계열 데이터(Time-series Data)**는 차곡차곡 쌓여요.",
      "builds": 3
+    },
+    {
+     "kind": "viz",
+     "viz": "iot.datatypes",
+     "head": "움직여 보기: 상태, 이벤트, 시계열",
+     "caption": "재생을 누르면 세 줄이 하나씩 그려져요.",
+     "vp": "iot-data-wb9"
     },
     {
      "kind": "steps",
@@ -2838,6 +2928,25 @@
      "svg": "<svg viewBox=\"0 0 480 270\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"10\" y=\"90\" width=\"110\" height=\"70\" rx=\"2\" class=\"n3 b1\"/><text x=\"65\" y=\"122\" font-size=\"18\" text-anchor=\"middle\" class=\"tb b1\">평문</text><text x=\"65\" y=\"142\" font-size=\"16\" text-anchor=\"middle\" class=\"t b1\">1234</text><line x1=\"122\" y1=\"125\" x2=\"158\" y2=\"125\" class=\"e2 b2\"/><polygon points=\"168.0,125.0 158.0,130.0 158.0,120.0\" class=\"arrow b2\"/><rect x=\"170\" y=\"90\" width=\"140\" height=\"70\" rx=\"2\" class=\"n2 b2\"/><text x=\"240\" y=\"122\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b2\">암호화</text><text x=\"240\" y=\"141\" font-size=\"14\" text-anchor=\"middle\" class=\"tm b2\">열쇠로 잠그기</text><line x1=\"312\" y1=\"125\" x2=\"348\" y2=\"125\" class=\"e2 b3\"/><polygon points=\"358.0,125.0 348.0,130.0 348.0,120.0\" class=\"arrow b3\"/><rect x=\"360\" y=\"90\" width=\"110\" height=\"70\" rx=\"2\" class=\"n4 b3\"/><text x=\"415\" y=\"121\" font-size=\"17\" text-anchor=\"middle\" class=\"tb b3\">암호문</text><text x=\"415\" y=\"142\" font-size=\"16\" text-anchor=\"middle\" class=\"t b3\">4567</text><text x=\"240\" y=\"200\" font-size=\"15\" text-anchor=\"middle\" class=\"t b3\">중간에서 엿봐도 4567 만 보여요</text><text x=\"240\" y=\"240\" font-size=\"15\" text-anchor=\"middle\" class=\"tb b4\">열쇠를 가진 받는 쪽만 거꾸로 풀어요(복호화)</text></svg>",
      "caption": "**암호화(Encryption)**는 열쇠로 잠그기, 복호화는 열쇠로 풀기예요. 그래서 **기밀성(Confidentiality)**이 지켜져요.",
      "builds": 4
+    },
+    {
+     "kind": "viz",
+     "viz": "iot.secure",
+     "head": "움직여 보기: 진짜인지 묻고, 비밀 글씨로 보내기",
+     "caption": "문제 번호와 도장은 흐름을 보여 주려고 단순하게 만든 예시예요. 실제 기기는 훨씬 복잡한 수학을 써요.",
+     "vp": "iot-secure-wb10"
+    },
+    {
+     "kind": "check",
+     "q": "허브가 앱에게 매번 새 문제 번호를 내요. 까닭으로 가장 알맞은 것은?",
+     "choices": [
+      "엿본 옛 도장을 다시 보내도 통과하지 못하게",
+      "패킷을 더 빨리 보내려고",
+      "암호문을 짧게 만들려고"
+     ],
+     "a": 0,
+     "why": "문제가 바뀌면 맞는 도장도 바뀌어요. 그래서 엿본 도장으로는 **인증(Authentication)**을 통과하지 못해요.",
+     "vp": "iot-secure-wb10"
     },
     {
      "kind": "check",

@@ -11,7 +11,7 @@ REQ = {
     "title": ["big", "sub"], "goal": ["items"], "points": ["head", "items"], "analogy": ["head", "scene", "map"],
     "formula": ["head", "tex", "parts", "whole"], "steps": ["head", "steps", "answer"],
     "figure": ["head", "svg", "caption", "builds"], "compare": ["head", "cols", "rows"],
-    "english": ["head", "en", "ko"], "check": ["q", "choices", "a", "why"], "warn": ["head", "items"], "recap": ["items"],
+    "english": ["head", "en", "ko"], "check": ["q", "choices", "a", "why"], "viz": ["viz", "head"], "warn": ["head", "items"], "recap": ["items"],
     "say": ["lines"], "look": ["head", "boxes"], "prof": ["when", "lines"], "mining": ["src", "lines"], "bg": ["src", "lines"],
     "exam": ["src", "q", "qko", "solve", "answer"], "code": ["head", "file", "code", "lines"], "pyterm": ["name", "say", "example"],
 }

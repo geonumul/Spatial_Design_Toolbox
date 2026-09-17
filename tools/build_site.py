@@ -126,6 +126,23 @@ def tid(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:40] or hashlib.md5(s.encode()).hexdigest()[:8]
 
 
+def viz_tags(W, ver):
+    """움직이는 그림(kind "viz")을 쓰는 과목이면 engine/viz/viz.js 와 쓰는 묶음(<묶음>.js)만 넣는다.
+    그림 이름은 "<묶음>.<이름>" (예: iot.packet 이면 engine/viz/iot.js). 설명은 engine/viz/README.md"""
+    packs = set()
+    for f in list((W / "notes").glob("*.json")) + list((W / "lesson").glob("*.json")):
+        raw = f.read_text(encoding="utf-8")
+        if '"viz"' not in raw:
+            continue
+        packs.update(re.findall(r'"viz"\s*:\s*"([a-z0-9_]+)\.[a-z0-9_]+"', raw))
+    missing = [x for x in sorted(packs) if not (ENGINE / "viz" / f"{x}.js").exists()]
+    if missing:
+        raise SystemExit(f"움직이는 그림 묶음 파일이 없어요: engine/viz/{missing[0]}.js")
+    if not packs:
+        return ""
+    return "".join(f'<script src="../../engine/viz/{x}.js?v={ver}" defer></script>\n' for x in ["viz"] + sorted(packs))
+
+
 def main(slug, skip, home=True):
     W, SITE = ROOT / "work" / slug, ROOT / "subjects" / slug
     cfg = load(W / "subject.json")
@@ -345,7 +362,8 @@ def main(slug, skip, home=True):
             .replace("__BRAND__", html.escape(cfg.get("brand") or name))
             .replace("__LOGO__", "" if slug in ("eco-architecture", "modern-space-design") else LOGOS.get(slug, DEFAULT_LOGO))
             .replace("__DESC__", html.escape(name + ": 강의 회독, 정리 슬라이드, 용어 카드, 문제은행"))
-            .replace("__NAV__", "\n".join("      " + x for x in nav)))
+            .replace("__NAV__", "\n".join("      " + x for x in nav))
+            .replace("__VIZ__", viz_tags(W, ver)))
     write(SITE / "index.html", page)
 
     # 6) 검사
