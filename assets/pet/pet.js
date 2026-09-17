@@ -1067,6 +1067,12 @@ async function friendsLoad(force) {
       if (!x.exists) return;
       const v = x.data(); if (v.name) f.pet = fcut(v.name, 8); if (v.sp) f.sp = fsp(v.sp); if (v.owner) f.who = fcut(v.owner, 20);
       f.ts = tsMs(v.ts); f.act = LIVE_ACTS[v.act] ? v.act : '';
+      // 최근 2분 안에 한 장기, 배운 장기 (쓴 기기 시계 차이는 ts - ct 로 맞춘다)
+      const shift = f.ts && typeof v.ct === 'number' && v.ct > 0 ? f.ts - v.ct : 0;
+      const ev = (Array.isArray(v.ev) ? v.ev : []).filter(e => e && (e.k === 'trick' || e.k === 'learn') && TRICKS.some(k => k.id === e.a) && Number(e.t) > 0)
+        .map(e => ({ k: e.k, a: e.a, t: Number(e.t) + shift })).sort((a, b) => a.t - b.t);
+      const last = ev[ev.length - 1];   // 막 배우고 바로 한 장기면 "배웠어요" 를 보여 준다
+      f.trick = last ? (ev.find(e => e.k === 'learn' && e.a === last.a && e.t >= last.t - 1000) || last) : null;
     }).catch(() => {})));
     const inList = new Set(list.map(e => e.id));
     FR.requests = [];
@@ -1308,7 +1314,12 @@ function friendsRender() {
     if (FR.requests.length) h += '<h3>받은 친구 요청</h3>' + FR.requests.map(q => row({ id: q.id, sp: q.sp, title: q.pet || '친구', who: q.name }, q.name ? q.name + ' 님이 키우는 펫이 친구 하자고 해요' : '친구 하자고 해요',
       '<button type="button" class="pet-btn main" data-f="accept">수락</button><button type="button" class="pet-btn" data-f="decline">거절</button>')).join('');
     h += '<h3>친구 ' + FR.friends.length + '명</h3>';
-    const actLine = f => (f.act && f.ts && Date.now() + (skewMs || 0) - f.ts < 5 * 60000 ? f.pet + fJosa(f.pet, '은', '는') + ' ' + LIVE_ACTS[f.act] : '');
+    const trickLine = f => {
+      const e = f.trick; if (!e || Date.now() + (skewMs || 0) - e.t > 2 * 60000) return '';
+      const n = (TRICKS.find(k => k.id === e.a) || {}).name || '';
+      return e.k === 'learn' ? f.pet + fJosa(f.pet, '이', '가') + ' 새 개인기 ' + n + fJosa(n, '을', '를') + ' 배웠어요' : f.pet + fJosa(f.pet, '이', '가') + ' ' + n + fJosa(n, '을', '를') + ' 했어요';
+    };
+    const actLine = f => trickLine(f) || (f.act && f.ts && Date.now() + (skewMs || 0) - f.ts < 5 * 60000 ? f.pet + fJosa(f.pet, '은', '는') + ' ' + LIVE_ACTS[f.act] : '');
     h += FR.friends.length ? FR.friends.map(f => row({ id: f.id, sp: f.sp, title: f.pet, who: f.who }, actLine(f) ? actLine(f) + (f.who ? ', ' + f.who + ' 님의 펫' : '') : f.who ? f.who + ' 님의 펫, 노트북 화면에 같이 나와요' : '노트북 화면에 같이 나와요',
       FR.confirm === f.id ? '<button type="button" class="pet-btn warn" data-f="remove">정말 끊기</button><button type="button" class="pet-btn" data-f="keep">아니요</button>' : '<button type="button" class="pet-btn main" data-f="poke">콕 찌르기</button><button type="button" class="pet-btn" data-f="ask">끊기</button>')).join('')
       : '<p class="pf-empty">아직 친구가 없어요. 내 펫 이름을 친구에게 알려 주거나 친구 펫 이름을 위에 넣어 보세요.</p>';
