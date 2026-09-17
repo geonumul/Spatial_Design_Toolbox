@@ -162,3 +162,7 @@ body.playing .pet-hud,body.inking .pet-hud,body.paper .pet-hud,body.pet-open .pe
 @keyframes tRoll{0%{transform:scale(var(--grow,1)) translateX(-30px) rotate(0)}100%{transform:scale(var(--grow,1)) translateX(0) rotate(720deg)}}
 @keyframes tDance{0%,100%{transform:rotate(0)}15%{transform:rotate(-10deg) translateX(-6px)}30%{transform:rotate(10deg) translateX(6px)}45%{transform:rotate(-10deg) translateX(-6px)}60%{transform:rotate(10deg) translateX(6px)}75%{transform:rotate(-6deg)}}
 .pet-note{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:92vw;background:#FFFBFD;border:1.5px solid #F0E3F2;border-radius:18px;padding:10px 14px;box-shadow:0 10px 30px rgba(60,40,80,.18);font-size:14px;color:#4A3F5C}
+
+.wip{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;background:#EEE8F6;color:#8A7AA8;font-size:11px;font-weight:600;opacity:1!important}
+.pet-row.wips{flex-direction:column;gap:0}
+.pet-row.wips .pet-btn.wide{margin-top:8px}

@@ -395,6 +395,7 @@ function act(e, p) {
       if (a === 'close') closePanel(); else if (a === 'tab') { tab = v; fillPanel(p); } else if (a === 'feed') feed(v); else if (a === 'wear') wear(v); else if (a === 'boss') startBoss(v); else if (a === 'pet') pet(b);
       else if (a === 'desk') launchDesktop();
       else if (a === 'trick') trick(v);
+      else if (a === 'chat') note(WIP.chat);
 }
 function closePanel() { const p = $('#petPanel'); if (p) p.hidden = true; document.body.classList.remove('pet-open'); }
 function bar(v, cls) { return '<span class="pet-bar ' + cls + '"><i style="width:' + clamp(Math.round(v), 0, 100) + '%"></i></span>'; }
@@ -425,7 +426,7 @@ function fillPanel(p) {
       h += '<div class="pet-slot"><span>' + sl[1] + '</span><div class="pet-row">' + WEAR.filter(x => x.slot === sl[0]).map(x => '<button type="button" class="pet-btn' + (s.wear[x.slot] === x.id ? ' on' : '') + '" data-act="wear:' + x.id + '">' + esc(x.name) + (s.owned[x.id] ? '' : ' <small>' + coinSvg() + x.cost + '</small>') + '</button>').join('') + '</div></div>';
     });
   }
-  h += '<button type="button" class="pet-btn wide" data-act="desk">노트북 화면에 ' + esc(s.name || '펫') + ' 띄우기</button>';
+  h += '<div class="pet-row wips"><button type="button" class="pet-btn wide" data-act="desk">노트북 화면에 ' + esc(s.name || '펫') + ' 띄우기' + (DESKTOP_READY ? '' : ' <small class="wip">작업 중</small>') + '</button><button type="button" class="pet-btn wide" data-act="chat">친구들과 말풍선 채팅 <small class="wip">작업 중</small></button></div>';
   p.innerHTML = h + '</div>';
 }
 
@@ -443,7 +444,13 @@ function presenceBeat() {
 function startBeat() { if (beatT) return; presenceBeat(); beatT = setInterval(presenceBeat, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) presenceBeat(); }); }
 
 /* ---------- 노트북 화면에 펫 띄우기 (설치한 펫 프로그램을 tsgpet:// 주소로 켜고 끔) ---------- */
+const DESKTOP_READY = false;   // 데스크톱 펫 프로그램을 올리면 true
+const WIP = {
+  desk: '노트북 화면 전체에 펫을 띄우는 기능은 지금 만들고 있어요. 다 되면 이 버튼 하나로 켜고 끌 수 있어요.',
+  chat: '로그인한 친구들과 펫 말풍선으로 채팅하는 기능은 지금 만들고 있어요.',
+};
 function launchDesktop() {
+  if (!DESKTOP_READY) { note(WIP.desk); return; }
   const s = load();
   if (!s.adopted) {
     if (window.SDT_META || window.GNN_META) { adoptView(); return; }
