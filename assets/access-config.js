@@ -14,9 +14,9 @@ window.SDT_ACCESS = {
     {slug: "eco-architecture", key: "sdt_eco_v1", name: "친환경건축"}
   ],
   plans: [
-    {kind: "subject", name: "과목별 이용권", desc: "과목 하나를 한 학기 동안 열어요.", days: 120, price: null},
-    {kind: "month", name: "월간 프리패스", desc: "모든 과목을 30일 동안 열어요.", days: 30, price: null},
-    {kind: "year", name: "연간 프리패스", desc: "모든 과목을 365일 동안 열어요.", days: 365, price: null}
+    {kind: "subject", name: "과목별 이용권", desc: "과목 하나를 60일 동안 열어요. 중간고사나 기말고사 하나를 준비하기에 맞아요.", days: 60, price: "6,900원"},
+    {kind: "month", name: "월간 프리패스", desc: "모든 과목을 30일 동안 열어요. 시험 기간에 여러 과목을 볼 때 좋아요.", days: 30, price: "9,900원"},
+    {kind: "year", name: "연간 프리패스", desc: "모든 과목을 365일 동안 열어요. 한 달에 5,750원꼴이에요.", days: 365, price: "69,000원"}
   ],
   payReady: false
 };

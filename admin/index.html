@@ -127,7 +127,7 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
 <script>
 (function(){
   var A = window.SDTAccess, C = window.SDT_ACCESS || {subjects: []}, DAY = 86400000;
-  var KINDS = [["subject", "과목 이용권", 120], ["month", "월간 프리패스", 30], ["year", "연간 프리패스", 365], ["days", "전체 과목 N일", 7]];
+  var KINDS = [["subject", "과목 이용권", 60], ["month", "월간 프리패스", 30], ["year", "연간 프리패스", 365], ["days", "전체 과목 N일", 7]];
   var built = false, current = null;
   function $(s){ return document.querySelector(s); }
   function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
