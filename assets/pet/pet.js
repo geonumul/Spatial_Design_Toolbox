@@ -392,7 +392,7 @@ function save() {
   try { localStorage.setItem(LKEY, JSON.stringify(s)); } catch (e) { /* 저장 공간 없음 */ }
   clearTimeout(pushT);
   if (window.SDT && SDT.user && s.adopted) s.owner = SDT.user.uid;
-  pushT = setTimeout(() => { if (window.SDT && SDT.user && (!s.owner || s.owner === SDT.user.uid)) SDT.set(REMOTE, s); presenceBeat(); }, 1500);
+  pushT = setTimeout(() => { if (window.SDT && SDT.user && (!s.owner || s.owner === SDT.user.uid)) SDT.set(REMOTE, s); presenceSoon(); }, 1500);
   render();
 }
 function pullRemote() {
@@ -409,7 +409,7 @@ function pullRemote() {
     else if (l.adopted) { l.owner = uid; SDT.set(REMOTE, l); }
     const pg = $('#petPage'); if (pg) bootPage(pg);
     render(); startBeat();
-    if ($('#petFriends')) friendsLoad(true); else nameSync().then(presenceBeat);
+    if ($('#petFriends')) friendsLoad(true); else { nameSync().then(presenceBeat); grantsCheck(true); }
   });
 }
 const moodOf = s => careMood(s, now());
@@ -536,10 +536,12 @@ function careFx(r, el) {
   if (r.anim === 'bath') pop(needIcon('dirty') + ' 뽀송', 'heart');
   if (r.msg) say(r.msg);
   hearts(el || $('.pet-room .pet-sprite'), r.anim === 'love' ? 4 : 3);
+  const ek = { eat: 'eat', drink: 'drink', bath: 'bath', sleep: 'sleep' }[r.anim];
+  if (ek) liveEvent(ek, '');
   return true;
 }
 function feed(id) { const s = load(); if (careFx(careDo(s, 'feed', id, now()))) save(); }
-function care(kind) { const s = load(); if (careFx(careDo(s, kind, '', now()))) { save(); needHide(); } }
+function care(kind) { const s = load(); if (careFx(careDo(s, kind, '', now()))) { if (kind === 'wake') liveEvent('wake', ''); save(); needHide(); } }
 function pet(el) {
   const s = load();
   careDo(s, 'pet', '', now());
@@ -553,6 +555,8 @@ function trick(id) {
   const r = careDo(s, 'trick', id, now());
   if (!r.ok) { say(r.msg); react('shake'); return; }
   if (r.learned) news(s.name + fJosa(s.name, '이', '가') + ' "' + k.name + '"' + fJosa(k.name, '을', '를') + ' 배웠어요', '이제 언제든 보여 달라고 할 수 있어요.', petSvg(s, { mood: 'happy', cls: 'big' }));
+  if (r.learned) liveEvent('learn', id);
+  liveEvent('trick', id);
   save();
   perform(k);
 }
@@ -992,14 +996,40 @@ function fillPanel(p) {
    이름은 이름표(pet3Owners)에 잡힌 이름 그대로여야 해서, 이름 자리를 잡은 뒤에만 쓴다. */
 let beatT = null;
 const fs = () => (window.firebase && firebase.firestore) ? firebase.firestore() : null;
+//  act, mood, ev(최근 일 10개, 이 기기 시각), ct(쓸 때 이 기기 시각): 친구 프로그램이 ts(서버 시각) 와 ct 의 차이로 시계 차이를 맞춘다
+//  쓰기는 1분마다, 일이 생기면 바로(10초에 한 번까지)
+const LIVE = { ev: [], recent: null, lastW: 0, t: 0 };
+function liveEvent(k, a) {
+  LIVE.ev = LIVE.ev.concat([{ k, a: fcut(a, 40), t: Date.now() }]).slice(-10);
+  if (['eat', 'drink', 'bath'].includes(k)) LIVE.recent = { k, at: Date.now() };
+}
+function liveAct(s) {
+  const t = now();
+  if (careAsleep(s, t)) return 'sleeping';
+  if (LIVE.recent && Date.now() - LIVE.recent.at < 20000) return { eat: 'eating', drink: 'drinking', bath: 'bathing' }[LIVE.recent.k];
+  if (careMood(s, t) === 'sad') return 'sad';
+  return 'walking';
+}
+// 돌보기로 저장할 때: 10초에 한 번까지 (남은 것은 10초가 차면 한 번에)
+function presenceSoon() {
+  const since = Date.now() - LIVE.lastW;
+  clearTimeout(LIVE.t);
+  if (since < 10000) { LIVE.t = setTimeout(presenceBeat, 10000 - since); return; }
+  presenceBeat();
+}
+// 바로 쓰기: 1분 주기, 이름이나 보이는 이름을 바꿨을 때, 친구 목록을 열 때
 function presenceBeat() {
   const db = fs(), s = load(); if (!db || !(window.SDT && SDT.user) || !s.adopted) return;
   if (document.hidden || !FR.me || FR.me.pet !== s.name) return;
+  clearTimeout(LIVE.t);
+  LIVE.lastW = Date.now();
   const wear = {}; ['head', 'neck', 'face'].forEach(k => { if (s.wear && typeof s.wear[k] === 'string') wear[k] = s.wear[k].slice(0, 20); });
   const doc = { name: FR.me.pet, sp: fsp(s.sp), wear, ts: firebase.firestore.FieldValue.serverTimestamp() };
   const tricks = Object.keys(s.tricks || {}).filter(k => TRICK_FRAMES[k]).slice(0, 10);
+  const mid = Object.assign({ tricks }, FR.me.who ? { owner: FR.me.who } : {}, doc);
+  const live = Object.assign({ act: liveAct(s), mood: String(careMood(s, now())).slice(0, 8), ev: LIVE.ev.slice(-10), ct: Date.now() }, mid);
   const ref = db.collection('pet3Presence').doc(SDT.user.uid);
-  ref.set(Object.assign({ tricks }, FR.me.who ? { owner: FR.me.who } : {}, doc)).catch(() => ref.set(doc)).catch(() => { /* 규칙이 아직 없으면 조용히 */ });
+  ref.set(live).catch(() => ref.set(mid)).catch(() => ref.set(doc)).catch(() => { /* 규칙이 아직 없으면 조용히 */ });
 }
 function startBeat() {
   if (beatT || !(window.SDT && SDT.user)) return;
@@ -1036,6 +1066,7 @@ async function friendsLoad(force) {
     await Promise.all(FR.friends.map(f => db.collection('pet3Presence').doc(f.id).get().then(x => {
       if (!x.exists) return;
       const v = x.data(); if (v.name) f.pet = fcut(v.name, 8); if (v.sp) f.sp = fsp(v.sp); if (v.owner) f.who = fcut(v.owner, 20);
+      f.ts = tsMs(v.ts); f.act = LIVE_ACTS[v.act] ? v.act : '';
     }).catch(() => {})));
     const inList = new Set(list.map(e => e.id));
     FR.requests = [];
@@ -1046,9 +1077,11 @@ async function friendsLoad(force) {
       FR.requests.push({ id: d.id, name: fcut(v.name, 60), pet: fcut(v.pet, 8), sp: fsp(v.sp) });
     });
     FR.loaded = true; FR.at = Date.now();
+    await pokeCheck();
   } catch (e) { FR.msg = fFail(e); FR.ok = false; }
   finally { FR.loading = false; }
   friendsRender();
+  grantsCheck(false);
 }
 async function friendsAdd(raw) {
   const db = fs(), s = load();
@@ -1143,6 +1176,98 @@ async function friendsPoke(id) {
   FR.busy = '';
   friendsRender();
 }
+
+/* ---------- 받은 콕 찌르기 (내 펫 페이지 친구 칸 위 알림) ----------
+   pet3Inbox/{나}.p_친구uid 에 친구가 찌른 서버 시각이 있다. 12시간 안의 것 중 닫지 않은 것을 보여 준다.
+   이 브라우저에서 닫은(또는 답장한) 시각은 localStorage 에 친구마다 적는다. 시계 차이는 latest.json 응답의 Date 로 맞춘다. */
+const tsMs = v => (v && typeof v.toMillis === 'function' ? v.toMillis() : (typeof v === 'number' ? v : 0));
+const LIVE_ACTS = { walking: '산책 중', sitting: '앉아 쉬는 중', sleeping: '자는 중', eating: '밥 먹는 중', drinking: '물 마시는 중', bathing: '씻는 중', sad: '배고프고 심심해요', away: '자리 비움' };
+const POKE_KEY = 'sdt_petpoke_v1', POKE_KEEP = 12 * 3600000, POKE_FRESH = 2 * 60000;
+let skewMs = null;
+async function serverSkew() {
+  if (skewMs !== null) return skewMs;
+  skewMs = 0;
+  try {
+    const r = await window.fetch(DOWNLOAD.replace(/download\.html$/, 'latest.json') + '?t=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+    const d = Date.parse((r && r.headers && r.headers.get && r.headers.get('date')) || '');
+    if (d && Math.abs(d + 500 - Date.now()) > 60000) skewMs = d + 500 - Date.now();
+  } catch (e) { /* 시계 그대로 */ }
+  return skewMs;
+}
+const pokeSeenAll = () => { try { return JSON.parse(localStorage.getItem(POKE_KEY) || '{}') || {}; } catch (e) { return {}; } };
+function pokeSeen(uid, fid, t) {
+  const o = pokeSeenAll(); o[uid] = o[uid] || {}; o[uid][fid] = t;
+  try { localStorage.setItem(POKE_KEY, JSON.stringify(o)); } catch (e) { /* 무시 */ }
+}
+async function pokeCheck() {
+  const db = fs(); if (!db || !(window.SDT && SDT.user)) return;
+  const me = SDT.user.uid;
+  let v = null;
+  try { const x = await db.collection('pet3Inbox').doc(me).get(); v = x.exists ? x.data() : {}; } catch (e) { return; }
+  if (!(SDT.user && SDT.user.uid === me)) return;
+  const nowS = Date.now() + await serverSkew(), seen = pokeSeenAll()[me] || {};
+  FR.pokes = FR.friends.map(f => ({ f, t: tsMs(v['p_' + f.id]) }))
+    .filter(x => x.t && x.t > (seen[x.f.id] || 0) && nowS - x.t <= POKE_KEEP)
+    .sort((a, b) => b.t - a.t)
+    .map(x => ({ id: x.f.id, pet: x.f.pet, who: x.f.who, sp: x.f.sp, t: x.t, late: nowS - x.t > POKE_FRESH, ago: Math.max(0, Math.round((nowS - x.t) / 60000)) }));
+}
+function pokesRender() {
+  const host = $('#pfPokes'); if (!host) return;
+  const list = FR.pokes || [];
+  host.hidden = !list.length;
+  host.innerHTML = list.map(x => {
+    const who = x.pet + (x.who ? '(' + x.who + ')' : '');
+    const last = x.pet;   // 조사는 괄호 밖 펫 이름에 맞춘다
+    const when = x.ago < 1 ? '방금' : x.ago < 60 ? x.ago + '분 전' : Math.floor(x.ago / 60) + '시간 전';
+    return '<div class="pf-poke" data-id="' + esc(x.id) + '" role="status"><span class="pf-av">' + petSvg({ sp: x.sp, wear: {} }, { mood: 'happy' }) + '</span><span class="pf-col"><b>' + esc((x.late ? '아까 ' : '') + who + fJosa(last, '이', '가') + ' 콕 찔렀어요!') + '</b><small>' + esc(when) + '</small></span>'
+      + (FR.busy === x.id ? '<small class="pf-wait">처리 중</small>' : '<button type="button" class="pet-btn main" data-f="pokeBack">답장 콕</button><button type="button" class="pet-btn" data-f="pokeX">닫기</button>') + '</div>';
+  }).join('');
+}
+function pokeDismiss(id) {
+  const x = (FR.pokes || []).find(q => q.id === id); if (!x || !(window.SDT && SDT.user)) return;
+  pokeSeen(SDT.user.uid, id, x.t);
+  FR.pokes = FR.pokes.filter(q => q.id !== id);
+  pokesRender();
+}
+
+/* ---------- 관리자가 준 코인 (petCoinGrants) ----------
+   관리자 화면에서 만든 { uid, amount, note, claimed:false } 를 찾아, 트랜잭션으로 claimed 를 true 로 바꾼 쪽만 코인을 더한다.
+   기기 두 대가 같이 받아도 한 번만. 펫이 없으면 받지 않고 남겨 둔다. 데스크톱 펫 프로그램(1.4.2)도 같은 방법으로 받는다. */
+const GR = { at: 0, busy: false };
+async function grantsCheck(force) {
+  const db = fs(), s = load();
+  if (!db || !db.runTransaction || !(window.SDT && SDT.user) || !s.adopted || GR.busy) return 0;
+  if (!force && Date.now() - GR.at < 60000) return 0;
+  GR.busy = true; GR.at = Date.now();
+  const me = SDT.user.uid;
+  let got = 0;
+  try {
+    const q = await db.collection('petCoinGrants').where('uid', '==', me).where('claimed', '==', false).limit(20).get();
+    for (const g of q.docs) {
+      if (!(SDT.user && SDT.user.uid === me) || !load().adopted) break;
+      const v = g.data() || {}, amount = Math.floor(Number(v.amount));
+      if (!(amount >= 1 && amount <= 5000)) continue;
+      let ok = false;
+      try {
+        ok = await db.runTransaction(async tx => {
+          const x = await tx.get(g.ref);
+          if (!x.exists || x.data().claimed !== false || x.data().uid !== me) return false;
+          tx.update(g.ref, { claimed: true, claimedAt: firebase.firestore.FieldValue.serverTimestamp() });
+          return true;
+        });
+      } catch (e) { ok = false; }
+      if (!ok) continue;
+      const st = load();
+      st.grantsApplied = st.grantsApplied || {};
+      if (st.grantsApplied[g.id]) continue;
+      st.grantsApplied[g.id] = now(); st.coins += amount; got += amount;
+      save();
+      news('관리자에게서 코인 ' + amount + '개가 왔어요', (v.note ? '"' + fcut(v.note, 60) + '" ' : '') + '지금 간식 돈은 ' + st.coins + '개예요.', coinSvg() + petSvg(st, { mood: 'happy', cls: 'big' }));
+    }
+  } catch (e) { /* 규칙이 아직 없거나 오프라인 */ }
+  finally { GR.busy = false; }
+  return got;
+}
 function friendsRender() {
   const host = $('#petFriends'); if (!host) return;
   const s = load();
@@ -1156,7 +1281,7 @@ function friendsRender() {
     if (state === 'off') h += '<p class="pf-empty">친구 기능은 사이트 주소(https://geonumul.github.io/Toolbox_Group_Study/)에서 로그인하면 쓸 수 있어요.</p>';
     else if (state === 'login') h += '<div class="pf-empty"><p>로그인하면 친구를 추가할 수 있어요.</p><button type="button" class="pet-btn main" data-f="login">로그인</button></div>';
     else if (state === 'nopet') h += '<p class="pf-empty">펫을 먼저 데려오면 친구를 추가할 수 있어요.</p>';
-    else h += '<div class="pf-code"><span>내 펫 이름</span><b id="pfMine"></b><button type="button" class="pet-btn" data-f="copy">복사</button>'
+    else h += '<div class="pf-pokes" id="pfPokes" hidden></div><div class="pf-code"><span>내 펫 이름</span><b id="pfMine"></b><button type="button" class="pet-btn" data-f="copy">복사</button>'
       + '<div class="pf-wholine"><span>친구에게 보이는 내 이름</span><b id="pfWho"></b><button type="button" class="pet-btn" data-f="who">바꾸기</button></div>'
       + '<form class="pf-whoform" id="pfWhoForm" hidden autocomplete="off"><input id="pfWhoIn" maxlength="20" aria-label="친구에게 보이는 내 이름" spellcheck="false"><button type="submit" class="pet-btn main">저장</button><button type="button" class="pet-btn" data-f="whoCancel">취소</button><small>20글자까지. 서로 친구인 사람에게만 보여요</small></form></div>'
       + '<p class="pf-issue" id="pfIssue" hidden></p>'
@@ -1165,6 +1290,7 @@ function friendsRender() {
     host.innerHTML = h + '</section>';
   }
   if (state !== 'ready') return;
+  pokesRender();
   $('#pfMine').textContent = FR.me ? FR.me.pet : (FR.nameIssue ? s.name : '확인하는 중');
   $('#pfWho').textContent = FR.me ? (FR.me.who || '(없음)') : '';
   const iss = $('#pfIssue');
@@ -1182,7 +1308,8 @@ function friendsRender() {
     if (FR.requests.length) h += '<h3>받은 친구 요청</h3>' + FR.requests.map(q => row({ id: q.id, sp: q.sp, title: q.pet || '친구', who: q.name }, q.name ? q.name + ' 님이 키우는 펫이 친구 하자고 해요' : '친구 하자고 해요',
       '<button type="button" class="pet-btn main" data-f="accept">수락</button><button type="button" class="pet-btn" data-f="decline">거절</button>')).join('');
     h += '<h3>친구 ' + FR.friends.length + '명</h3>';
-    h += FR.friends.length ? FR.friends.map(f => row({ id: f.id, sp: f.sp, title: f.pet, who: f.who }, f.who ? f.who + ' 님의 펫, 노트북 화면에 같이 나와요' : '노트북 화면에 같이 나와요',
+    const actLine = f => (f.act && f.ts && Date.now() + (skewMs || 0) - f.ts < 5 * 60000 ? f.pet + fJosa(f.pet, '은', '는') + ' ' + LIVE_ACTS[f.act] : '');
+    h += FR.friends.length ? FR.friends.map(f => row({ id: f.id, sp: f.sp, title: f.pet, who: f.who }, actLine(f) ? actLine(f) + (f.who ? ', ' + f.who + ' 님의 펫' : '') : f.who ? f.who + ' 님의 펫, 노트북 화면에 같이 나와요' : '노트북 화면에 같이 나와요',
       FR.confirm === f.id ? '<button type="button" class="pet-btn warn" data-f="remove">정말 끊기</button><button type="button" class="pet-btn" data-f="keep">아니요</button>' : '<button type="button" class="pet-btn main" data-f="poke">콕 찌르기</button><button type="button" class="pet-btn" data-f="ask">끊기</button>')).join('')
       : '<p class="pf-empty">아직 친구가 없어요. 내 펫 이름을 친구에게 알려 주거나 친구 펫 이름을 위에 넣어 보세요.</p>';
     if (FR.pending.length) h += '<h3>수락 기다리는 중</h3>' + FR.pending.map(p => row({ id: p.id, sp: p.sp, title: p.pet }, '친구가 수락하면 친구 목록으로 옮겨져요', '<button type="button" class="pet-btn" data-f="cancel">요청 취소</button>')).join('');
@@ -1210,6 +1337,9 @@ function friendsBoot() {
       return;
     }
     if (f === 'poke') { friendsPoke(id); return; }
+    const pk = b.closest('.pf-poke'), pid = pk ? pk.dataset.id : '';
+    if (f === 'pokeBack') { friendsPoke(pid).then(() => { if (FR.ok) pokeDismiss(pid); }); return; }
+    if (f === 'pokeX') { pokeDismiss(pid); return; }
     if (f === 'ask') { FR.confirm = id; friendsRender(); return; }
     if (f === 'keep') { FR.confirm = ''; friendsRender(); return; }
     if (['accept', 'decline', 'remove', 'cancel'].includes(f)) friendsAct(f, id);
@@ -1217,6 +1347,8 @@ function friendsBoot() {
   friendsRender();
   if (window.SDT) SDT.onAuth(() => { FR.me = null; FR.nameIssue = ''; FR.loaded = false; FR.friends = []; FR.pending = []; FR.requests = []; friendsRender(); });
   window.addEventListener('focus', () => friendsLoad(false));
+  // 펫 페이지를 열어 둔 동안 1분마다 받은 콕만 다시 본다 (문서 하나 읽기)
+  setInterval(() => { if (!document.hidden && FR.loaded && window.SDT && SDT.user) pokeCheck().then(pokesRender); }, 60000);
 }
 
 /* ---------- 노트북 화면에 펫 띄우기 (설치한 펫 프로그램을 tsgpet:// 주소로 켜고 끔) ---------- */
@@ -1339,7 +1471,7 @@ const DOWNLOAD = (function () {
 const PET_PAGE = DOWNLOAD.replace(/desktop-pet\/download\.html$/, 'pet/index.html');
 
 /* ---------- 시작 ---------- */
-window.SDTPet = { onAnswer, onUndo, canStart, onSetEnd, onRead, openPanel, startBoss, petSvg, SPECIES, launchDesktop, care: { lastPing: () => lastPing, state: () => load(), tick: () => tick(load()), save, needAsk, needs: () => careNeeds(load(), now()) } };
+window.SDTPet = { onAnswer, onUndo, canStart, onSetEnd, onRead, openPanel, startBoss, petSvg, SPECIES, launchDesktop, care: { lastPing: () => lastPing, state: () => load(), tick: () => tick(load()), save, needAsk, needs: () => careNeeds(load(), now()), grants: () => grantsCheck(true), pokes: () => pokeCheck().then(pokesRender), live: () => ({ ev: LIVE.ev.slice(), act: liveAct(load()) }), beat: () => presenceBeat() } };
 window.addEventListener('sdt:read', e => onRead(e.detail && e.detail.id));
 function bootPage(pg) {
   if (load().adopted) { fillPanel(pg); return; }
@@ -1356,6 +1488,8 @@ function boot() {
   $$('[data-petlaunch]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); launchDesktop(); }));
   if (window.SDT) SDT.onAuth(u => { if (u) pullRemote(); });
   setInterval(() => { tick(load()); if (withPet) render(); needAsk(); }, 60000);
+  setInterval(() => { if (!document.hidden) grantsCheck(false); }, 5 * 60000);
+  window.addEventListener('focus', () => grantsCheck(false));
   // 보고 싶었어요: 하루 넘게 안 왔으면 먼저 말하고, 아니면 이번 방문 시각만 적는다 (서버로 보내지 않음, 다음 저장 때 같이 감)
   setTimeout(() => {
     const st = load();

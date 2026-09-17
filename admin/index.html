@@ -68,13 +68,19 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
 .cf-more summary{cursor:pointer;color:var(--sub,#6B6B84)}
 .cf-more .row{margin-top:10px}
 .cf-go{min-height:46px;padding:0 26px;font-size:16px}
+.coin-amt{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end}
+.coin-amt button{min-width:64px}
+.coin-sum{font-size:14px;color:var(--sub);margin:4px 0 0}
+.coin-sum b{color:var(--ink);font-weight:600}
+.delask td{background:var(--no-soft)}
+.delask p{margin:0 0 8px;color:var(--ink-2);font-size:14px}
 </style>
 </head>
 <body>
 <header><div class="hwrap"><a class="brand" href="../index.html">TSG</a><a class="back" href="../index.html">사이트로 돌아가기</a></div></header>
 <main>
 <h1>관리자</h1>
-<p class="lead">이용권을 주고 회수하고, 이벤트 코드를 만들어요.</p>
+<p class="lead">이용권을 주고 회수하고, 펫 코인을 주고, 이벤트 코드를 만들어요.</p>
 
 <div id="state" class="panel"><p style="margin:0">로그인 정보를 확인하고 있어요.</p></div>
 
@@ -100,6 +106,34 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
       </form>
       <p class="msg" id="grantMsg"></p>
     </div>
+  </section>
+
+  <section class="panel" id="coinPanel">
+    <h2>펫 코인 주기</h2>
+    <p>과목을 안 듣는 사람도 펫 간식을 사고 채팅을 즐길 수 있게 코인을 보내요. 받는 사람이 사이트나 펫 프로그램을 켜면 한 번만 들어가요. 펫이 아직 없으면 데려온 뒤에 들어가요.</p>
+    <form class="row" id="coinFindForm">
+      <label>이메일 또는 uid<input class="wide" name="q" autocomplete="off" required></label>
+      <button type="submit">찾기</button>
+      <button type="button" class="line" id="coinRecentBtn">최근 로그인한 사람</button>
+    </form>
+    <p class="msg" id="coinFindMsg"></p>
+    <div class="tbl" id="coinFindList"></div>
+    <div id="coinUserBox" hidden>
+      <div class="who" id="coinWhoBox"></div>
+      <form id="coinForm">
+        <div class="row">
+          <label>코인<input class="num" type="number" name="amount" min="1" max="5000" value="100" required></label>
+          <span class="coin-amt"><button type="button" class="line" data-add="50">+50</button><button type="button" class="line" data-add="100">+100</button><button type="button" class="line" data-add="300">+300</button></span>
+        </div>
+        <div class="row"><label>받는 사람에게 보일 한마디 (안 써도 돼요)<input class="wide" name="note" maxlength="60" placeholder="예: 채팅 많이 하세요!"></label></div>
+        <p class="coin-sum" id="coinSum"></p>
+        <button type="submit" id="coinSend">코인 보내기</button>
+      </form>
+      <p class="msg" id="coinMsg"></p>
+    </div>
+    <h2 style="font-size:16px;margin-top:18px">보낸 코인</h2>
+    <div class="row"><button type="button" class="line" id="reloadCoins">새로 읽기</button></div>
+    <div class="tbl" id="coinList"></div>
   </section>
 
   <section class="panel">
@@ -137,7 +171,7 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
 
   <section class="panel">
     <h2>코드 목록</h2>
-    <p>최근에 만든 100개까지 보여요. 쓴 사람 보기를 누르면 누가 언제 등록했는지 나와요.</p>
+    <p>최근에 만든 100개까지 보여요. 쓴 사람 보기를 누르면 누가 언제 등록했는지 나와요. 필요 없는 코드는 끄거나 삭제할 수 있어요.</p>
     <div class="row"><button type="button" class="line" id="reloadCodes">새로 읽기</button></div>
     <div class="tbl" id="codeList"></div>
     <div id="redBox" hidden style="margin-top:14px">
@@ -156,7 +190,7 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
 (function(){
   var A = window.SDTAccess, C = window.SDT_ACCESS || {subjects: []}, DAY = 86400000;
   var KINDS = [["subject", "과목 이용권", 60], ["month", "월간 프리패스", 30], ["year", "연간 프리패스", 365], ["days", "전체 과목 N일", 7]];
-  var built = false, current = null;
+  var built = false, current = null, coinUser = null, codeRows = [], delAsk = "";
   function $(s){ return document.querySelector(s); }
   function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
   function say(el, text, ok){ el.textContent = text; el.className = "msg" + (ok === true ? " ok" : ok === false ? " no" : ""); }
@@ -235,28 +269,70 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
     cf.until.value = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
     $("#newCode").addEventListener("click", function(){ cf.code.value = randCode(); });
 
-    /* 사람 찾기 */
-    $("#findForm").addEventListener("submit", function(e){
+    /* 사람 찾기 (이용권, 펫 코인 두 곳) */
+    function finder(form, recent, list, msgSel, onPick){
+      $(form).addEventListener("submit", function(e){
+        e.preventDefault();
+        var q = this.elements.q.value.trim(), msg = $(msgSel);
+        if(!q) return;
+        say(msg, "찾고 있어요.");
+        var p = q.indexOf("@") > 0
+          ? db().collection("users").where("email", "==", q).limit(10).get().then(function(r){ return r.docs; })
+          : db().collection("users").doc(q).get().then(function(s){ return s.exists ? [s] : []; });
+        p.then(function(docs){ showUsers(docs, docs.length ? "" : "못 찾았어요. 그 계정으로 사이트에 한 번 로그인해야 찾을 수 있어요.", list, msgSel); })
+         .catch(function(err){ fail(msg, err); });
+      });
+      $(recent).addEventListener("click", function(){
+        say($(msgSel), "읽고 있어요.");
+        db().collection("users").orderBy("updatedAt", "desc").limit(30).get()
+          .then(function(r){ showUsers(r.docs, r.empty ? "아직 로그인한 사람이 없어요." : "", list, msgSel); })
+          .catch(function(err){ fail($(msgSel), err); });
+      });
+      $(list).addEventListener("click", function(e){
+        var tr = e.target.closest("[data-uid]"); if(!tr) return;
+        onPick({uid: tr.getAttribute("data-uid"), email: tr.getAttribute("data-email") || "", name: tr.getAttribute("data-name") || ""});
+      });
+    }
+    finder("#findForm", "#recentBtn", "#findList", "#findMsg", pickUser);
+    finder("#coinFindForm", "#coinRecentBtn", "#coinFindList", "#coinFindMsg", pickCoinUser);
+
+    /* 펫 코인 주기: petCoinGrants 에 { uid, email, name, amount, note, by, ts, claimed:false } 하나. 받는 쪽이 claimed 를 true 로 바꾸며 받는다 */
+    var coinF = $("#coinForm");
+    function coinAmount(){ var n = parseInt(coinF.elements.amount.value, 10); return n > 0 ? n : 0; }
+    function coinSync(){
+      var n = coinAmount();
+      $("#coinSum").innerHTML = coinUser ? esc(coinUser.name || coinUser.email || coinUser.uid) + " 님에게 <b>코인 " + n + "개</b>를 보내요." : "";
+    }
+    coinF.addEventListener("click", function(e){
+      var b = e.target.closest("[data-add]"); if(!b) return;
+      coinF.elements.amount.value = Math.min(5000, coinAmount() + parseInt(b.getAttribute("data-add"), 10));
+      coinSync();
+    });
+    coinF.addEventListener("input", coinSync);
+    coinF.addEventListener("submit", function(e){
       e.preventDefault();
-      var q = this.q.value.trim(), msg = $("#findMsg");
-      if(!q) return;
-      say(msg, "찾고 있어요.");
-      var p = q.indexOf("@") > 0
-        ? db().collection("users").where("email", "==", q).limit(10).get().then(function(r){ return r.docs; })
-        : db().collection("users").doc(q).get().then(function(s){ return s.exists ? [s] : []; });
-      p.then(function(docs){ showUsers(docs, docs.length ? "" : "못 찾았어요. 그 계정으로 사이트에 한 번 로그인해야 찾을 수 있어요."); })
-       .catch(function(err){ fail(msg, err); });
+      if(!coinUser) return;
+      var n = coinAmount(), note = coinF.elements.note.value.trim().slice(0, 60), msg = $("#coinMsg"), btn = $("#coinSend");
+      if(!(n >= 1 && n <= 5000)){ say(msg, "코인은 1개에서 5000개 사이로 넣어 주세요.", false); return; }
+      btn.disabled = true;
+      db().collection("petCoinGrants").add({
+        uid: coinUser.uid, email: String(coinUser.email || "").slice(0, 200), name: String(coinUser.name || "").slice(0, 100),
+        amount: n, note: note, by: SDT.user.uid, ts: firebase.firestore.FieldValue.serverTimestamp(), claimed: false
+      }).then(function(){
+        say(msg, (coinUser.name || coinUser.email || coinUser.uid) + " 님에게 코인 " + n + "개를 보냈어요. 사이트나 펫 프로그램을 켜면 들어가요.", true);
+        coinF.elements.note.value = ""; loadCoins();
+      }).catch(function(err){ fail(msg, err); }).then(function(){ btn.disabled = false; });
     });
-    $("#recentBtn").addEventListener("click", function(){
-      say($("#findMsg"), "읽고 있어요.");
-      db().collection("users").orderBy("updatedAt", "desc").limit(30).get()
-        .then(function(r){ showUsers(r.docs, r.empty ? "아직 로그인한 사람이 없어요." : ""); })
-        .catch(function(err){ fail($("#findMsg"), err); });
+    $("#reloadCoins").addEventListener("click", loadCoins);
+    $("#coinList").addEventListener("click", function(e){
+      var b = e.target.closest("[data-cancel]"); if(!b) return;
+      if(!confirm("아직 안 받은 코인 선물을 취소할까요?")) return;
+      b.disabled = true;
+      db().collection("petCoinGrants").doc(b.getAttribute("data-cancel")).delete()
+        .then(function(){ say($("#coinMsg"), "취소했어요.", true); loadCoins(); })
+        .catch(function(err){ b.disabled = false; fail($("#coinMsg"), err); });
     });
-    $("#findList").addEventListener("click", function(e){
-      var tr = e.target.closest("[data-uid]"); if(!tr) return;
-      pickUser({uid: tr.getAttribute("data-uid"), email: tr.getAttribute("data-email"), name: tr.getAttribute("data-name")});
-    });
+    loadCoins();
 
     /* 이용권 주기와 회수 */
     $("#grantForm").addEventListener("submit", function(e){
@@ -308,6 +384,10 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
     $("#reloadCodes").addEventListener("click", loadCodes);
     $("#codeList").addEventListener("click", function(e){
       var t = e.target.closest("[data-toggle]"), r = e.target.closest("[data-red]");
+      var da = e.target.closest("[data-delask]"), dg = e.target.closest("[data-delgo]"), dn = e.target.closest("[data-delno]");
+      if(da){ delAsk = da.getAttribute("data-delask"); renderCodes(); return; }
+      if(dn){ delAsk = ""; renderCodes(); return; }
+      if(dg){ deleteCode(dg.getAttribute("data-delgo"), dg); return; }
       if(t){
         db().collection("codes").doc(t.getAttribute("data-toggle")).update({active: t.getAttribute("data-on") !== "1"})
           .then(loadCodes).catch(function(err){ alert("안 됐어요. " + (err && err.message || "")); });
@@ -317,9 +397,10 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
     loadCodes();
   }
 
-  function showUsers(docs, empty){
-    say($("#findMsg"), empty);
-    $("#findList").innerHTML = docs.length ? '<table><tr><th>이름</th><th>이메일</th><th>마지막 로그인</th></tr>' + docs.map(function(s){
+  function showUsers(docs, empty, list, msgSel){
+    list = list || "#findList"; msgSel = msgSel || "#findMsg";
+    say($(msgSel), empty);
+    $(list).innerHTML = docs.length ? '<table><tr><th>이름</th><th>이메일</th><th>마지막 로그인</th></tr>' + docs.map(function(s){
       var u = s.data() || {};
       return '<tr class="pick" data-uid="' + esc(s.id) + '" data-email="' + esc(u.email) + '" data-name="' + esc(u.name) + '"><td>' + esc(u.name || "-") + '</td><td>' + esc(u.email || "-") + '</td><td>' + when(u.updatedAt) + '</td></tr>';
     }).join("") + '</table><p class="msg">줄을 누르면 그 사람을 골라요.</p>' : "";
@@ -331,6 +412,27 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
     $("#whoBox").innerHTML = '<b>' + esc(u.name || "이름 없음") + ' (' + esc(u.email || "-") + ')</b><span class="uid">' + esc(u.uid) + '</span>';
     say($("#grantMsg"), "");
     loadPasses();
+  }
+
+  function pickCoinUser(u){
+    coinUser = u;
+    $("#coinUserBox").hidden = false;
+    $("#coinWhoBox").innerHTML = '<b>' + esc(u.name || "이름 없음") + ' (' + esc(u.email || "-") + ')</b><span class="uid">' + esc(u.uid) + '</span>';
+    say($("#coinMsg"), "");
+    var f = $("#coinForm"); f.elements.amount.value = 100; f.elements.note.value = "";
+    $("#coinSum").innerHTML = esc(u.name || u.email || u.uid) + " 님에게 <b>코인 100개</b>를 보내요.";
+  }
+
+  function loadCoins(){
+    $("#coinList").innerHTML = '<p class="msg">읽고 있어요.</p>';
+    db().collection("petCoinGrants").orderBy("ts", "desc").limit(50).get().then(function(r){
+      $("#coinList").innerHTML = r.empty ? '<p class="msg">아직 보낸 코인이 없어요.</p>' : '<table><tr><th>받는 사람</th><th>코인</th><th>한마디</th><th>보낸 때</th><th>상태</th><th></th></tr>' + r.docs.map(function(s){
+        var g = s.data() || {};
+        return '<tr><td>' + esc(g.name || "-") + '<br><small class="uid">' + esc(g.email || g.uid) + '</small></td><td>' + (g.amount || 0) + '</td><td>' + esc(g.note || "") + '</td><td>' + when(g.ts) + '</td>'
+          + '<td>' + (g.claimed ? '<span class="tag on">받음</span> ' + when(g.claimedAt) : '<span class="tag">아직 안 받음</span>') + '</td>'
+          + '<td>' + (g.claimed ? "" : '<button type="button" class="danger" data-cancel="' + esc(s.id) + '">취소</button>') + '</td></tr>';
+      }).join("") + '</table>';
+    }).catch(function(err){ $("#coinList").innerHTML = ""; fail($("#coinMsg"), err); });
   }
 
   function loadPasses(){
@@ -351,15 +453,43 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
   function loadCodes(){
     $("#codeList").innerHTML = '<p class="msg">읽고 있어요.</p>';
     db().collection("codes").orderBy("createdAt", "desc").limit(100).get().then(function(r){
-      var now = Date.now();
-      $("#codeList").innerHTML = r.empty ? '<p class="msg">아직 만든 코드가 없어요.</p>' : '<table><tr><th>코드</th><th>주는 것</th><th>쓴 인원</th><th>마감</th><th>상태</th><th>메모</th><th></th></tr>' + r.docs.map(function(s){
-        var c = s.data(), open = c.active && ms(c.expiresAt) > now && c.used < c.maxUses;
-        return '<tr><td><code>' + esc(s.id) + '</code></td><td>' + esc(grantText(c.kind, c.scope, c.days)) + '</td><td>' + (c.used || 0) + ' / ' + c.maxUses + '</td><td>' + when(c.expiresAt) + '</td>'
-          + '<td><span class="tag ' + (open ? 'on">쓸 수 있음' : 'off">' + (!c.active ? "꺼 둠" : ms(c.expiresAt) <= now ? "마감" : "인원 참")) + '</span></td><td>' + esc(c.note || "") + '</td>'
-          + '<td style="white-space:nowrap"><button type="button" class="line" data-red="' + esc(s.id) + '">쓴 사람 보기</button> '
-          + '<button type="button" class="line" data-toggle="' + esc(s.id) + '" data-on="' + (c.active ? "1" : "0") + '">' + (c.active ? "끄기" : "켜기") + '</button></td></tr>';
-      }).join("") + '</table>';
+      codeRows = r.docs.map(function(s){ return {id: s.id, c: s.data() || {}}; });
+      if(delAsk && !codeRows.some(function(x){ return x.id === delAsk; })) delAsk = "";
+      renderCodes();
     }).catch(function(err){ $("#codeList").innerHTML = ""; fail($("#codeMsg"), err); });
+  }
+  function renderCodes(){
+    var now = Date.now();
+    $("#codeList").innerHTML = !codeRows.length ? '<p class="msg">아직 만든 코드가 없어요.</p>' : '<table><tr><th>코드</th><th>주는 것</th><th>쓴 인원</th><th>마감</th><th>상태</th><th>메모</th><th></th></tr>' + codeRows.map(function(x){
+      var c = x.c, id = x.id, open = c.active && ms(c.expiresAt) > now && c.used < c.maxUses;
+      var row = '<tr data-code="' + esc(id) + '"><td><code>' + esc(id) + '</code></td><td>' + esc(grantText(c.kind, c.scope, c.days)) + '</td><td>' + (c.used || 0) + ' / ' + c.maxUses + '</td><td>' + when(c.expiresAt) + '</td>'
+        + '<td><span class="tag ' + (open ? 'on">쓸 수 있음' : 'off">' + (!c.active ? "꺼 둠" : ms(c.expiresAt) <= now ? "마감" : "인원 참")) + '</span></td><td>' + esc(c.note || "") + '</td>'
+        + '<td style="white-space:nowrap"><button type="button" class="line" data-red="' + esc(id) + '">쓴 사람 보기</button> '
+        + '<button type="button" class="line" data-toggle="' + esc(id) + '" data-on="' + (c.active ? "1" : "0") + '">' + (c.active ? "끄기" : "켜기") + '</button> '
+        + '<button type="button" class="danger" data-delask="' + esc(id) + '">삭제</button></td></tr>';
+      if(delAsk === id) row += '<tr class="delask" data-delrow="' + esc(id) + '"><td colspan="7"><p><b>' + esc(id) + '</b> 코드를 삭제할까요? 삭제하면 코드는 없어지지만, 이미 받은 이용권은 그대로 남아요. 쓴 사람 기록도 같이 지워요.</p>'
+        + '<button type="button" class="danger" data-delgo="' + esc(id) + '">정말 삭제</button> <button type="button" class="line" data-delno="1">취소</button></td></tr>';
+      return row;
+    }).join("") + '</table>';
+  }
+  // 코드 삭제: 쓴 사람 기록(redemptions)을 400개씩 나눠 지우고, 마지막에 코드 문서를 지운다
+  function deleteCode(id, btn){
+    var msg = $("#codeMsg"), ref = db().collection("codes").doc(id);
+    btn.disabled = true; btn.textContent = "삭제하는 중";
+    ref.collection("redemptions").get().then(function(r){
+      var docs = r.docs.slice(), chain = Promise.resolve();
+      while(docs.length){
+        (function(part){
+          chain = chain.then(function(){ var b = db().batch(); part.forEach(function(d){ b.delete(d.ref); }); return b.commit(); });
+        })(docs.splice(0, 400));
+      }
+      return chain.then(function(){ return ref.delete(); }).then(function(){ return r.size; });
+    }).then(function(n){
+      codeRows = codeRows.filter(function(x){ return x.id !== id; }); delAsk = "";
+      renderCodes();
+      if($("#redTitle").textContent.indexOf(id + " ") === 0){ $("#redBox").hidden = true; }
+      say(msg, id + " 코드를 삭제했어요." + (n ? " 쓴 사람 기록 " + n + "개도 지웠어요." : ""), true);
+    }).catch(function(err){ btn.disabled = false; btn.textContent = "정말 삭제"; fail(msg, err); });
   }
 
   function loadRedemptions(id){

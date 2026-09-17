@@ -131,7 +131,7 @@ service cloud.firestore {
   //        이름표와 이름 자리는 한 요청 안에서 같이 쓴다. 새 이름 자리를 잡으면서 예전 이름 자리는 비워야 한다
   //   pet3Friends/{uid}/list/{other}     "나는 other 와 친구 하고 싶다" {pet, sp, ts}. 양쪽에 다 있어야 친구
   //   pet3Friends/{uid}/requests/{from}  받은 친구 요청 {name, pet, sp, via, ts}. via = 받는 사람 펫 이름 열쇠
-  //   pet3Presence/{uid}                 접속 표시 {name, sp, wear, tricks(배운 개인기 id 목록), owner(이름표의 who), ts}. name 은 내 이름표의 pet 과 같아야 한다. 서로 친구만 읽는다
+  //   pet3Presence/{uid}                 접속 표시 {name, sp, wear, tricks(배운 개인기 id 목록), owner(이름표의 who), act(하는 일), mood, ev(최근 일 10개 {k, a, t}), ct(쓴 기기 시각), ts}. name 은 내 이름표의 pet 과 같아야 한다. 서로 친구만 읽는다
   //   pet3Chats/{a_b}/messages/{id}      1:1 대화 {from, text, ts}. a_b 는 두 uid 를 정렬해 _ 로 이은 것
   //   pet3Board/{uid}/messages/{id}      전체 채팅: 내 친구 모두에게 한 말 {from, text, ts}. 나와 서로 친구만 읽는다
   //   pet3Inbox/{uid}                    알림 {보낸 친구 uid: 1:1 새 메시지, p_uid: 콕 찌르기, b_uid: 전체 채팅 새 글}. 친구는 자기 칸 세 개만 고친다
@@ -251,7 +251,11 @@ service cloud.firestore {
       allow get: if p3Me(uid) || p3Mutual(uid);
       allow list: if false;
       allow create, update: if p3Me(uid)
-        && request.resource.data.keys().hasOnly(['name', 'sp', 'wear', 'tricks', 'owner', 'ts'])
+        && request.resource.data.keys().hasOnly(['name', 'sp', 'wear', 'tricks', 'owner', 'act', 'mood', 'ev', 'ct', 'ts'])
+        && (!('act' in request.resource.data) || (request.resource.data.act is string && request.resource.data.act.size() <= 12))
+        && (!('mood' in request.resource.data) || (request.resource.data.mood is string && request.resource.data.mood.size() <= 8))
+        && (!('ev' in request.resource.data) || (request.resource.data.ev is list && request.resource.data.ev.size() <= 10))
+        && (!('ct' in request.resource.data) || request.resource.data.ct is int)
         && request.resource.data.name == get(p3Doc('pet3Owners/' + uid)).data.pet
         && (!('owner' in request.resource.data) || request.resource.data.owner == get(p3Doc('pet3Owners/' + uid)).data.get('who', ''))
         && (!('tricks' in request.resource.data) || (request.resource.data.tricks is list && request.resource.data.tricks.size() <= 10))
@@ -318,4 +322,37 @@ service cloud.firestore {
     }
   }
   // ===================== 친구 전용 펫 v3 끝 =====================
+
+  // ===================== 펫 코인 선물 (2026-09-17, 관리자 페이지 "펫 코인 주기") =====================
+  // 과목을 안 들어서 퀴즈로 코인을 못 모으는 사람에게 관리자가 펫 간식 돈을 보낸다.
+  //   petCoinGrants/{id}  { uid: 받는 사람, email, name, amount: 1~5000, note: 60자까지, by: 보낸 관리자 uid, ts, claimed: false }
+  //   받는 사람의 사이트 펫이나 펫 프로그램이 claimed 를 true 로 바꾼 뒤(같은 요청에 claimedAt) 자기 펫 상태에 코인을 더한다.
+  //   이미 받은 것은 다시 true 로 못 바꿔서 여러 기기에서 두 번 받지 않는다.
+  match /databases/{database}/documents {
+    function pcIn() { return request.auth != null; }
+    function pcAdmin() { return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    match /petCoinGrants/{id} {
+      // 관리자는 모두, 받는 사람은 자기 것만 (목록은 where uid == 내 uid 로)
+      allow read: if pcAdmin() || (pcIn() && resource.data.uid == request.auth.uid);
+      allow create: if pcAdmin()
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'name', 'amount', 'note', 'by', 'ts', 'claimed'])
+        && request.resource.data.uid is string && request.resource.data.uid.size() > 0 && request.resource.data.uid.size() <= 128
+        && request.resource.data.email is string && request.resource.data.email.size() <= 200
+        && request.resource.data.name is string && request.resource.data.name.size() <= 100
+        && request.resource.data.amount is int && request.resource.data.amount >= 1 && request.resource.data.amount <= 5000
+        && request.resource.data.note is string && request.resource.data.note.size() <= 60
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.ts == request.time
+        && request.resource.data.claimed == false;
+      // 받기: 받는 사람만, 아직 안 받은 것을 받은 것으로만
+      allow update: if pcIn() && resource.data.uid == request.auth.uid
+        && resource.data.claimed == false
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimed', 'claimedAt'])
+        && request.resource.data.claimed == true
+        && request.resource.data.claimedAt == request.time;
+      // 취소: 관리자만, 아직 안 받은 것만
+      allow delete: if pcAdmin() && resource.data.claimed == false;
+    }
+  }
+  // ===================== 펫 코인 선물 끝 =====================
 }
