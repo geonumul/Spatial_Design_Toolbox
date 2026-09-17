@@ -1,4 +1,4 @@
-# Spatial Design Toolbox
+# Toolbox Study Group
 
 공간디자인 수업 과목별 정리노트, 암기 팁, 문제은행.
 
