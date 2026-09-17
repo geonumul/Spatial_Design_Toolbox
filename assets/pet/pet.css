@@ -247,4 +247,26 @@ body.playing .pet-hud,body.inking .pet-hud,body.paper .pet-hud,body.pet-open .pe
 .pa-msg{margin:0;padding:10px 12px;border-radius:14px;background:#FFF6E0;color:#8A6412;font-size:13.5px;word-break:keep-all;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pa-msg[hidden]{display:none}
 .pa-msg .pet-btn{min-height:34px;text-decoration:none;color:#fff}
-
+/* 조르기와 돌보기 */
+.pet-bar.water i{background:linear-gradient(90deg,#8FD0FF,#5AB4F0)}
+.pet-bar.clean i{background:linear-gradient(90deg,#C8F0DC,#7FD3AE)}
+.pet-free .pet-food{background:#F5FAFF;border-color:#DCEBF7}
+.pet-free .pet-food .pet-ico{width:22px;height:22px}
+.pet-dnd{display:flex;align-items:center;gap:6px;margin:10px 4px 0;font-size:13px;color:#7A6E8A;cursor:pointer}
+.pet-wants{display:flex;flex-wrap:wrap;gap:6px;margin:4px 2px 8px}
+.pet-want{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;background:#FFF6E0;color:#8A6412;font-size:12.5px}
+.pet-want.urgent{background:#FFE8EE;color:#C8356A}
+.pet-want.ok{background:#EFFAF4;color:#2F9E6B}
+.pet-want .pet-ico{width:16px;height:16px}
+.pet-ask{position:relative;z-index:3;display:flex;flex-direction:column;gap:6px;max-width:300px;margin:0 0 8px;padding:10px 12px;border-radius:18px 18px 18px 6px;background:#FFFFFF;border:1.5px solid #FFD2E0;box-shadow:0 8px 22px rgba(96,62,120,.18);animation:petPop .35s cubic-bezier(.2,.8,.3,1.25)}
+.pet-ask.urgent{border-color:#FF9DBB}
+.pet-ask-line{display:flex;align-items:center;gap:6px}
+.pet-ask-line .pet-ico{width:24px;height:24px;flex:none}
+.pet-ask-line b{flex:1;font-size:14px;font-weight:600;color:#4A3F5C;word-break:keep-all}
+.pet-ask-x{border:0;background:none;color:#9A8FA8;font:500 12px inherit;font-family:inherit;cursor:pointer}
+.pet-ask-btns{display:flex;flex-wrap:wrap;gap:6px}
+.pet-ask-btns .pet-btn{min-height:34px;padding:5px 12px;font-size:13px}
+.pet-room .pet-ask{position:absolute;left:12px;top:12px}
+.pet-hud .pet-ask{position:absolute;right:0;bottom:calc(100% + 8px);width:260px}
+.pet-hud .pet-ask{pointer-events:auto}
+.pet-room{position:relative}

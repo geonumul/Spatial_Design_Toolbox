@@ -70,6 +70,125 @@ const FOODS = [
 const GROW = [{ at: 0, name: '아기', scale: 0.82 }, { at: 60, name: '꼬마', scale: 0.92 }, { at: 200, name: '어린이', scale: 1 }];
 const growOf = love => { let g = GROW[0]; GROW.forEach(x => { if (love >= x.at) g = x; }); return g; };
 
+/* CARE-BEGIN: 돌보기 규칙 (사이트와 펫 프로그램이 같이 씀. 펫 프로그램은 tools/sync-art.js 가 src/care.js 로 복사)
+   모든 수치는 careTs 부터 지난 시간으로 계산해서 어느 기기에서 보든 같다.
+   배부름 food(시간당 -2.5), 기분 fun(-2), 목마름 water(-3, 물은 공짜), 깨끗함 clean(-1, 씻기기 공짜),
+   밤(22시~7시)에는 졸려요. 재우면 sleepTs, 아침 7시까지 잔다. 하루 넘게 안 오면 보고 싶었어요.
+   돌보지 않아도 펫이나 간식 돈을 잃지 않는다: 슬픈 얼굴, 느린 걸음, 배고프거나 목마르면(10 이하) 장기를 안 한다. */
+const CARE = { food: 2.5, fun: 2, water: 3, clean: 1, low: 35, dirty: 30, hungry: 10, thirsty: 10, sad: 15, nightFrom: 22, nightTo: 7, sleepMs: 10 * 3600000, missMs: 24 * 3600000, askGapMs: 25 * 60000 };
+const careClamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const careDay = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const careNight = t => { const h = new Date(t).getHours(); return h >= CARE.nightFrom || h < CARE.nightTo; };
+// 자고 있나: 밤에 재웠고 아직 아침이 안 됐으면
+function careAsleep(s, t) {
+  if (!s.sleepTs || t - s.sleepTs > CARE.sleepMs) return false;
+  const wake = new Date(s.sleepTs); if (wake.getHours() >= CARE.nightTo) wake.setDate(wake.getDate() + 1); wake.setHours(CARE.nightTo, 0, 0, 0);
+  return t < wake.getTime();
+}
+// 시간이 지난 만큼 줄인다 (하트는 30분마다 하나씩 찬다)
+function careTick(s, t) {
+  if (typeof s.water !== 'number') s.water = 80;
+  if (typeof s.clean !== 'number') s.clean = 80;
+  if (s.hearts < RULE.heartsMax) {
+    const step = RULE.heartRegenMin * 60000, n = Math.floor((t - (s.heartTs || t)) / step);
+    if (n > 0) { s.hearts = Math.min(RULE.heartsMax, s.hearts + n); s.heartTs = s.hearts >= RULE.heartsMax ? t : s.heartTs + n * step; }
+  } else s.heartTs = t;
+  const h = (t - (s.careTs || t)) / 3600000;
+  if (h > 0.05) {
+    const slow = careAsleep(s, t) ? 0.4 : 1;   // 자는 동안은 천천히 줄어든다
+    s.food = careClamp(s.food - h * CARE.food * slow, 0, 100); s.fun = careClamp(s.fun - h * CARE.fun * slow, 0, 100);
+    s.water = careClamp(s.water - h * CARE.water * slow, 0, 100); s.clean = careClamp(s.clean - h * CARE.clean, 0, 100);
+    s.careTs = t;
+  }
+  return s;
+}
+function careMood(s, t) {
+  if (careAsleep(s, t)) return 'sleep';
+  return (s.food <= CARE.hungry || s.water <= CARE.thirsty || s.fun <= CARE.sad) ? 'sad' : 'normal';
+}
+// 지금 원하는 것 (급한 순서). 각 { id, text, action, urgent }
+function careNeeds(s, t) {
+  if (!s || !s.adopted) return [];
+  const out = [];
+  const asleep = careAsleep(s, t);
+  if (s.seenTs && t - s.seenTs > CARE.missMs) out.push({ id: 'miss', text: '보고 싶었어요! 쓰다듬어 줘요', action: 'pet', urgent: true });
+  if (asleep) return out;
+  if (s.water <= CARE.low) out.push({ id: 'thirsty', text: '목말라요, 물 주세요', action: 'water', urgent: s.water <= CARE.thirsty });
+  if (s.food <= CARE.low) out.push({ id: 'hungry', text: '배고파요, 밥 주세요', action: 'feed', urgent: s.food <= CARE.hungry });
+  if (s.fun <= CARE.low) out.push({ id: 'bored', text: '심심해요, 놀아 줘요', action: 'play', urgent: s.fun <= CARE.sad });
+  if (s.clean <= CARE.dirty) out.push({ id: 'dirty', text: '꼬질꼬질해요, 씻겨 줘요', action: 'bath', urgent: s.clean <= 10 });
+  if (careNight(t) && !(s.sleepTs && t - s.sleepTs < CARE.sleepMs)) out.push({ id: 'sleepy', text: '졸려요, 재워 주세요', action: 'sleep', urgent: false });
+  return out.sort((a, b) => Number(b.urgent) - Number(a.urgent));
+}
+// 방해 금지: s.dnd = { on, from, to } (시). 그 시간에는 조르지 않는다
+function careQuiet(s, t) {
+  const d = s && s.dnd; if (!d || !d.on) return false;
+  const h = new Date(t).getHours(), a = Number(d.from), b = Number(d.to);
+  return a === b ? false : a < b ? (h >= a && h < b) : (h >= a || h < b);
+}
+// 돌보기 한 번. 돌려주는 값 { ok, msg, anim, learned }
+function careDo(s, kind, arg, t) {
+  careTick(s, t);
+  const day = careDay(t);
+  if (kind === 'feed') {
+    const f = FOODS.find(x => x.id === arg); if (!f) return { ok: false, msg: '' };
+    if (s.coins < f.cost) return { ok: false, msg: '코인이 모자라요. 문제를 맞히면 모여요' };
+    s.coins -= f.cost; s.food = careClamp(s.food + f.food, 0, 100); s.fun = careClamp(s.fun + f.fun, 0, 100); s.love += f.love;
+    return { ok: true, msg: f.say, anim: 'eat' };
+  }
+  if (kind === 'water') {
+    const before = s.water;
+    s.water = 100;
+    if (before <= 60 && (!s.waterTs || t - s.waterTs > 20 * 60000)) s.love += 1;
+    s.waterTs = t;
+    return { ok: true, msg: before >= 90 ? '지금은 목 안 말라요' : '꿀꺽꿀꺽, 시원해요', anim: 'drink' };
+  }
+  if (kind === 'bath') {
+    const before = s.clean;
+    s.clean = 100;
+    if (before <= 60) { s.love += 1; s.fun = careClamp(s.fun + 5, 0, 100); }
+    return { ok: true, msg: before >= 90 ? '벌써 뽀송뽀송해요' : '보글보글, 뽀송뽀송해졌어요', anim: 'bath' };
+  }
+  if (kind === 'sleep') {
+    if (!careNight(t)) return { ok: false, msg: '아직 안 졸려요. 밤이 되면 재워 주세요' };
+    s.sleepTs = t;
+    return { ok: true, msg: '잘 자요, 내일 봐요', anim: 'sleep' };
+  }
+  if (kind === 'wake') { s.sleepTs = 0; return { ok: true, msg: '으음, 잘 잤어요', anim: 'hop' }; }
+  if (kind === 'pet') {
+    s.petDay = s.petDay || {};
+    if ((s.petDay[day] || 0) < 10) { s.petDay[day] = (s.petDay[day] || 0) + 1; s.love += 1; s.fun = careClamp(s.fun + 2, 0, 100); }
+    s.seenTs = t;
+    return { ok: true, msg: '', anim: 'love' };
+  }
+  if (kind === 'trick') {
+    const k = TRICKS.find(x => x.id === arg); if (!k) return { ok: false, msg: '' };
+    s.tricks = s.tricks || {};
+    if (s.food <= CARE.hungry || s.water <= CARE.thirsty) return { ok: false, msg: '배고프고 목말라서 장기를 못 해요. 밥이랑 물 먼저 주세요' };
+    if (careAsleep(s, t)) return { ok: false, msg: '쿨쿨 자고 있어요' };
+    let learned = false;
+    if (!s.tricks[arg]) {
+      if (s.love < k.need) return { ok: false, msg: '더 친해지면 배울 수 있어요' };
+      if (s.coins < k.cost) return { ok: false, msg: '연습용 간식 돈 ' + k.cost + '개가 필요해요' };
+      s.coins -= k.cost; s.tricks[arg] = day; s.love += 5; learned = true;
+    }
+    return { ok: true, msg: k.say, anim: 'trick', learned };
+  }
+  if (kind === 'wear') {
+    const it = WEAR.find(x => x.id === arg); if (!it) return { ok: false, msg: '' };
+    s.owned = s.owned || {}; s.wear = s.wear || {};
+    let bought = false;
+    if (!s.owned[arg]) {
+      if (s.coins < it.cost) return { ok: false, msg: '코인 ' + it.cost + '개가 필요해요' };
+      s.coins -= it.cost; s.owned[arg] = 1; bought = true;
+    }
+    s.wear[it.slot] = arg;
+    return { ok: true, msg: bought ? it.name + ' 샀어요!' : '', anim: 'hop' };
+  }
+  return { ok: false, msg: '' };
+}
+/* CARE-END */
+
 /* 개인기 자세: 부위(꼬리, 뒷발, 몸, 머리, 앞발)를 따로 움직여 실제 자세를 그린다.
    값: all(펫 전체), body(몸, 발 높이 기준 크기), head(머리), hindL/hindR(뒷발), armL/armR(앞발), tail
    각 부위 { dx, dy, r(도), s(크기), sx, sy }. mood 는 표정, back 은 뒤돌아본 모습, wink 는 한쪽 눈 감기,
@@ -254,8 +373,8 @@ function flameSvg() { return '<svg class="pet-ico" viewBox="0 0 24 24" aria-hidd
 /* ---------- 상태 ---------- */
 function blank() {
   return { v: VER, adopted: false, sp: 'cat', name: '', wear: { head: 'none', neck: 'nothing', face: 'plain' }, owned: { none: 1, nothing: 1, plain: 1 },
-    coins: 15, tricks: {}, hearts: RULE.heartsMax, heartTs: now(), food: 80, fun: 80, love: 0, careTs: now(), daily: {}, streak: 0, lastGoal: null,
-    combo: 0, trophies: {}, read: {}, boss: null, undo: {}, nick: '', ts: now() };
+    coins: 15, tricks: {}, hearts: RULE.heartsMax, heartTs: now(), food: 80, fun: 80, water: 80, clean: 80, sleepTs: 0, seenTs: now(), dnd: { on: true, from: 23, to: 8 },
+    love: 0, careTs: now(), daily: {}, streak: 0, lastGoal: null, combo: 0, trophies: {}, read: {}, boss: null, undo: {}, nick: '', ts: now() };
 }
 let ST = null;
 function load() {
@@ -266,15 +385,7 @@ function load() {
   tick(ST);
   return ST;
 }
-function tick(s) {
-  const t = now();
-  if (s.hearts < RULE.heartsMax) {
-    const step = RULE.heartRegenMin * 60000, n = Math.floor((t - (s.heartTs || t)) / step);
-    if (n > 0) { s.hearts = Math.min(RULE.heartsMax, s.hearts + n); s.heartTs = s.hearts >= RULE.heartsMax ? t : s.heartTs + n * step; }
-  } else s.heartTs = t;
-  const h = (t - (s.careTs || t)) / 3600000;
-  if (h > 0.05) { s.food = clamp(s.food - h * 2.5, 0, 100); s.fun = clamp(s.fun - h * 2, 0, 100); s.careTs = t; }
-}
+function tick(s) { careTick(s, now()); }
 let pushT = null;
 function save() {
   const s = load(); s.ts = now();
@@ -301,7 +412,7 @@ function pullRemote() {
     if ($('#petFriends')) friendsLoad(true); else nameSync().then(presenceBeat);
   });
 }
-const moodOf = s => (s.food <= 10 || s.fun <= 15) ? 'sad' : 'normal';
+const moodOf = s => careMood(s, now());
 function streakNow(s) { if (!s.lastGoal) return 0; return dayDiff(s.lastGoal, dayKey()) <= 1 ? s.streak : 0; }
 
 /* ---------- 반응 ---------- */
@@ -416,30 +527,32 @@ function startBoss(part) {
 function onRead(id) { const s = load(); if (!s.adopted || !id || s.read[id]) return; s.read[id] = dayKey(); s.love += 2; pop(heartSvg(true) + ' 다 읽었어요', 'heart'); save(); }
 
 /* ---------- 돌보기, 옷장 ---------- */
-function feed(id) {
-  const s = load(), f = FOODS.find(x => x.id === id); if (!f) return;
-  if (s.coins < f.cost) { say('코인이 모자라요. 문제를 맞히면 모여요'); react('shake'); return; }
-  s.coins -= f.cost; s.food = clamp(s.food + f.food, 0, 100); s.fun = clamp(s.fun + f.fun, 0, 100); s.love += f.love;
-  react('eat'); say(f.say); hearts($('.pet-room .pet-sprite'), 3); save();
+function careFx(r, el) {
+  if (!r.ok) { if (r.msg) { say(r.msg); react('shake'); } return false; }
+  if (r.anim === 'eat' || r.anim === 'drink') react('eat');
+  else if (r.anim === 'love') react('love');
+  else react('hop');
+  if (r.anim === 'drink') pop(needIcon('thirsty') + ' 꿀꺽', 'heart');
+  if (r.anim === 'bath') pop(needIcon('dirty') + ' 뽀송', 'heart');
+  if (r.msg) say(r.msg);
+  hearts(el || $('.pet-room .pet-sprite'), r.anim === 'love' ? 4 : 3);
+  return true;
 }
+function feed(id) { const s = load(); if (careFx(careDo(s, 'feed', id, now()))) save(); }
+function care(kind) { const s = load(); if (careFx(careDo(s, kind, '', now()))) { save(); needHide(); } }
 function pet(el) {
-  const s = load(); const d = dayKey();
-  s.petDay = s.petDay || {};
-  if ((s.petDay[d] || 0) < 10) { s.petDay[d] = (s.petDay[d] || 0) + 1; s.love += 1; s.fun = clamp(s.fun + 2, 0, 100); }
+  const s = load();
+  careDo(s, 'pet', '', now());
   react('love'); hearts(el, 4);
-  const lines = ['헤헤, 간지러워요', '좋아요', '또 해 줘요', '오늘 같이 공부해요', s.name + '는 기분 최고'];
+  const lines = ['헤헤, 간지러워요', '좋아요', '또 해 줘요', '오늘 같이 공부해요', s.name + fJosa(s.name, '은', '는') + ' 기분 최고'];
   say(lines[Math.floor(Math.random() * lines.length)]);
   save();
 }
 function trick(id) {
   const s = load(), k = TRICKS.find(x => x.id === id); if (!k) return;
-  s.tricks = s.tricks || {};
-  if (!s.tricks[id]) {
-    if (s.love < k.need) { say('더 친해지면 배울 수 있어요'); react('shake'); return; }
-    if (s.coins < k.cost) { say('연습용 간식 돈 ' + k.cost + '개가 필요해요'); react('shake'); return; }
-    s.coins -= k.cost; s.tricks[id] = dayKey(); s.love += 5;
-    news(s.name + fJosa(s.name, '이', '가') + ' "' + k.name + '"' + fJosa(k.name, '을', '를') + ' 배웠어요', '이제 언제든 보여 달라고 할 수 있어요.', petSvg(s, { mood: 'happy', cls: 'big' }));
-  }
+  const r = careDo(s, 'trick', id, now());
+  if (!r.ok) { say(r.msg); react('shake'); return; }
+  if (r.learned) news(s.name + fJosa(s.name, '이', '가') + ' "' + k.name + '"' + fJosa(k.name, '을', '를') + ' 배웠어요', '이제 언제든 보여 달라고 할 수 있어요.', petSvg(s, { mood: 'happy', cls: 'big' }));
   save();
   perform(k);
 }
@@ -464,13 +577,63 @@ function playTrick(el, s, id) {
   step();
 }
 function wear(id) {
-  const s = load(), it = WEAR.find(x => x.id === id); if (!it) return;
-  if (!s.owned[id]) {
-    if (s.coins < it.cost) { say('코인 ' + it.cost + '개가 필요해요'); return; }
-    s.coins -= it.cost; s.owned[id] = 1; say(it.name + ' 샀어요!');
-  }
-  s.wear[it.slot] = id; react('hop'); save();
+  const s = load(), r = careDo(s, 'wear', id, now());
+  if (!r.ok) { if (r.msg) say(r.msg); return; }
+  if (r.msg) say(r.msg);
+  react('hop'); save();
 }
+
+/* ---------- 조르기 (밥, 물, 놀기, 씻기, 잠, 보고 싶음) ---------- */
+const ASK_KEY = 'sdt_pet_ask_v1';   // { 원하는 것 id: 마지막으로 보여 준 시각 } (이 브라우저)
+function needIcon(id) {
+  const I = {
+    hungry: '<path d="M4 12h16a8 8 0 0 1-16 0z" fill="#FFB86B" stroke="#C9772E" stroke-width="1.4"/><circle cx="9" cy="10" r="1.6" fill="#8A5A2B"/><circle cx="13" cy="9.4" r="1.6" fill="#8A5A2B"/><circle cx="16" cy="10.4" r="1.4" fill="#8A5A2B"/>',
+    thirsty: '<path d="M12 3c3.5 4.6 6 8 6 11a6 6 0 0 1-12 0c0-3 2.5-6.4 6-11z" fill="#8FD0FF" stroke="#3E9BD6" stroke-width="1.4"/><ellipse cx="9.6" cy="14" rx="1.4" ry="2.2" fill="#fff" opacity=".7"/>',
+    bored: '<circle cx="12" cy="12" r="8" fill="#FFD34D" stroke="#E3A91E" stroke-width="1.4"/><path d="M4.5 10c5 2 10 2 15 0M4.5 14c5 2 10 2 15 0" stroke="#FF7FA6" stroke-width="1.6" fill="none"/>',
+    dirty: '<circle cx="9" cy="13" r="5" fill="#EAF6FF" stroke="#8CC3E8" stroke-width="1.4"/><circle cx="16" cy="9" r="3.4" fill="#EAF6FF" stroke="#8CC3E8" stroke-width="1.4"/><circle cx="16.5" cy="16.5" r="2.4" fill="#EAF6FF" stroke="#8CC3E8" stroke-width="1.4"/>',
+    sleepy: '<path d="M15 3.5a8.5 8.5 0 1 0 5.5 13.5A7 7 0 0 1 15 3.5z" fill="#C9C2F0" stroke="#8C84C8" stroke-width="1.4"/>',
+    miss: '<path d="M12 20.5C5 15.5 2.5 12 2.5 8.3 2.5 5.6 4.6 3.5 7.2 3.5c2 0 3.7 1.2 4.8 2.9 1.1-1.7 2.8-2.9 4.8-2.9 2.6 0 4.7 2.1 4.7 4.8 0 3.7-2.5 7.2-9.5 12.2z" fill="#FF6B8B" stroke="#E0456A" stroke-width="1.4"/>',
+  };
+  return '<svg class="pet-ico" viewBox="0 0 24 24" aria-hidden="true">' + (I[id] || I.miss) + '</svg>';
+}
+function askSeen() { try { return JSON.parse(localStorage.getItem(ASK_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function askMark(id) { try { const o = askSeen(); o[id] = now(); localStorage.setItem(ASK_KEY, JSON.stringify(o)); } catch (e) { /* 무시 */ } }
+let askT = 0;
+function needAsk(force) {
+  const s = load(); if (!s.adopted) return;
+  const host = PAGE() ? $('#petPage .pet-room') : $('#petHud'); if (!host) return;
+  if (host.querySelector('.pet-ask')) return;
+  const t = now();
+  if (careQuiet(s, t) && !force) return;
+  const seen = askSeen();
+  const n = careNeeds(s, t).find(x => force || t - (seen[x.id] || 0) > CARE.askGapMs);
+  if (!n) return;
+  askMark(n.id);
+  if (n.id === 'miss') { s.seenTs = t; try { localStorage.setItem(LKEY, JSON.stringify(s)); } catch (e) { /* 무시 */ } }
+  const btns = {
+    feed: FOODS.filter(f => f.id !== 'play').map(f => '<button type="button" class="pet-btn main" data-ask="feed:' + f.id + '">' + esc(f.name) + ' <small>' + coinSvg() + f.cost + '</small></button>').join(''),
+    water: '<button type="button" class="pet-btn main" data-ask="water">물 주기</button>',
+    play: '<button type="button" class="pet-btn main" data-ask="pet">쓰다듬기</button><button type="button" class="pet-btn" data-ask="feed:play">장난감 <small>' + coinSvg() + '40</small></button>',
+    bath: '<button type="button" class="pet-btn main" data-ask="bath">씻기기</button>',
+    sleep: '<button type="button" class="pet-btn main" data-ask="sleep">재우기</button>',
+    pet: '<button type="button" class="pet-btn main" data-ask="pet">쓰다듬기</button>',
+  }[n.action] || '';
+  const d = document.createElement('div');
+  d.className = 'pet-ask' + (n.urgent ? ' urgent' : ''); d.setAttribute('role', 'status'); d.dataset.need = n.id;
+  d.innerHTML = '<div class="pet-ask-line">' + needIcon(n.id) + '<b>' + esc(n.text) + '</b><button type="button" class="pet-ask-x" data-ask="close" aria-label="닫기">닫기</button></div><div class="pet-ask-btns">' + btns + '</div>';
+  host.prepend(d);
+  d.addEventListener('click', e => {
+    e.stopPropagation();
+    const b = e.target.closest('[data-ask]'); if (!b) return;
+    const [k, v] = b.dataset.ask.split(':');
+    if (k === 'close') { needHide(); return; }
+    if (k === 'feed') { const st = load(); if (careFx(careDo(st, 'feed', v, now()))) { save(); needHide(); } return; }
+    if (k === 'pet') { pet($('.pet-room .pet-sprite') || $('.pet-hud .pet-sprite')); needHide(); return; }
+    care(k);
+  });
+  clearTimeout(askT); askT = setTimeout(needHide, 45000);
+}
+function needHide() { $$('.pet-ask').forEach(x => x.remove()); }
 
 /* ---------- 입양, 다른 동물로 바꾸기 ----------
    이름은 모두 달라야 한다. 로그인해 있으면 pet3Names 에 이름 자리를 잡은 뒤에 데려온다(바꾼다).
@@ -741,6 +904,8 @@ function act(e, p) {
       else if (a === 'rename') renameOpen(b);
       else if (a === 'change') adoptView('change');
       else if (a === 'leave') leaveView();
+      else if (a === 'care') care(v);
+      else if (a === 'dnd') { const st = load(); st.dnd = { on: !!b.checked, from: 23, to: 8 }; save(); }
       else if (a === 'chat') { note(WIP.chat); if (DESKTOP_READY) launchDesktop('&open=chat'); }
 }
 /* 이름 바꾸기: 제목 줄을 입력칸으로 바꾼다. 이름 자리를 먼저 잡고 저장하면 펫 상태, 화면 펫(presence)에 같이 반영 */
@@ -776,6 +941,12 @@ function renameOpen(btn) {
   });
 }
 function closePanel() { const p = $('#petPanel'); if (p) p.hidden = true; document.body.classList.remove('pet-open'); }
+function careNeedsHtml(s) {
+  const n = careNeeds(s, now()).filter(x => x.id !== 'miss');
+  if (careAsleep(s, now())) return '<div class="pet-wants"><span class="pet-want">' + needIcon('sleepy') + '쿨쿨 자는 중이에요</span></div>';
+  if (!n.length) return '<div class="pet-wants"><span class="pet-want ok">' + heartSvg(true) + '지금은 다 괜찮아요</span></div>';
+  return '<div class="pet-wants">' + n.map(x => '<span class="pet-want' + (x.urgent ? ' urgent' : '') + '">' + needIcon(x.id) + esc(x.text) + '</span>').join('') + '</div>';
+}
 function bar(v, cls) { return '<span class="pet-bar ' + cls + '"><i style="width:' + clamp(Math.round(v), 0, 100) + '%"></i></span>'; }
 function fillPanel(p) {
   const s = load(), g = growOf(s.love), nextG = GROW.find(x => x.at > s.love);
@@ -784,10 +955,16 @@ function fillPanel(p) {
   if (tab === 'care') {
     h += '<div class="pet-room"><button type="button" class="pet-touch" data-act="pet" aria-label="쓰다듬기">' + spriteHtml(s, 'big walk') + '</button><div class="pet-room-hint">눌러서 쓰다듬기</div></div>'
       + '<div class="pet-title"><b>' + esc(s.name) + '</b><button type="button" class="pet-rename" data-act="rename" aria-label="이름 바꾸기">이름 바꾸기</button><span>' + esc(SP[s.sp].animal) + ', ' + g.name + '</span><span class="pet-coins">' + coinSvg() + s.coins + '</span></div>'
-      + '<div class="pet-meters"><div><span>배부름</span>' + bar(s.food, 'food') + '</div><div><span>기분</span>' + bar(s.fun, 'fun') + '</div>'
+      + careNeedsHtml(s)
+      + '<div class="pet-meters"><div><span>배부름</span>' + bar(s.food, 'food') + '</div><div><span>목마름</span>' + bar(s.water, 'water') + '</div><div><span>기분</span>' + bar(s.fun, 'fun') + '</div><div><span>깨끗함</span>' + bar(s.clean, 'clean') + '</div>'
       + '<div><span>친해진 정도</span>' + bar(nextG ? (s.love - g.at) / (nextG.at - g.at) * 100 : 100, 'love') + '<small>' + s.love + (nextG ? ', ' + nextG.name + '까지 조금 더' : ', 다 자랐어요') + '</small></div></div>'
       + '<div class="pet-chips"><span>' + [0, 1, 2, 3, 4].map(i => heartSvg(i < s.hearts)).join('') + '</span><span>' + flameSvg() + streakNow(s) + '일째</span><span>오늘 ' + Math.min(today, RULE.goal) + ' / ' + RULE.goal + '문제</span></div>'
       + '<div class="pet-foods">' + FOODS.map(f => '<button type="button" class="pet-food" data-act="feed:' + f.id + '"><b>' + f.name + '</b><small>' + coinSvg() + f.cost + '</small></button>').join('') + '</div>'
+      + '<div class="pet-foods pet-free">' + '<button type="button" class="pet-food" data-act="care:water">' + needIcon('thirsty') + '<b>물 주기</b><small>공짜</small></button>'
+      + '<button type="button" class="pet-food" data-act="care:bath">' + needIcon('dirty') + '<b>씻기기</b><small>공짜</small></button>'
+      + (careAsleep(s, now()) ? '<button type="button" class="pet-food" data-act="care:wake">' + needIcon('sleepy') + '<b>깨우기</b><small>자는 중</small></button>'
+        : '<button type="button" class="pet-food" data-act="care:sleep">' + needIcon('sleepy') + '<b>재우기</b><small>밤에만</small></button>') + '</div>'
+      + '<label class="pet-dnd"><input type="checkbox" data-act="dnd"' + (s.dnd && s.dnd.on ? ' checked' : '') + '> 밤 11시부터 아침 8시까지는 조르지 않기</label>'
       + '<button type="button" class="pet-btn wide pet-change" data-act="change">다른 동물로 바꾸기</button>'
       + '<button type="button" class="pet-leave" data-act="leave">펫 떠나보내기</button>';
     const A = app();
@@ -1125,7 +1302,7 @@ const DOWNLOAD = (function () {
 const PET_PAGE = DOWNLOAD.replace(/desktop-pet\/download\.html$/, 'pet/index.html');
 
 /* ---------- 시작 ---------- */
-window.SDTPet = { onAnswer, onUndo, canStart, onSetEnd, onRead, openPanel, startBoss, petSvg, SPECIES, launchDesktop };
+window.SDTPet = { onAnswer, onUndo, canStart, onSetEnd, onRead, openPanel, startBoss, petSvg, SPECIES, launchDesktop, care: { state: () => load(), tick: () => tick(load()), save, needAsk, needs: () => careNeeds(load(), now()) } };
 window.addEventListener('sdt:read', e => onRead(e.detail && e.detail.id));
 function bootPage(pg) {
   if (load().adopted) { fillPanel(pg); return; }
@@ -1141,7 +1318,13 @@ function boot() {
   appCardBoot();
   $$('[data-petlaunch]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); launchDesktop(); }));
   if (window.SDT) SDT.onAuth(u => { if (u) pullRemote(); });
-  setInterval(() => { tick(load()); if (withPet) render(); }, 60000);
+  setInterval(() => { tick(load()); if (withPet) render(); needAsk(); }, 60000);
+  // 보고 싶었어요: 하루 넘게 안 왔으면 먼저 말하고, 아니면 이번 방문 시각만 적는다 (서버로 보내지 않음, 다음 저장 때 같이 감)
+  setTimeout(() => {
+    const st = load();
+    if (st.adopted && !(st.seenTs && now() - st.seenTs > CARE.missMs)) { st.seenTs = now(); try { localStorage.setItem(LKEY, JSON.stringify(st)); } catch (e) { /* 무시 */ } }
+    needAsk();
+  }, 2500);
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
