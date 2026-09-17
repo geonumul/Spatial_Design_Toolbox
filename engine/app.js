@@ -467,11 +467,27 @@ function termsOfWeek(week) {
   return ((window.SDT_TERMS || {})[week] || []).filter(t => termKey(t).length >= 2);
 }
 
+/* 발표 화면처럼 전체 화면: 브라우저 전체 화면(가능하면) + 머리글, 메뉴, 푸터 숨기고 무대만 크게 */
+function pFullSet(on) {
+  document.body.classList.toggle('pfull', on);
+  const c = $('#fullChip'); if (c) { c.classList.toggle('on', on); c.textContent = on ? '전체 화면 끄기' : '전체 화면'; }
+  const d = document, el = d.documentElement;
+  const isFs = !!(d.fullscreenElement || d.webkitFullscreenElement);
+  try {
+    if (on && !isFs) { const r = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null; if (r && r.catch) r.catch(() => {}); }
+    else if (!on && isFs) { const r = d.exitFullscreen ? d.exitFullscreen() : d.webkitExitFullscreen ? d.webkitExitFullscreen() : null; if (r && r.catch) r.catch(() => {}); }
+  } catch (e) { /* 전체 화면을 못 쓰는 브라우저는 화면 안에서만 크게 */ }
+  if (typeof drawTrail === 'function') setTimeout(drawTrail, 120);
+}
+function pFullSync() { if (!document.fullscreenElement && !document.webkitFullscreenElement && document.body.classList.contains('pfull')) pFullSet(false); }
+document.addEventListener('fullscreenchange', pFullSync);
+document.addEventListener('webkitfullscreenchange', pFullSync);
 /* ---------- 플레이어 ---------- */
 let P = null;
 function playerShell(opts) {
   return '<div id="player" class="on">'
     + '<div class="ptop"><a class="btn sm" href="' + esc(opts.backHref) + '">목록</a><div class="ptitle" id="ptitle"></div><div class="pchips">' + (opts.chips || '')
+    + '<button class="chip" id="fullChip" type="button" title="전체 화면 (F)">전체 화면</button>'
     + '<button class="chip auto' + (store.pref.auto ? ' on' : '') + '" id="autoChip" type="button">' + (store.pref.auto ? '자동 재생 중' : '자동 재생') + '</button></div></div>'
     + '<div class="stage" id="pstage"><div class="slide" id="pslide"></div></div>'
     + '<div class="sprog"><i id="sprogBar"></i></div>'
@@ -510,13 +526,17 @@ function startPlayer(opts) {
   });
   const key = e => {
     if (/INPUT|TEXTAREA/.test((e.target || {}).tagName || '')) return;
+    if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); pFullSet(!document.body.classList.contains('pfull')); return; }
+    if (e.key === 'Escape' && document.body.classList.contains('pfull')) { pFullSet(false); return; }
     if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); pNext(); }
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); pPrev(); }
   };
   document.addEventListener('keydown', key);
   const onResize = () => drawTrail();
   window.addEventListener('resize', onResize);
+  { const fc = $('#fullChip'); if (fc) { fc.addEventListener('click', e => { e.stopPropagation(); pFullSet(!document.body.classList.contains('pfull')); }); if (document.body.classList.contains('pfull')) { fc.classList.add('on'); fc.textContent = '전체 화면 끄기'; } } }
   cleanup = () => {
+    if (document.body.classList.contains('pfull') && !/^#\/(lesson|unit|recall)\//.test(location.hash)) pFullSet(false);
     document.removeEventListener('keydown', key); window.removeEventListener('resize', onResize);
     if (P) { clearTimeout(P.timer); if (P.ink) P.ink.destroy(); }
     P = null;
