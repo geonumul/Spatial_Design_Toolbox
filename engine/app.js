@@ -488,7 +488,7 @@ function startPlayer(opts) {
   $('#pPrev').addEventListener('click', e => { e.stopPropagation(); pPrev(); });
   stage.addEventListener('click', e => {
     if (P && P.ink && P.ink.enabled) return;
-    if (e.target.closest('button,a,input,textarea,.term,pre,.schoices,.tpop')) return;
+    if (e.target.closest('button,a,input,textarea,.term,pre,.schoices,.tpop,details')) return;
     navTap(e.clientX);
   });
   let sx = null, sy = null;
@@ -543,11 +543,15 @@ function pJumpOpen() {
     if (paged) {
       const cur = P.frames[P.i] || {};
       idx = P.frames.findIndex(f => f._p === n && f._pass === cur._pass);
+      if (idx > 0 && P.frames[idx - 1]._p === n && !P.frames[idx - 1]._pass) idx--;   // 쪽 첫 장면(슬라이드, 부분씩 읽기)부터
       if (idx < 0) idx = P.frames.findIndex(f => f._p === n);
       if (idx < 0) idx = P.frames.findIndex(f => f._p > n);
     } else idx = n - 1;
     close();
-    if (idx >= 0 && P) pShow(idx, idx < P.i ? 'prev' : 'next');
+    if (idx >= 0 && P) {
+      pShow(idx, idx < P.i ? 'prev' : 'next');
+      if (P.step && !P.showAll) { P.step = 0; pApply(); schedule(); }   // 뒤쪽 쪽으로 가도 그 쪽 처음 단계부터
+    }
   });
 }
 function toggleInk() {
@@ -641,7 +645,7 @@ function schedule() {
   const el = $('#pslide');
   const vis = $$('[data-s]', el).filter(e => +e.dataset.s === P.step);
   const text = vis.length ? vis.map(e => e.textContent).join(' ') : el.textContent;
-  const ms = (clamp(1500 + text.length * 60, 2200, 11000) + (f.kind === 'slideimg' ? 1500 : 0)) * (+store.pref.speed || 1);
+  const ms = (clamp(1500 + text.length * 60, 2200, 11000) + (f.kind === 'slideimg' || f.kind === 'walk' ? 1500 : 0)) * (+store.pref.speed || 1);
   P.timer = setTimeout(pNext, ms);
 }
 function drawTrail() {
@@ -668,6 +672,63 @@ function prepSvg(el) {
     const m = c.match(/\bb(\d)\b/);
     if (m) { node.classList.add('bld'); node.setAttribute('data-s', m[1]); }
   });
+}
+/* 용어 카드를 한 장씩: 용어가 먼저 나오고 (짐작), 한 번 더 누르면 뜻. 지나간 카드는 한 줄로 접혀 위에 쌓인다.
+   단계 = 용어마다 2개 (0단계에 첫 용어가 보이므로 steps = 2n - 1) */
+function termSteps(f, kicker, lead, more) {
+  const ts = f.terms || [], n = ts.length;
+  return {
+    html: '<div class="review tstep"><div class="sk">' + kicker + ' <span class="tsn num"></span></div><h2 class="sh">' + lead + '</h2><div class="tlist">'
+      + ts.map((t, i) => '<div class="tcard bld" data-s="' + (2 * i) + '"><div class="tface"><span class="ren">' + esc(termFace(t)) + '</span>' + (t.en && t.ko ? '<small>' + esc(t.en) + '</small>' : '') + '</div>'
+        + '<div class="tguess">뜻을 먼저 짐작해 보고 누르세요</div>'
+        + S(2 * i + 1, '<p class="tsay">' + esc(t.say) + '</p>' + (more && t.more ? '<details class="tmore"><summary>더 보기</summary><p>' + esc(t.more) + '</p></details>' : ''), 'div', 'tmean') + '</div>').join('') + '</div></div>',
+    steps: Math.max(0, 2 * n - 1),
+    onStep: (s, el) => {
+      const cur = Math.min(n - 1, Math.floor(s / 2));
+      $$('.tcard', el).forEach((c, i) => { c.classList.toggle('cur', i === cur); c.classList.toggle('past', i < cur); c.classList.toggle('open', s >= 2 * i + 1); });
+      const k = $('.tsn', el); if (k) k.textContent = n > 1 ? (cur + 1) + ' / ' + n : '';
+    },
+    after: () => { ts.forEach(t => { const r = store.terms[termKey(t)] || (store.terms[termKey(t)] = { seen: 0 }); r.seen++; }); save(); },
+  };
+}
+/* 슬라이드 부분씩 읽기: 글이 많은 슬라이드를 한 부분씩 크게 잘라 보여 주고, 아래에 그 부분 설명과 어디쯤인지 보여 주는 작은 그림.
+   parts: [{c: 잘라 보일 칸, b: 짚을 상자, r: 칸 가로/세로 비, img, say} | {head: 1, ...} | {full: 1}]  (tools/walk_build.py) */
+function walkSay(q, k, m, o) {
+  if (q.full) return '<div class="wk-tx"><b class="wk-lab">전체 한 번 보기</b><p class="wk-tip">방금 하나씩 읽은 ' + m + '부분이 슬라이드 전체에서 어디에 있었는지 봐요.</p></div>';
+  if (q.head) return '<div class="wk-tx"><b class="wk-lab">제목부터 읽어요</b><p>' + fmt(o.title) + '</p><p class="wk-tip">이 쪽은 ' + m + '부분으로 나눠서 한 부분씩 크게 보여 줘요. 누르면 다음 부분이에요.</p></div>';
+  const say = String(q.say || ''), mm = say.match(/^([^:*$\n]{1,34}):\s*([\s\S]+)$/);
+  return '<span class="wk-k num">' + k + '</span><div class="wk-tx">' + (!say ? '<p class="wk-tip">이 부분은 슬라이드 글을 직접 읽어 봐요.</p>' : mm ? '<b class="wk-lab">' + fmt(mm[1]) + '</b><p>' + fmt(mm[2]) + '</p>' : '<p>' + fmt(say) + '</p>') + '</div>';
+}
+function walkFrame(o) {
+  const parts = o.parts, m = parts.filter(q => !q.full && !q.head).length;
+  const pct = v => (Math.round(v * 10000) / 100) + '%';
+  let k = 0;
+  const nums = parts.map(q => q.full || q.head ? 0 : ++k);
+  const view = parts.map((q, i) => {
+    if (q.full) return '<div class="wk-part full" data-i="' + i + '"><img src="' + esc(o.slide) + '" alt="" loading="lazy" decoding="async"></div>';
+    const c = q.c, b = q.b, small = b && !q.head && (b[2] * b[3]) / (c[2] * c[3]) < 0.62;
+    const r = +q.r || 1.414;   // --nw: 그림 제 크기(더 키우면 흐려짐), --cw: 좁은 화면에서 가로로 긴 부분은 이 너비로 두고 옆으로 밀어 본다
+    return '<div class="wk-part" data-i="' + i + '"><div class="wk-scroll"><div class="wk-crop" style="--r:' + r + ';--nw:' + Math.round(c[2] * 1800) + ';--cw:' + (r >= 1.8 && c[2] > 0.5 ? Math.round(c[2] * 900) : 0) + '"><img src="' + esc(q.img) + '" alt="" loading="lazy" decoding="async">'
+      + (small ? '<i class="wk-hl" style="left:' + pct((b[0] - c[0]) / c[2]) + ';top:' + pct((b[1] - c[1]) / c[3]) + ';width:' + pct(b[2] / c[2]) + ';height:' + pct(b[3] / c[3]) + '"></i>' : '') + '</div></div><div class="wk-swipe">옆으로 밀면 나머지 글이 보여요</div></div>';
+  }).join('');
+  const map = '<div class="wk-map" aria-hidden="true"><img src="' + esc(o.slide) + '" alt="" loading="lazy" decoding="async">'
+    + parts.map((q, i) => q.full ? '' : '<i class="wk-mb" data-i="' + i + '" style="left:' + pct(q.b[0]) + ';top:' + pct(q.b[1]) + ';width:' + pct(q.b[2]) + ';height:' + pct(q.b[3]) + '"></i>').join('') + '</div>';
+  return {
+    html: '<div class="walk"><div class="wk-top"><span class="sk">' + esc(o.kicker) + '</span><span class="wk-n num"></span></div>' + (o.head ? '<h2 class="sh">' + fmt(o.head) + '</h2>' : '')
+      + '<div class="wk-view">' + view + '</div><div class="wk-foot">' + map + '<div class="wk-says">' + parts.map((q, i) => S(i, walkSay(q, nums[i], m, o), 'div', 'wk-say')).join('') + '</div></div></div>',
+    steps: parts.length - 1,
+    onStep: (s, el) => {
+      $$('.wk-part', el).forEach((x, i) => { x.classList.toggle('on', i === s); const sc = $('.wk-scroll', x); if (i === s && sc) x.classList.toggle('scrolls', sc.scrollWidth > sc.clientWidth + 4); });
+      $$('.wk-say', el).forEach((x, i) => x.classList.toggle('gone', i < s));
+      $$('.wk-mb', el).forEach(x => { const i = +x.dataset.i; x.classList.toggle('cur', i === s); x.classList.toggle('past', i < s); });
+      const q = parts[s] || {}, w = $('.walk', el);
+      if (w) w.classList.toggle('atfull', !!q.full);
+      const n = $('.wk-n', el); if (n) n.textContent = q.full ? '전체' : q.head ? '제목' : nums[s] + ' / ' + m + ' 부분';
+    },
+    after: el => {
+      $$('.wk-scroll', el).forEach(sc => ['touchstart', 'touchend'].forEach(ev => sc.addEventListener(ev, e => { if (sc.scrollWidth > sc.clientWidth + 4) e.stopPropagation(); }, { passive: true })));
+    },
+  };
 }
 function renderFrame(f, st) {
   const k = f.kind;
@@ -728,8 +789,13 @@ function renderFrame(f, st) {
           }));
         },
       };
+    case 'walk': {
+      const w = f.walk || {};
+      return walkFrame({ parts: (w.head ? [Object.assign({ head: 1 }, w.head)] : []).concat(w.parts || [], [{ full: 1 }]), slide: f.src, title: f._t, kicker: 'p.' + f._p + ' 부분씩 읽기' });
+    }
     case 'look': {
       const boxes = f.boxes || [];
+      if (boxes.length && boxes.every(b => b.img && b.c)) return walkFrame({ parts: boxes.map(b => ({ b: [b.x, b.y, b.w, b.h], c: b.c, r: b.r, img: b.img, say: b.say })), slide: st.opts.imgOf(f), title: f._t, head: f.head, kicker: '슬라이드를 짚어 읽어요' });
       return {
         html: head(f.head) + '<div class="lookwrap"><img src="' + esc(st.opts.imgOf(f)) + '" alt="" decoding="async">'
           + boxes.map((b, i) => '<div class="lbox bld" data-s="' + (i + 1) + '" style="left:' + (b.x * 100) + '%;top:' + (b.y * 100) + '%;width:' + (b.w * 100) + '%;height:' + (b.h * 100) + '%"><em>' + (i + 1) + '</em></div>').join('')
@@ -784,14 +850,9 @@ function renderFrame(f, st) {
       return { html: '<div class="pyt"><div class="sk">파이썬 한 걸음</div><div class="pyn">' + fmt(f.name) + '</div><div class="pys">' + lines(f.say).map(x => fmt(x)).join('<br>') + '</div><pre class="code">'
         + String(f.example || '').split('\n').map(l => '<span class="cl">' + (esc(l) || ' ') + '</span>').join('') + '</pre>' + (f.out ? S(1, esc(f.out), 'div', 'pyout') : '') + '</div>', steps: f.out ? 1 : 0 };
     case 'warm':
-      return { html: '<div class="review"><div class="sk">이 슬라이드에 나오는 용어</div><h2 class="sh">소리 내어 한 번 읽고, 뜻을 짐작해 본 다음 넘기면 뜻이 나와요.</h2><div class="rcards">'
-        + f.terms.map((t, i) => '<div class="rcard"><span class="ren">' + esc(termFace(t)) + (t.en && t.ko ? ' <small>' + esc(t.en) + '</small>' : '') + '</span>' + S(i + 1, esc(t.say) + (t.more ? '<br><span class="muted" style="font-size:14.5px">' + esc(t.more) + '</span>' : ''), 'span', 'rko') + '</div>').join('') + '</div></div>',
-        steps: f.terms.length,
-        after: () => { f.terms.forEach(t => { const r = store.terms[termKey(t)] || (store.terms[termKey(t)] = { seen: 0 }); r.seen++; }); save(); } };
+      return termSteps(f, '이 슬라이드에 나오는 용어', '소리 내어 한 번 읽고 뜻을 짐작해 본 다음 누르면 뜻이 나와요.', true);
     case 'review':
-      return { html: '<div class="review"><div class="sk">기억나요?</div><h2 class="sh">앞에서 본 용어예요. 뜻을 먼저 떠올린 다음 눌러 보세요.</h2><div class="rcards">'
-        + f.terms.map((t, i) => '<div class="rcard"><span class="ren">' + esc(termFace(t)) + (t.en && t.ko ? ' <small>' + esc(t.en) + '</small>' : '') + '</span>' + S(i + 1, esc(t.say), 'span', 'rko') + '</div>').join('') + '</div></div>', steps: f.terms.length,
-        after: () => { f.terms.forEach(t => { const r = store.terms[termKey(t)] || (store.terms[termKey(t)] = { seen: 0 }); r.seen++; }); save(); } };
+      return termSteps(f, '기억나요?', '앞에서 본 용어예요. 뜻을 먼저 떠올린 다음 눌러 보세요.', false);
     case 'end':
       return { html: '<div class="endf"><div class="sk" style="color:var(--ok)">끝까지 왔어요</div><h1 class="sbig">' + fmt(f.big) + '</h1><p class="ssub">' + fmt(f.sub) + '</p><div class="btnrow">'
         + f.links.map((l, i) => '<a class="btn' + (i === 0 ? ' primary' : '') + '" href="' + esc(l[1]) + '">' + esc(l[0]) + '</a>').join('') + '</div></div>', steps: 0 };
@@ -823,10 +884,12 @@ async function pageLesson(deck, passStr, jump, all) {
   } else L.slides.forEach(s => {
     const layers = cum ? PASS_INFO.map(x => x.n).filter(n => n <= pass) : [pass];
     const content = [];
-    layers.forEach(n => (s['pass' + n] || []).forEach((f, ix) => content.push(Object.assign({ _pass: n, _ix: ix }, f))));
-    if (!content.length) return;
+    let walked = false;   // 부분 읽기로 옮긴 look 프레임은 첫 장면(부분씩 읽기)에 들어 있다
+    layers.forEach(n => (s['pass' + n] || []).forEach((f, ix) => { if (f.walked) walked = true; else content.push(Object.assign({ _pass: n, _ix: ix }, f)); }));
+    if (!content.length && !walked) return;
     const start = frames.length;
-    frames.push({ kind: 'slideimg', src: 'img/' + deck + '/p' + pad3(s.p) + '.jpg', alt: 'p.' + s.p + ' ' + s.title, cap: 'p.' + s.p + '  ' + s.title, _p: s.p, _t: s.title });
+    const src = 'img/' + deck + '/p' + pad3(s.p) + '.jpg';
+    frames.push(s.walk ? { kind: 'walk', walk: s.walk, src, _p: s.p, _t: s.title } : { kind: 'slideimg', src, alt: 'p.' + s.p + ' ' + s.title, cap: 'p.' + s.p + '  ' + s.title, _p: s.p, _t: s.title });
     content.forEach(f => { f._p = s.p; f._t = s.title; frames.push(f); });
     groups.push({ start, end: frames.length - 1, p: s.p });
   });
@@ -844,7 +907,7 @@ async function pageLesson(deck, passStr, jump, all) {
     backHref: '#/week/' + week,
     chips: passChips,
     imgOf: f => 'img/' + deck + '/p' + pad3(f._p) + '.jpg',
-    inkKey: f => f.kind === 'end' ? null : f.kind === 'slideimg' ? 'slide/' + deck + '/p' + pad3(f._p) : 'lesson/' + deck + '/p' + pad3(f._p) + '/' + f._pass + '/' + f._ix,
+    inkKey: f => f.kind === 'end' ? null : f.kind === 'slideimg' ? 'slide/' + deck + '/p' + pad3(f._p) : f.kind === 'walk' ? 'walk/' + deck + '/p' + pad3(f._p) : 'lesson/' + deck + '/p' + pad3(f._p) + '/' + f._pass + '/' + f._ix,
     title: f => esc(deckTitle) + ' ' + (pass ? pass + '회독' : '용어 먼저') + ' <small>' + (f._p ? 'p.' + f._p + ' ' + esc(f._t || '') : '마무리') + (cum && f._pass ? ', ' + f._pass + '회독 내용' : '') + '</small>',
     onProgress: i => {
       rec.i = i; rec.max = Math.max(rec.max || 0, i + 1); rec.total = frames.length;

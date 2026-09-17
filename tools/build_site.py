@@ -9,6 +9,7 @@
   lesson/<덱>_*.json         회독 레슨 (tools/checkers/lesson_check.py)
   notes/slides_w*.json       정리 슬라이드. 기초 다지기는 slides_wb.json (tools/checkers/slide_check.py)
   bank/*.json                문제은행 JSON 배열 (tools/checkers/bank_check.py)
+  walk/<덱>.json             슬라이드 부분씩 읽기 (tools/walk_build.py 가 만든다, 선택) -> 레슨 쪽마다 walk
   recall/<덱>.json           가리고 설명하기 (tools/recall_build.py 가 만든다, 선택) -> data/recall_<덱>.js
   pages/tips.html, exams.html  답안 팁, 기출 분석 (선택)
   pages/note.html, time.html   정리노트, 연표 (선택, 큰 페이지라 data/page_<이름>.js 로 따로 두고 열 때 읽음.
@@ -58,6 +59,51 @@ def write(path, text):
 
 def load(path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def attach_walk(src, ordered, deck):
+    """tools/walk_build.py 가 만든 부분 읽기 (work/<slug>/walk/<덱>.json).
+    쪽마다 walk (제목 칸, 부분 차례와 설명) 를 붙이고, look 상자에 확대 그림을 붙인다.
+    부분 읽기로 옮긴 look 프레임은 {"kind": "look", "walked": 1} 로 비워 둔다 (필기 키가 순서로 정해져서 자리는 남긴다)."""
+    if not src.exists():
+        return 0
+    pages = {x["p"]: x for x in load(src).get("pages", [])}
+    n = 0
+    for s in ordered:
+        w = pages.get(s["p"])
+        if not w:
+            continue
+        looks = {}
+        for k in range(1, 7):
+            for i, fr in enumerate(s.get(f"pass{k}", [])):
+                if fr.get("kind") == "look" and fr.get("boxes"):
+                    looks[f"pass{k}:{i}"] = fr
+        bad = [key for key, parts in w.get("looks", {}).items()
+               if key not in looks or len(looks[key]["boxes"]) != len(parts)
+               or any(max(abs(bx[a] - q["b"][j]) for j, a in enumerate("xywh")) > 0.002 for bx, q in zip(looks[key]["boxes"], parts))]
+        if bad or any(key not in looks for key in w.get("lead", [])):
+            print(f"  [부분 읽기 건너뜀] {deck} p.{s['p']} {bad}: look 상자가 바뀌었어요. python tools/walk_build.py 를 다시 돌려요")
+            continue
+        for key, parts in w.get("looks", {}).items():
+            for bx, q in zip(looks[key]["boxes"], parts):
+                bx["c"], bx["r"], bx["img"] = q["c"], q["r"], q["img"]
+        seq = []
+        for key in w.get("lead", []):
+            seq += [{"b": [bx["x"], bx["y"], bx["w"], bx["h"]], "c": bx["c"], "r": bx["r"], "img": bx["img"], "say": bx["say"]} for bx in looks[key]["boxes"]]
+        for q in w.get("extra", []):
+            say = q.get("say", "")
+            if q.get("ref"):
+                key, j = q["ref"].rsplit(":", 1)
+                say = looks[key]["boxes"][int(j) - 1]["say"]
+            seq.insert(min(q.get("at", 99), len(seq)), {"b": q["b"], "c": q["c"], "r": q["r"], "img": q["img"], "say": say})
+        if not seq:
+            continue
+        for key in w.get("lead", []):
+            pk, i = key.split(":")
+            s[pk][int(i)] = {"kind": "look", "walked": 1}
+        s["walk"] = {"head": {k: w["head"][k] for k in ("b", "c", "r", "img")} if w.get("head") else None, "parts": seq}
+        n += 1
+    return n
 
 
 def pack_recall(src, out, name, deck):
@@ -126,11 +172,12 @@ def main(slug, skip, home=True):
         for g in gloss:
             add_term(week, g)
         ordered = [slides[p] for p in sorted(slides)]
+        walks = attach_walk(W / "walk" / f"{deck}.json", ordered, deck)   # 1-1) 부분 읽기 (tools/walk_build.py)
         frames = [0] * 6
         for s in ordered:
             for n in range(6):
                 if s.get(f"pass{n + 1}"):
-                    frames[n] += 1 + len(s[f"pass{n + 1}"])
+                    frames[n] += 1 + len([f for f in s[f"pass{n + 1}"] if not f.get("walked")])
         for n in range(6):
             if frames[n]:
                 frames[n] += 1
@@ -144,7 +191,7 @@ def main(slug, skip, home=True):
             write(out, js_assign("SDT_LESSONS", deck, {"deck": deck, "slides": ordered}))
         elif out.exists():
             out.unlink()
-        print(f"  레슨 {deck}: {len(ordered)}/{total}장, 장면 {frames}" + (", PDF 있음" if pdf.exists() else ""))
+        print(f"  레슨 {deck}: {len(ordered)}/{total}장, 장면 {frames}" + (f", 부분 읽기 {walks}쪽" if walks else "") + (", PDF 있음" if pdf.exists() else ""))
         # 1-2) 가리고 설명하기 (tools/recall_build.py 가 만든 work/<slug>/recall/<덱>.json)
         rinfo = pack_recall(W / "recall" / f"{deck}.json", SITE / "data" / f"recall_{deck}.js", "SDT_RECALL", deck)
         if rinfo:
