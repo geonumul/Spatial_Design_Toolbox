@@ -395,7 +395,7 @@ function act(e, p) {
       if (a === 'close') closePanel(); else if (a === 'tab') { tab = v; fillPanel(p); } else if (a === 'feed') feed(v); else if (a === 'wear') wear(v); else if (a === 'boss') startBoss(v); else if (a === 'pet') pet(b);
       else if (a === 'desk') launchDesktop();
       else if (a === 'trick') trick(v);
-      else if (a === 'chat') note(WIP.chat);
+      else if (a === 'chat') { note(WIP.chat); if (DESKTOP_READY) launchDesktop('&open=chat'); }
 }
 function closePanel() { const p = $('#petPanel'); if (p) p.hidden = true; document.body.classList.remove('pet-open'); }
 function bar(v, cls) { return '<span class="pet-bar ' + cls + '"><i style="width:' + clamp(Math.round(v), 0, 100) + '%"></i></span>'; }
@@ -426,7 +426,7 @@ function fillPanel(p) {
       h += '<div class="pet-slot"><span>' + sl[1] + '</span><div class="pet-row">' + WEAR.filter(x => x.slot === sl[0]).map(x => '<button type="button" class="pet-btn' + (s.wear[x.slot] === x.id ? ' on' : '') + '" data-act="wear:' + x.id + '">' + esc(x.name) + (s.owned[x.id] ? '' : ' <small>' + coinSvg() + x.cost + '</small>') + '</button>').join('') + '</div></div>';
     });
   }
-  h += '<div class="pet-row wips"><button type="button" class="pet-btn wide" data-act="desk">노트북 화면에 ' + esc(s.name || '펫') + ' 띄우기' + (DESKTOP_READY ? ' <small class="wip">베타</small>' : ' <small class="wip">작업 중</small>') + '</button><button type="button" class="pet-btn wide" data-act="chat">친구들과 말풍선 채팅 <small class="wip">작업 중</small></button></div>';
+  h += '<div class="pet-row wips"><button type="button" class="pet-btn wide" data-act="desk">노트북 화면에 ' + esc(s.name || '펫') + ' 띄우기' + (DESKTOP_READY ? ' <small class="wip">베타</small>' : ' <small class="wip">작업 중</small>') + '</button><button type="button" class="pet-btn wide" data-act="chat">친구들과 말풍선 채팅 <small class="wip">베타</small></button></div>';
   p.innerHTML = h + '</div>';
 }
 
@@ -447,9 +447,9 @@ function startBeat() { if (beatT) return; presenceBeat(); beatT = setInterval(pr
 const DESKTOP_READY = true;   // 데스크톱 펫 프로그램을 올리면 true
 const WIP = {
   desk: '노트북 화면 전체에 펫을 띄우는 기능은 지금 만들고 있어요. 다 되면 이 버튼 하나로 켜고 끌 수 있어요.',
-  chat: '로그인한 친구들과 펫 말풍선으로 채팅하는 기능은 지금 만들고 있어요.',
+  chat: '채팅은 노트북 화면에 띄운 펫에서 해요. 펫 위 말풍선 버튼을 누르거나 Ctrl+Shift+Space 를 눌러요.',
 };
-function launchDesktop() {
+function launchDesktop(extra) {
   if (!DESKTOP_READY) { note(WIP.desk); return; }
   const s = load();
   if (!s.adopted) {
@@ -461,7 +461,7 @@ function launchDesktop() {
   let left = false;
   const onBlur = () => { left = true; };
   window.addEventListener('blur', onBlur, { once: true });
-  location.href = 'tsgpet://toggle?' + q;
+  location.href = 'tsgpet://toggle?' + q + (extra || '');
   setTimeout(() => {
     window.removeEventListener('blur', onBlur);
     if (!left) note('펫 프로그램이 아직 없으면 한 번만 설치해 주세요', true);
