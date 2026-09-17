@@ -53,13 +53,14 @@ const WEAR = [
   { id: 'glasses', slot: 'face', name: '동그란 안경', cost: 140 },
 ];
 const TRICKS = [
-  { id: 'sit', name: '앉아', need: 20, cost: 40, anim: 'sit', say: '앉았어요, 칭찬해 줘요' },
-  { id: 'paw', name: '손', need: 50, cost: 60, anim: 'paw', say: '손! 여기요' },
-  { id: 'spin', name: '빙글빙글', need: 90, cost: 90, anim: 'spin', say: '빙글빙글, 어지러워' },
-  { id: 'wink', name: '윙크 애교', need: 140, cost: 120, anim: 'wink', say: '뿅, 반했죠?' },
-  { id: 'jump', name: '점프', need: 200, cost: 150, anim: 'jump', say: '높이 뛰었어요' },
-  { id: 'roll', name: '데굴데굴', need: 280, cost: 200, anim: 'roll', say: '데굴데굴 굴렀어요' },
-  { id: 'dance', name: '엉덩이 춤', need: 380, cost: 260, anim: 'dance', say: '신난다 신난다' },
+  // 하루 새 문제 20개쯤 풀면 3주 안팎에 다 배우도록 (2026-09-17 조정: 값 합계 920 -> 600, 배고픔 4 -> 2.5, 심심함 3 -> 2 per 시간)
+  { id: 'sit', name: '앉아', need: 20, cost: 30, anim: 'sit', say: '앉았어요, 칭찬해 줘요' },
+  { id: 'paw', name: '손', need: 50, cost: 45, anim: 'paw', say: '손! 여기요' },
+  { id: 'spin', name: '빙글빙글', need: 90, cost: 60, anim: 'spin', say: '빙글빙글, 어지러워' },
+  { id: 'wink', name: '윙크 애교', need: 140, cost: 80, anim: 'wink', say: '뿅, 반했죠?' },
+  { id: 'jump', name: '점프', need: 200, cost: 100, anim: 'jump', say: '높이 뛰었어요' },
+  { id: 'roll', name: '데굴데굴', need: 280, cost: 125, anim: 'roll', say: '데굴데굴 굴렀어요' },
+  { id: 'dance', name: '엉덩이 춤', need: 380, cost: 160, anim: 'dance', say: '신난다 신난다' },
 ];
 const FOODS = [
   { id: 'meal', name: '사료', cost: 12, food: 30, fun: 4, love: 1, say: '냠냠, 배불러요' },
@@ -272,7 +273,7 @@ function tick(s) {
     if (n > 0) { s.hearts = Math.min(RULE.heartsMax, s.hearts + n); s.heartTs = s.hearts >= RULE.heartsMax ? t : s.heartTs + n * step; }
   } else s.heartTs = t;
   const h = (t - (s.careTs || t)) / 3600000;
-  if (h > 0.05) { s.food = clamp(s.food - h * 4, 0, 100); s.fun = clamp(s.fun - h * 3, 0, 100); s.careTs = t; }
+  if (h > 0.05) { s.food = clamp(s.food - h * 2.5, 0, 100); s.fun = clamp(s.fun - h * 2, 0, 100); s.careTs = t; }
 }
 let pushT = null;
 function save() {
@@ -291,7 +292,8 @@ function pullRemote() {
     const l = load(), okR = r && r.v === VER && r.adopted;
     // 다른 계정이 이 브라우저에 남긴 펫이거나, 이 브라우저에 아직 펫이 없거나(펫 프로그램에서 데려옴), 서버 것이 더 새것이면 서버 것을 쓴다
     const other = l.owner && l.owner !== uid;
-    if (okR && (other || !l.adopted || (r.ts || 0) > (l.ts || 0))) { ST = r; ST.owner = uid; tick(ST); try { localStorage.setItem(LKEY, JSON.stringify(ST)); } catch (e) { /* 무시 */ } }
+    if (r && r.v === VER && !r.adopted && r.left && (other || (r.ts || 0) > (l.ts || 0))) { ST = blank(); ST.owner = uid; ST.left = r.left; ST.ts = r.ts; try { localStorage.setItem(LKEY, JSON.stringify(ST)); } catch (e) { /* 무시 */ } }
+    else if (okR && (other || !l.adopted || (r.ts || 0) > (l.ts || 0))) { ST = r; ST.owner = uid; tick(ST); try { localStorage.setItem(LKEY, JSON.stringify(ST)); } catch (e) { /* 무시 */ } }
     else if (!okR && other) { ST = blank(); try { localStorage.setItem(LKEY, JSON.stringify(ST)); } catch (e) { /* 무시 */ } }
     else if (l.adopted) { l.owner = uid; SDT.set(REMOTE, l); }
     const pg = $('#petPage'); if (pg) bootPage(pg);
@@ -542,6 +544,89 @@ function adoptView(mode) {
   setTimeout(() => { const i = $('#petNameIn', d); if (i && change) i.focus(); }, 0);
 }
 
+/* 펫 떠나보내기: 두 번 확인한 뒤 펫, 이름, 간식 돈, 개인기, 옷장, 친구 목록을 모두 지운다.
+   로그인해 있으면 서버에서도: 이름 자리와 이름표, 접속 표시, 알림 문서, 전체 채팅 글, 내 친구 목록과 요청(상대 쪽의 나를 가리키는 문서까지),
+   펫 상태는 adopted:false 와 left(떠나보낸 시각)로 덮어써서 다른 기기에서도 다시 데려오기 화면이 나온다 */
+function leaveView() {
+  const s = load(); if (!s.adopted) return;
+  let step = 1, busy = false, msg = '';
+  const d = document.createElement('div'); d.className = 'pet-news pet-adopt pet-leave-dlg'; d.setAttribute('role', 'dialog');
+  const close = () => { d.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape' && !busy) close(); };
+  document.addEventListener('keydown', onKey);
+  const nf = FR.friends.length, owned = Object.keys(s.owned || {}).filter(k => !['none', 'nothing', 'plain'].includes(k)).length, tricks = Object.keys(s.tricks || {}).length;
+  const draw = () => {
+    d.innerHTML = '<div class="pet-news-card wide"><button type="button" class="pet-adopt-x" data-x aria-label="닫기" title="닫기 (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg></button>'
+      + '<div class="pet-news-art">' + petSvg(s, { mood: 'sad', cls: 'big' }) + '</div>'
+      + (step === 1
+        ? '<b>' + esc(s.name) + fJosa(s.name, '을', '를') + ' 떠나보낼까요?</b><p>떠나보내면 되돌릴 수 없어요. 아래 것이 모두 사라져요.</p>'
+          + '<ul class="pet-leave-list"><li>' + esc(SP[s.sp].animal) + ' <b>' + esc(s.name) + '</b>, 친해진 정도 ' + s.love + '</li><li>펫 이름 "' + esc(s.name) + '" (다른 친구가 쓸 수 있게 돼요)</li><li>간식 돈 ' + s.coins + '개</li><li>배운 장기 ' + tricks + '개, 옷장 ' + owned + '벌</li><li>친구 목록' + (FR.loaded ? ' ' + nf + '명' : '') + '과 받은, 보낸 친구 요청</li></ul>'
+          + '<div class="pet-row pet-adopt-btns"><button class="pet-btn" type="button" data-x>그만두기</button><button class="pet-btn warn" type="button" data-go>떠나보내기</button></div>'
+        : '<b>정말 떠나보낼까요?</b><p>마지막 확인이에요. 누르면 바로 지워지고 새 친구를 데려오는 화면으로 돌아가요.</p>'
+          + (msg ? '<p class="pet-adopt-msg" role="alert">' + esc(msg) + '</p>' : '')
+          + '<div class="pet-row pet-adopt-btns"><button class="pet-btn" type="button" data-x>아니요, 같이 있을래요</button><button class="pet-btn warn" type="button" data-go' + (busy ? ' disabled' : '') + '>' + (busy ? '지우는 중' : '네, 떠나보낼게요') + '</button></div>')
+      + '</div>';
+    $$('[data-x]', d).forEach(x => x.addEventListener('click', () => { if (!busy) close(); }));
+    $('[data-go]', d).addEventListener('click', go);
+  };
+  const go = async () => {
+    if (busy) return;
+    if (step === 1) { step = 2; draw(); return; }
+    busy = true; msg = ''; draw();
+    const r = await leaveCloud();
+    busy = false;
+    if (!r.ok) { msg = r.why; draw(); return; }
+    close();
+    const name = load().name;
+    ST = blank(); ST.left = now();
+    if (window.SDT && SDT.user) ST.owner = SDT.user.uid;
+    try { localStorage.setItem(LKEY, JSON.stringify(ST)); } catch (e) { /* 무시 */ }
+    FR.me = null; FR.nameIssue = ''; FR.friends = []; FR.pending = []; FR.requests = []; FR.loaded = false; FR.msg = '';
+    const pn = $('#petPanel'); if (pn) closePanel();
+    const pg = $('#petPage'); if (pg) bootPage(pg);
+    render(); friendsRender();
+    note(name + fJosa(name, '과', '와') + ' 인사했어요. 언제든 새 친구를 데려올 수 있어요');
+  };
+  d.addEventListener('click', e => { if (e.target === d && !busy) close(); });
+  draw(); document.body.appendChild(d);
+}
+async function leaveCloud() {
+  const db = fs();
+  if (!db || !(window.SDT && SDT.user)) return { ok: true, local: true };
+  const me = SDT.user.uid, F = db.collection('pet3Friends');
+  try {
+    const [own, ls, rs, bs] = await Promise.all([
+      db.collection('pet3Owners').doc(me).get(),
+      F.doc(me).collection('list').get(), F.doc(me).collection('requests').get(),
+      db.collection('pet3Board').doc(me).collection('messages').get().catch(() => ({ docs: [] })),
+    ]);
+    const ops = [];
+    ls.docs.forEach(x => { if (x.id === me) return; ops.push(['del', F.doc(me).collection('list').doc(x.id)], ['del', F.doc(x.id).collection('list').doc(me)], ['del', F.doc(x.id).collection('requests').doc(me)]); });
+    rs.docs.forEach(x => { if (x.id === me) return; ops.push(['del', F.doc(me).collection('requests').doc(x.id)], ['del', F.doc(x.id).collection('list').doc(me)]); });
+    bs.docs.forEach(x => ops.push(['del', x.ref]));
+    ops.push(['del', db.collection('pet3Presence').doc(me)], ['del', db.collection('pet3Inbox').doc(me)]);
+    // 이름표와 이름 자리는 같은 묶음에서 지운다 (규칙)
+    const first = db.batch();
+    if (own.exists) {
+      const key = own.data().name;
+      const nd = key ? await db.collection('pet3Names').doc(key).get() : null;
+      if (nd && nd.exists && nd.data().uid === me) first.delete(db.collection('pet3Names').doc(key));
+      first.delete(db.collection('pet3Owners').doc(me));
+    }
+    const left = blank(); left.left = now(); left.owner = me;
+    await first.commit();
+    for (let i = 0; i < ops.length; i += 400) {
+      const b = db.batch();
+      ops.slice(i, i + 400).forEach(o => b.delete(o[1]));
+      await b.commit();
+    }
+    await SDT.set(REMOTE, left);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, why: e && e.code === 'permission-denied' ? '권한이 없어요. 새로고침한 뒤 다시 해 주세요' : '지우지 못했어요. 인터넷 연결을 보고 다시 해 주세요' };
+  }
+}
+
 /* 펫 이름: 앞뒤 빈칸을 없애고 빈칸은 한 칸으로. 열쇠는 빈칸을 빼고 영문 소문자 (firestore.rules 의 p3KeyOf 와 같게) */
 const ro = w => { const c = String(w || '').slice(-1).charCodeAt(0); if (c < 0xAC00 || c > 0xD7A3) return '로'; const j = (c - 0xAC00) % 28; return j === 0 || j === 8 ? '로' : '으로'; };
 const NAME_RE = /^[A-Za-z0-9가-힣]( ?[A-Za-z0-9가-힣])*$/;
@@ -646,6 +731,7 @@ function act(e, p) {
       else if (a === 'trick') trick(v);
       else if (a === 'rename') renameOpen(b);
       else if (a === 'change') adoptView('change');
+      else if (a === 'leave') leaveView();
       else if (a === 'chat') { note(WIP.chat); if (DESKTOP_READY) launchDesktop('&open=chat'); }
 }
 /* 이름 바꾸기: 제목 줄을 입력칸으로 바꾼다. 이름 자리를 먼저 잡고 저장하면 펫 상태, 화면 펫(presence)에 같이 반영 */
@@ -693,7 +779,8 @@ function fillPanel(p) {
       + '<div><span>친해진 정도</span>' + bar(nextG ? (s.love - g.at) / (nextG.at - g.at) * 100 : 100, 'love') + '<small>' + s.love + (nextG ? ', ' + nextG.name + '까지 조금 더' : ', 다 자랐어요') + '</small></div></div>'
       + '<div class="pet-chips"><span>' + [0, 1, 2, 3, 4].map(i => heartSvg(i < s.hearts)).join('') + '</span><span>' + flameSvg() + streakNow(s) + '일째</span><span>오늘 ' + Math.min(today, RULE.goal) + ' / ' + RULE.goal + '문제</span></div>'
       + '<div class="pet-foods">' + FOODS.map(f => '<button type="button" class="pet-food" data-act="feed:' + f.id + '"><b>' + f.name + '</b><small>' + coinSvg() + f.cost + '</small></button>').join('') + '</div>'
-      + '<button type="button" class="pet-btn wide pet-change" data-act="change">다른 동물로 바꾸기</button>';
+      + '<button type="button" class="pet-btn wide pet-change" data-act="change">다른 동물로 바꾸기</button>'
+      + '<button type="button" class="pet-leave" data-act="leave">펫 떠나보내기</button>';
     const A = app();
     if (A && strict()) {
       const parts = (A.META.weeks || []).filter(w => A.BANK.filter(q => q.part === w.id && q.unit !== '용어').length >= RULE.bossN);
@@ -723,9 +810,10 @@ function presenceBeat() {
   const db = fs(), s = load(); if (!db || !(window.SDT && SDT.user) || !s.adopted) return;
   if (document.hidden || !FR.me || FR.me.pet !== s.name) return;
   const wear = {}; ['head', 'neck', 'face'].forEach(k => { if (s.wear && typeof s.wear[k] === 'string') wear[k] = s.wear[k].slice(0, 20); });
-  db.collection('pet3Presence').doc(SDT.user.uid).set({
-    name: FR.me.pet, sp: fsp(s.sp), wear, ts: firebase.firestore.FieldValue.serverTimestamp(),
-  }).catch(() => { /* 규칙이 아직 없으면 조용히 */ });
+  const doc = { name: FR.me.pet, sp: fsp(s.sp), wear, ts: firebase.firestore.FieldValue.serverTimestamp() };
+  const tricks = Object.keys(s.tricks || {}).filter(k => TRICK_FRAMES[k]).slice(0, 10);
+  const ref = db.collection('pet3Presence').doc(SDT.user.uid);
+  ref.set(Object.assign({ tricks }, doc)).catch(() => ref.set(doc)).catch(() => { /* 규칙이 아직 없으면 조용히 */ });
 }
 function startBeat() {
   if (beatT || !(window.SDT && SDT.user)) return;
