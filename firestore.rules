@@ -1,6 +1,43 @@
+// Firestore 규칙. 바꾼 뒤에는 Firebase 콘솔 > Firestore Database > 규칙 탭에 전체를 붙여넣고 게시한다.
+//
+// 관리자 지정 (콘솔에서 손으로, 한 번만)
+//   1. 사이트에서 관리자로 쓸 구글 계정으로 로그인한 뒤 admin/index.html 을 열면 내 uid 가 보인다.
+//   2. Firestore Database > 데이터 > 컬렉션 시작 > 컬렉션 ID "admins"
+//      > 문서 ID 에 그 uid 를 그대로 넣고, 필드는 아무거나 하나 (예: name, 문자열, 내 이름) > 저장.
+//   admins 문서는 사이트에서 누구도 만들거나 고칠 수 없다. 콘솔에서만 넣고 뺀다.
+//
+// 저장 구조
+//   admins/{uid}                        관리자 표시. 콘솔에서만 만든다
+//   users/{uid}                         프로필 {email, name, updatedAt}. 로그인할 때 본인이 쓴다
+//   users/{uid}/stores/{id}             공부 기록 (assets/sync.js)
+//   users/{uid}/passes/{passId}         이용권 {kind, scope, expiresAt, source, code?, by?, createdAt}
+//        kind: subject(과목 하나) | month | year | days(전체 과목 N일).  scope: 과목 키 또는 "*"
+//        관리자가 준 것은 passId 자유, 코드로 받은 것은 passId = "c_" + 코드
+//   codes/{코드}                         이벤트 코드 {kind, scope, days, maxUses, used, active, expiresAt, note, createdAt, createdBy}
+//   codes/{코드}/redemptions/{uid}        코드를 쓴 사람 {uid, email, at}
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+
+    // 관리자 표시: 본인 것만 읽을 수 있고, 사이트에서는 아무도 못 쓴다
+    match /admins/{uid} {
+      allow get: if isSelf(uid);
+      allow list, write: if false;
+    }
+
+    // 프로필: 본인이 자기 이메일로만 쓴다. 관리자가 찾아볼 수 있다
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create, update: if isSelf(uid)
+        && request.resource.data.keys().hasOnly(['email', 'name', 'updatedAt'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.name is string && request.resource.data.name.size() <= 100;
+      allow delete: if false;
+    }
+
     // 각자 자기 기록만 읽고 쓴다. users/{uid}/stores/{과목키} = {data: 문자열, updatedAt}
     match /users/{uid}/stores/{key} {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
@@ -10,6 +47,82 @@ service cloud.firestore {
         && request.resource.data.data.size() < 900000;
     }
 
+    // 이용권
+    match /users/{uid}/passes/{passId} {
+      allow read: if isSelf(uid) || isAdmin();
+      // 관리자는 누구에게나 주고 고치고 회수한다
+      allow create, update: if isAdmin() && validPass(request.resource.data);
+      allow delete: if isAdmin();
+      // 본인은 이벤트 코드를 쓸 때만, 코드 내용과 똑같은 이용권 하나를 만든다
+      allow create: if isSelf(uid) && redeemPass(uid, passId, request.resource.data);
+    }
+
+    function validPass(p) {
+      return p.kind in ['subject', 'month', 'year', 'days']
+        && p.scope is string && p.scope.size() > 0 && p.scope.size() <= 60
+        && (p.kind == 'subject' ? p.scope != '*' : p.scope == '*')
+        && p.expiresAt is timestamp;
+    }
+
+    function redeemPass(uid, passId, p) {
+      let codePath = /databases/$(database)/documents/codes/$(p.code);
+      let c = get(codePath).data;
+      return p.keys().hasOnly(['kind', 'scope', 'expiresAt', 'source', 'code', 'createdAt'])
+        && p.source == 'code'
+        && p.code is string && p.code.matches('^[A-Z0-9]{6,32}$')
+        && passId == 'c_' + p.code
+        && p.createdAt == request.time
+        && c.active == true
+        && request.time < c.expiresAt
+        && c.used < c.maxUses
+        && p.kind == c.kind
+        && p.scope == c.scope
+        && p.expiresAt is timestamp
+        // 기기 시계 차이를 봐서 1시간까지만 여유를 둔다
+        && p.expiresAt <= request.time + duration.value(c.days, 'd') + duration.value(1, 'h')
+        // 같은 요청 안에서 코드 사용 횟수를 1 올리고, 사용 기록을 남겨야 한다
+        && getAfter(codePath).data.used == c.used + 1
+        && existsAfter(/databases/$(database)/documents/codes/$(p.code)/redemptions/$(uid));
+    }
+
+    // 이벤트 코드: 목록은 관리자만. 일반 사용자는 코드를 정확히 알 때 그 한 개만 읽는다
+    match /codes/{code} {
+      allow get: if signedIn();
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() && code.matches('^[A-Z0-9]{6,32}$')
+        && request.resource.data.kind in ['subject', 'month', 'year', 'days']
+        && request.resource.data.days is int && request.resource.data.days > 0 && request.resource.data.days <= 400
+        && request.resource.data.maxUses is int && request.resource.data.maxUses > 0
+        && request.resource.data.used is int
+        && request.resource.data.expiresAt is timestamp;
+      allow delete: if isAdmin();
+      // 사용자는 코드를 쓸 때 used 를 딱 1 올리는 것만 할 수 있다
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used'])
+        && request.resource.data.used == resource.data.used + 1
+        && resource.data.used < resource.data.maxUses
+        && resource.data.active == true
+        && request.time < resource.data.expiresAt
+        && !exists(/databases/$(database)/documents/codes/$(code)/redemptions/$(request.auth.uid))
+        && existsAfter(/databases/$(database)/documents/codes/$(code)/redemptions/$(request.auth.uid))
+        && existsAfter(/databases/$(database)/documents/users/$(request.auth.uid)/passes/$('c_' + code));
+
+      match /redemptions/{uid} {
+        allow read: if isAdmin();
+        allow delete: if isAdmin();
+        allow create: if isSelf(uid)
+          && request.resource.data.keys().hasOnly(['uid', 'email', 'at'])
+          && request.resource.data.uid == uid
+          && request.resource.data.email == request.auth.token.email
+          && request.resource.data.at == request.time
+          && getAfter(/databases/$(database)/documents/codes/$(code)).data.used
+             == get(/databases/$(database)/documents/codes/$(code)).data.used + 1
+          && existsAfter(/databases/$(database)/documents/users/$(uid)/passes/$('c_' + code));
+      }
+    }
+
+    // [사용 중단 예정] 예전 펫 광장. 새 펫 프로그램과 사이트는 맨 아래 "친구 전용 펫" 블록을 쓴다.
+    // 예전 버전 펫 프로그램이 아직 남아 있어서 당분간 둔다. 다들 새 버전으로 바꾸면 이 두 match 를 지운다.
     // 펫 광장: 로그인한 사람만 보고, 자기 펫 자리만 쓴다
     match /plaza/lobby/presence/{uid} {
       allow read: if request.auth != null;
@@ -19,7 +132,7 @@ service cloud.firestore {
         && request.resource.data.sp is string && request.resource.data.sp.size() <= 20;
     }
 
-    // 펫 광장 채팅: 로그인한 사람만 보고, 자기 이름으로만 쓰고, 자기 글만 지운다
+    // [사용 중단 예정] 펫 광장 채팅: 로그인한 사람만 보고, 자기 이름으로만 쓰고, 자기 글만 지운다
     match /plaza/lobby/messages/{id} {
       allow read: if request.auth != null;
       allow create: if request.auth != null
@@ -31,4 +144,141 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
   }
+
+  // ===================== 친구 전용 펫 (2026-09-17 추가, 펫 프로그램 새 버전과 사이트 pet/) =====================
+  // 서로 친구 추가한 사람끼리만 펫이 보이고 1:1 로 채팅한다. 위 블록과 따로 떨어진 match 라서 서로 영향이 없다.
+  //   petCodes/{code}                   친구 코드 {uid, pet, sp}. 코드를 정확히 알 때 한 개만 읽는다 (목록 금지)
+  //   petFriends/{uid}                  내 코드 {code}. 나만 읽고 쓴다
+  //   petFriends/{uid}/list/{other}     "나는 other 와 친구 하고 싶다" {pet, sp, ts}. 양쪽에 다 있어야 친구
+  //   petFriends/{uid}/requests/{from}  받은 친구 요청 {name, pet, sp, code, ts}. 보낸 사람이 만든다
+  //   petPresence/{uid}                 접속 표시 {name, sp, wear, ts}. 나와 서로 친구인 사람만 읽는다
+  //   petChats/{a_b}/messages/{id}      1:1 대화 {from, text, ts}. a_b 는 두 uid 를 정렬해 _ 로 이은 것
+  //   petInbox/{uid}                    새 메시지 알림 {보낸 친구 uid: 시각, p_보낸 친구 uid: 콕 찌르기 시각}. 친구는 자기 칸 두 개만 고친다
+  match /databases/{database}/documents {
+    function pfIn() { return request.auth != null; }
+    function pfMe(uid) { return request.auth != null && request.auth.uid == uid; }
+    function pfWants(a, b) { return exists(/databases/$(database)/documents/petFriends/$(a)/list/$(b)); }
+    // 서로 친구: 내 목록에 상대가, 상대 목록에 내가 있다
+    function pfMutual(other) {
+      return request.auth != null && other != request.auth.uid
+        && pfWants(request.auth.uid, other) && pfWants(other, request.auth.uid);
+    }
+    function pfStr(v, n) { return v is string && v.size() <= n; }
+    function pfSp(v) { return v is string && v.matches('[a-z0-9_-]{1,20}'); }
+    function pfCode(c) { return c is string && c.matches('[ACDEFGHJKMNPQRTWXY34679]{6}'); }
+    function pfWear(w) {
+      return w is map && w.keys().hasOnly(['head', 'neck', 'face'])
+        && (!('head' in w) || pfStr(w.head, 20))
+        && (!('neck' in w) || pfStr(w.neck, 20))
+        && (!('face' in w) || pfStr(w.face, 20));
+    }
+    // 대화방 id 가 "내uid_상대uid" 또는 "상대uid_내uid" 이고 상대와 서로 친구
+    function pfInPair(pair) {
+      let p = pair.split('_');
+      return p.size() == 2
+        && ((p[0] == request.auth.uid && pfMutual(p[1])) || (p[1] == request.auth.uid && pfMutual(p[0])));
+    }
+
+    // 친구 코드: 코드를 알 때 한 개만 읽는다. 없는 코드만 새로 만들고, 내 코드만 고치고 지운다
+    match /petCodes/{code} {
+      allow get: if pfIn();
+      allow list: if false;
+      allow create: if pfIn() && pfCode(code)
+        && request.resource.data.keys().hasOnly(['uid', 'pet', 'sp'])
+        && request.resource.data.uid == request.auth.uid
+        && pfStr(request.resource.data.pet, 8) && pfSp(request.resource.data.sp);
+      allow update: if pfIn() && resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'pet', 'sp'])
+        && request.resource.data.uid == request.auth.uid
+        && pfStr(request.resource.data.pet, 8) && pfSp(request.resource.data.sp);
+      allow delete: if pfIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // 내 코드 기록: 같은 요청 안에서 그 코드 문서가 내 것이어야 한다
+    match /petFriends/{owner} {
+      allow get, delete: if pfMe(owner);
+      allow list: if false;
+      allow create, update: if pfMe(owner)
+        && request.resource.data.keys().hasOnly(['code'])
+        && pfCode(request.resource.data.code)
+        && getAfter(/databases/$(database)/documents/petCodes/$(request.resource.data.code)).data.uid == owner;
+
+      // 친구 목록: 내 목록은 나만 만든다. 상대는 "자기를 가리키는 문서" 하나를 확인(get)하거나 지울(친구 끊기) 수만 있다
+      match /list/{other} {
+        allow get: if pfIn() && (request.auth.uid == owner || request.auth.uid == other);
+        allow list: if pfMe(owner);
+        allow create, update: if pfMe(owner) && owner != other
+          && request.resource.data.keys().hasOnly(['pet', 'sp', 'ts'])
+          && pfStr(request.resource.data.pet, 8) && pfSp(request.resource.data.sp)
+          && request.resource.data.ts == request.time;
+        allow delete: if pfIn() && (request.auth.uid == owner || request.auth.uid == other);
+      }
+
+      // 친구 요청: 보내는 사람이 받는 사람의 코드를 알아야 하고, 같은 요청 안에서 자기 목록에도 받는 사람을 적어야 한다
+      match /requests/{from} {
+        allow get, delete: if pfIn() && (request.auth.uid == owner || request.auth.uid == from);
+        allow list: if pfMe(owner);
+        allow create, update: if pfMe(from) && from != owner
+          && request.resource.data.keys().hasOnly(['name', 'pet', 'sp', 'code', 'ts'])
+          && pfStr(request.resource.data.name, 60)
+          && (request.resource.data.name == '' || request.resource.data.name == request.auth.token.get('name', ''))
+          && pfStr(request.resource.data.pet, 8) && pfSp(request.resource.data.sp)
+          && pfCode(request.resource.data.code)
+          && get(/databases/$(database)/documents/petCodes/$(request.resource.data.code)).data.uid == owner
+          && request.resource.data.ts == request.time
+          && existsAfter(/databases/$(database)/documents/petFriends/$(from)/list/$(owner));
+      }
+    }
+
+    // 접속 표시: 나와 서로 친구만 읽는다 (문서 id 로 한 장씩, 목록 금지)
+    match /petPresence/{uid} {
+      allow get: if pfMe(uid) || pfMutual(uid);
+      allow list: if false;
+      allow create, update: if pfMe(uid)
+        && request.resource.data.keys().hasOnly(['name', 'sp', 'wear', 'ts'])
+        && pfStr(request.resource.data.name, 8) && pfSp(request.resource.data.sp)
+        && (!('wear' in request.resource.data) || pfWear(request.resource.data.wear))
+        && request.resource.data.ts == request.time;
+      allow delete: if pfMe(uid);
+    }
+
+    // 1:1 대화: 두 사람이 서로 친구일 때만 읽고 쓴다. 내 이름으로만 쓰고, 고치지 못하고, 내 글만 지운다
+    match /petChats/{pair}/messages/{id} {
+      allow read: if pfIn() && pfInPair(pair);
+      allow create: if pfIn() && id.size() <= 40 && pfInPair(pair)
+        && request.resource.data.keys().hasOnly(['from', 'text', 'ts'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 120
+        && request.resource.data.ts == request.time;
+      allow update: if false;
+      allow delete: if pfIn() && resource.data.from == request.auth.uid;
+    }
+
+    // 새 메시지 알림과 콕 찌르기: 주인만 읽는다. 서로 친구인 사람은 자기 칸 두 개만 지금 시각으로 바꾼다
+    //   {내 uid}   새 메시지를 보냈다
+    //   p_{내 uid} 콕 찌르기. 같은 칸의 이전 시각에서 30초가 지나야 다시 쓸 수 있다 (추가 읽기 없음)
+    // 칸을 지우는 것은 주인만 (문서 삭제) 할 수 있어서 보낸 사람이 기다리는 시간을 없앨 수 없다
+    function pfPokeKey() { return 'p_' + request.auth.uid; }
+    function pfNowIfSet(k) { return !(k in request.resource.data) || request.resource.data[k] == request.time; }
+    match /petInbox/{owner} {
+      allow get, delete: if pfMe(owner);
+      allow list: if false;
+      allow create: if pfIn() && request.auth.uid != owner
+        && request.resource.data.keys().hasOnly([request.auth.uid, pfPokeKey()])
+        && request.resource.data.size() > 0
+        && pfNowIfSet(request.auth.uid) && pfNowIfSet(pfPokeKey())
+        && pfMutual(owner);
+      allow update: if pfIn() && request.auth.uid != owner
+        && request.resource.data.diff(resource.data).affectedKeys().size() > 0
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([request.auth.uid, pfPokeKey()])
+        && (!(request.auth.uid in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data[request.auth.uid] == request.time)
+        && (!(pfPokeKey() in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data[pfPokeKey()] == request.time
+            && (!(pfPokeKey() in resource.data) || request.time > resource.data[pfPokeKey()] + duration.value(30, 's'))))
+        && request.resource.data.size() <= 300
+        && pfMutual(owner);
+    }
+  }
+  // ===================== 친구 전용 펫 끝 =====================
 }

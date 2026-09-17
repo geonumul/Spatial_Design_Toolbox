@@ -115,7 +115,23 @@ footer a{color:var(--primary);font-weight:400}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 .pet-note{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:92vw;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 14px;box-shadow:0 10px 30px rgba(0,0,0,.15);font-size:14px}
 .pill{border:0;cursor:pointer;font-family:inherit}
-#subjects,#howto{scroll-margin-top:72px}
+#subjects,#howto,#pass{scroll-margin-top:72px}
+/* 이용권 (assets/access.js) */
+.badge.lock{background:var(--no-soft);color:var(--no)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.plan{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:22px 22px 18px}
+.plan h3{font-size:19px;margin:0 0 2px;letter-spacing:-.4px}
+.plan p{margin:0 0 14px;font-size:14.5px;color:#50506A;word-break:keep-all;flex:1}
+.plan .price{font-size:22px;font-weight:600;letter-spacing:-.5px;margin-bottom:12px}
+.plan .price.tbd{font-size:15px;color:var(--sub);font-weight:500}
+.plan button{min-height:46px;border-radius:4px;border:1.5px solid var(--line);background:var(--soft);color:var(--sub);font:inherit;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.wip{font-size:11.5px;font-weight:600;background:#FFF1D6;color:#9A6A12;border-radius:999px;padding:1px 8px}
+.paynote{margin:12px 0 0;font-size:14px;color:var(--sub);min-height:1.5em}
+.passrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:14px}
+.pbox{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.pbox h3{font-size:17px;margin:0 0 4px}
+.pbox>p{margin:0 0 12px;font-size:14px;color:var(--sub)}
+.pbox .adminlink{display:inline-block;margin-top:12px;color:var(--primary);font-size:14px}
 </style>
 <link rel="stylesheet" href="assets/pet/pet.css">
 </head>
@@ -125,6 +141,7 @@ footer a{color:var(--primary);font-weight:400}
 <nav>
 <a class="tab" href="#subjects">과목</a>
 <a class="tab" href="#howto">사용법</a>
+<a class="tab" href="#pass">이용권</a>
 <a class="tab" href="pet/index.html">내 펫</a>
 </nav>
 <div class="hright" id="hstat"></div>
@@ -156,6 +173,19 @@ footer a{color:var(--primary);font-weight:400}
   <div class="subjects" id="subjectList"></div>
 </section>
 
+<section id="pass">
+  <div class="sechead">
+    <h2>이용권</h2>
+    <p>과목은 로그인하고 이용권이 있어야 열려요. 카드 결제는 준비 중이라, 지금은 관리자가 직접 넣어 드리거나 이벤트 코드로 등록해요.</p>
+  </div>
+  <div class="plans" id="planList"></div>
+  <p class="paynote" id="payNote" role="status" aria-live="polite"></p>
+  <div class="passrow">
+    <div class="pbox"><h3>이벤트 코드 등록</h3><p>받은 코드를 넣으면 이용권이 바로 생겨요.</p><div id="codeBox"></div></div>
+    <div class="pbox"><h3>내 이용권</h3><div id="myPasses"></div></div>
+  </div>
+</section>
+
 <section id="howto">
   <div class="sechead">
     <h2>이렇게 공부해요</h2>
@@ -175,6 +205,8 @@ footer a{color:var(--primary);font-weight:400}
 
 <script src="assets/firebase-config.js"></script>
 <script src="assets/sync.js"></script>
+<script src="assets/access-config.js"></script>
+<script src="assets/access.js"></script>
 <script src="assets/pet/pet.js" defer></script>
 <script>
 /* 과목 목록. count, types, units, features, ready 는 tools/sync_home.py 가 과목 파일에서 읽어 갱신한다.
@@ -194,16 +226,16 @@ var SUBJECTS = /*SUBJECTS_START*/[
    "essay": 84,
    "calc": 88
   },
-  "units": 54,
+  "units": 56,
   "features": [
    "회독 레슨",
    "정리 슬라이드",
-   "코딩 실습 333개",
+   "코딩 실습 372개",
    "필기"
   ],
   "ready": true,
   "passTotal": 15,
-  "unitTotal": 54,
+  "unitTotal": 56,
   "engine": 2,
   "no": "01"
  },
@@ -351,7 +383,7 @@ function renderSubjects(){
       pct=count?Math.min(100,Math.round(p.seen/count*100)):0;
     } else { line = ready ? '아직 시작 전이에요' : '강의자료 준비 중'; pct=0; }
     h+='<a class="subj'+(ready?'':' wait')+'" href="'+esc(s.href)+'">'
-      +'<div class="top"><span class="no">'+esc(s.no)+'</span><span class="badge '+(ready?'ready">공부 가능':'wait">준비 중')+'</span></div>'
+      +'<div class="top"><span class="no">'+esc(s.no)+'</span>'+cardBadge(s, ready)+'</div>'
       +'<h3>'+esc(s.name)+'</h3>'+(s.sub?'<div class="sub">'+esc(s.sub)+'</div>':'')
       +'<div class="desc">'+esc(s.desc)+'</div>'
       +'<div class="feats">'+feats+'</div>'
@@ -366,14 +398,16 @@ function renderSubjects(){
   $("#sWrongLbl").textContent=REMOTE?"내 미해결 오답":"미해결 오답";
   $("#hstat").textContent="과목 "+SUBJECTS.length+"개 / 문항 "+total+"개";
 }
-$("#notice").innerHTML = (window.SDT_FIREBASE
+$("#notice").innerHTML = (window.SDT_FIREBASE && window.SDT_ACCESS && SDT_ACCESS.enforce
+  ? '과목은 로그인하고 이용권이 있어야 열려요. 오른쪽 위에서 <b>로그인</b>하면 기록이 계정에 저장돼서 휴대폰과 노트북에서 같이 보여요.'
+  : window.SDT_FIREBASE
   ? '휴대폰과 노트북을 오가며 공부한다면 오른쪽 위에서 <b>로그인</b>하세요. 로그인하지 않으면 지금 쓰는 브라우저에만 기록이 남습니다.'
   : '기록은 지금 쓰는 브라우저에만 남습니다.');
 renderSubjects();
 /* 과목 페이지의 "전체 과목" 으로 오면 영상 말고 과목 목록부터 보이게 (카드를 그린 뒤, 부드러운 스크롤 없이 바로) */
 (function(){
-  if(location.hash !== "#subjects") return;
-  var go = function(){ var el = document.getElementById("subjects"); if(!el) return; var y = el.getBoundingClientRect().top + window.pageYOffset - 64; document.documentElement.style.scrollBehavior = "auto"; window.scrollTo(0, y); setTimeout(function(){ document.documentElement.style.scrollBehavior = ""; }, 50); };
+  if(location.hash !== "#subjects" && location.hash !== "#pass") return;
+  var go = function(){ var el = document.getElementById(location.hash.slice(1)); if(!el) return; var y = el.getBoundingClientRect().top + window.pageYOffset - 64; document.documentElement.style.scrollBehavior = "auto"; window.scrollTo(0, y); setTimeout(function(){ document.documentElement.style.scrollBehavior = ""; }, 50); };
   go(); window.addEventListener("load", go); setTimeout(go, 400);
   if("scrollRestoration" in history) history.scrollRestoration = "manual";
 })();
@@ -386,6 +420,37 @@ if(window.SDT){
     });
   });
 }
+/* ---------- 이용권 (assets/access.js, 설정은 assets/access-config.js) ---------- */
+function cardBadge(s, ready){
+  var A=window.SDTAccess, st=A&&A.state;
+  if(ready && st && st.ready && !st.off){
+    if(!st.user) return '<span class="badge lock">로그인 필요</span>';
+    if(!A.can(s.key)) return '<span class="badge lock">이용권 필요</span>';
+  }
+  return '<span class="badge '+(ready?'ready">공부 가능':'wait">준비 중')+'</span>';
+}
+function renderPass(){
+  var A=window.SDTAccess; if(!A) return;
+  A.addCSS();
+  var C=window.SDT_ACCESS||{}, st=A.state;
+  $("#myPasses").innerHTML=A.passListHTML()+(st.admin?'<a class="adminlink" href="admin/index.html">관리자 페이지</a>':'');
+  if(!$("#planList").firstChild){
+    $("#planList").innerHTML=(C.plans||[]).map(function(p){
+      return '<div class="plan"><h3>'+esc(p.name)+'</h3><p>'+esc(p.desc)+'</p>'
+        +(p.price?'<div class="price">'+esc(p.price)+'</div>':'<div class="price tbd">가격 준비 중</div>')
+        +'<button type="button" data-plan="'+esc(p.kind)+'">결제하기'+(C.payReady?'':' <span class="wip">작업 중</span>')+'</button></div>';
+    }).join("");
+    $("#planList").addEventListener("click", function(e){
+      if(!e.target.closest("[data-plan]")) return;
+      $("#payNote").textContent="카드 결제는 아직 만드는 중이에요. 이벤트 코드가 있으면 아래에 넣어 주세요.";
+    });
+  }
+  var cb=$("#codeBox");
+  if(!st.user){ cb.innerHTML='<p class="acc-empty">로그인한 뒤에 코드를 넣을 수 있어요.</p>'; cb.removeAttribute("data-on"); }
+  else if(!cb.hasAttribute("data-on")){ cb.setAttribute("data-on","1"); A.codeForm(cb); }
+}
+if(window.SDTAccess){ SDTAccess.onChange(function(){ renderSubjects(); renderPass(); }); renderPass(); }
+
 /* 과목 페이지에서 뒤로 왔을 때 기록 다시 읽기 */
 window.addEventListener("pageshow", function(ev){ if(ev.persisted) renderSubjects(); });
 window.addEventListener("scroll", function(){ $("#hdr").classList.toggle("scrolled", window.scrollY>8); });

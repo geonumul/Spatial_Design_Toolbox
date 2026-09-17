@@ -333,3 +333,54 @@ img,svg,video,canvas{max-width:100%}
 }
 [hidden]{display:none!important}
 .tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+
+/* 생각 순서 실습 (think, pseudo, order, predict) */
+.thbox{margin-top:14px;padding:12px 14px;border-radius:var(--r-md);background:var(--accent-soft);min-width:0}
+.thbox.thfold{padding:4px 14px}
+.thbox summary{cursor:pointer;min-height:42px;display:flex;align-items:center;font-weight:550;color:var(--accent-deep);word-break:keep-all}
+.thbox.thfold[open]{padding-bottom:12px}
+.thk{font-weight:600;color:var(--accent-deep);margin-bottom:4px;word-break:keep-all}
+.thp{margin:6px 0;font-size:15px;line-height:1.65}
+.thsteps,.thhow{margin:8px 0 4px;padding-left:22px;font-size:15.5px;line-height:1.7}
+.thsteps li+li{margin-top:4px}
+.thsteps code,.thbox code{background:var(--surface);border-radius:4px;padding:1px 6px;font-size:.92em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre.thpseudo{margin:0;padding:10px 12px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:15px;line-height:1.7;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;tab-size:4;max-width:100%}
+.thmore summary{min-height:36px;font-size:14px}
+textarea.thdraft{display:block;width:100%;box-sizing:border-box;margin:6px 0 0;padding:10px 12px;border:1.5px solid var(--line-2);border-radius:var(--r-md);background:var(--paper,var(--surface));color:var(--ink);font-family:inherit;font-size:16px;line-height:1.6;resize:vertical;word-break:keep-all}
+textarea.pdans{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;min-height:120px}
+textarea.thdraft:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.odpick{list-style:none;margin:0 0 4px;padding:0;display:grid;gap:6px;min-height:44px;border:1.5px dashed var(--line-2);border-radius:var(--r-md);padding:6px}
+.odpool{display:grid;gap:6px}
+.oditem{display:flex;align-items:flex-start;gap:10px;width:100%;box-sizing:border-box;min-height:44px;padding:9px 12px;text-align:left;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--ink);font:inherit;font-size:15.5px;line-height:1.55;cursor:pointer;word-break:keep-all;overflow-wrap:anywhere}
+.oditem .odt{flex:1;min-width:0}
+.oditem .odn{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--sub);font-size:13px;font-weight:600}
+.oditem.good{border-color:var(--ok);background:var(--ok-soft)}
+.oditem.bad{border-color:var(--no);background:var(--no-soft)}
+
+/* ---------- 가리고 설명하기 (RECALL 블록) ---------- */
+#pslide:has(.rcwrap){padding:14px 16px;justify-content:flex-start}
+.rcwrap{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;min-width:0}
+.rcimg{position:relative;width:100%;max-width:calc(64vh * var(--ar, 1.414));margin:0 auto;line-height:0}
+.rcimg img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:4px;background:#fff;-webkit-user-select:none;user-select:none}
+.rcm{position:absolute;margin:0;padding:0;min-width:0;min-height:0;border:1.5px solid var(--accent-deep);border-radius:5px;background:var(--accent-mid);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .12s,border-color .12s}
+.rcm::after{content:"";position:absolute;inset:-5px}
+.rcm.open{background:transparent;border-color:var(--amber);border-style:dashed}
+.rcm:focus-visible{outline:3px solid var(--accent);outline-offset:1px;z-index:1}
+.rcbar{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;width:100%;max-width:calc(64vh * var(--ar, 1.414));line-height:1.5}
+.rcbar .rccap{font-size:14px;color:var(--sub);word-break:keep-all}
+.rcbar .rccap b{color:var(--ink)}
+.rctiles .ptile{min-height:150px}
+.rcch .sec{margin-top:22px}
+.rcsecs{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rcsec{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r-md);background:var(--surface)}
+.rcsec.done{border-color:var(--ok)}
+.rcno{font-size:13px;color:var(--sub);min-width:1.6em;text-align:right}
+.rcname{font-weight:550;word-break:keep-all;overflow-wrap:anywhere;min-width:0}
+.rcact{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.rcact .btn,.rcact .chip{white-space:nowrap}
+@media (max-width:640px){
+  #pslide:has(.rcwrap){padding:10px 8px}
+  .rcsec{grid-template-columns:auto minmax(0,1fr);padding:12px}
+  .rcact{grid-column:1 / -1;justify-content:flex-start}
+}
+/* ---------- (RECALL 블록 끝) ---------- */

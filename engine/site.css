@@ -421,3 +421,31 @@ img,svg,video,canvas{max-width:100%}
   #time .row .cap{width:100%}
   #time table.tl{min-width:560px}
 }
+
+/* ---------- 가리고 설명하기 (RECALL 블록) ---------- */
+#pslide:has(.rcwrap){padding:14px 16px;justify-content:flex-start}
+.rcwrap{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;min-width:0}
+.rcimg{position:relative;width:100%;max-width:calc(64vh * var(--ar, 1.414));margin:0 auto;line-height:0}
+.rcimg img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:4px;background:#fff;-webkit-user-select:none;user-select:none}
+.rcm{position:absolute;margin:0;padding:0;min-width:0;min-height:0;border:1.5px solid var(--accent-deep);border-radius:5px;background:var(--accent-mid);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .12s,border-color .12s}
+.rcm::after{content:"";position:absolute;inset:-5px}
+.rcm.open{background:transparent;border-color:var(--amber);border-style:dashed}
+.rcm:focus-visible{outline:3px solid var(--accent);outline-offset:1px;z-index:1}
+.rcbar{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;width:100%;max-width:calc(64vh * var(--ar, 1.414));line-height:1.5}
+.rcbar .rccap{font-size:14px;color:var(--sub);word-break:keep-all}
+.rcbar .rccap b{color:var(--ink)}
+.rctiles .ptile{min-height:150px}
+.rcch .sec{margin-top:22px}
+.rcsecs{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rcsec{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 12px;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--r-md);background:var(--surface)}
+.rcsec.done{border-color:var(--ok)}
+.rcno{font-size:13px;color:var(--sub);min-width:1.6em;text-align:right}
+.rcname{font-weight:550;word-break:keep-all;overflow-wrap:anywhere;min-width:0}
+.rcact{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.rcact .btn,.rcact .chip{white-space:nowrap}
+@media (max-width:640px){
+  #pslide:has(.rcwrap){padding:10px 8px}
+  .rcsec{grid-template-columns:auto minmax(0,1fr);padding:12px}
+  .rcact{grid-column:1 / -1;justify-content:flex-start}
+}
+/* ---------- (RECALL 블록 끝) ---------- */

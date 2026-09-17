@@ -224,6 +224,7 @@ const routes = [
   [/^#\/tips$/, () => pageStatic('tips')],
   [/^#\/note(?:\/([\w-]+))?$/, pageNote],
   [/^#\/time$/, pageTime],
+  [/^#\/recall\/([A-Za-z]+\d+)(?:\/([1-4])(?:\/(\d+))?)?$/, pageRecall],   // 가리고 설명하기
 ];
 let cleanup = null, qInk = null;
 function route() {
@@ -314,6 +315,7 @@ function weekSteps(week) {
   META.passes.filter(x => x.n > 1).forEach(x => { passStep(x.n); if (x.n === examPass) qstep('hard', '심화 문제 20개', '한 단계 어렵게 만든 문제예요.'); });
   if (!examPass) qstep('hard', '심화 문제 20개', '한 단계 어렵게 만든 문제예요.');
   if (weekQuizStat(week).total) steps.push({ t: '오답 다시 풀고 모의고사', d: '틀린 것만 다시 풀고, 서술과 계산 한 쌍씩 시험지처럼.', done: !!store.mockDone[week], href: '#/mock?week=' + week, meta: '' });
+  recallStep(w, steps);   // 가리고 설명하기: 기출 다음 마지막 순서
   return steps;
 }
 function guideCard(week, big) {
@@ -450,6 +452,7 @@ function pageWeek(week) {
       + (BANK.some(x => x.part === week && x.type === 'calc') ? '<a class="qbtn" href="#/quiz?week=' + week + '&type=calc&start=1"><b>계산만</b><span>시험 계산 문제 연습</span></a>' : '')
       + '<a class="qbtn" href="#/mock?week=' + week + '"><b>이 주차 모의고사</b><span>시험지처럼 섞어서</span></a></div>';
   }
+  h += recallTiles(week);   // 가리고 설명하기
   APP().innerHTML = h;
   renderMath(APP());
   const cc = $('#cumChip');
@@ -634,7 +637,7 @@ function schedule() {
   if (!store.pref.auto || (P.ink && P.ink.enabled)) return;
   const f = P.frames[P.i];
   if (f.kind === 'check' && !P.answered) return;
-  if (f.kind === 'end') return;
+  if (f.kind === 'end' || f.kind === 'recall') return;   // 가리고 설명하기는 자동으로 넘기지 않는다
   const el = $('#pslide');
   const vis = $$('[data-s]', el).filter(e => +e.dataset.s === P.step);
   const text = vis.length ? vis.map(e => e.textContent).join(' ') : el.textContent;
@@ -672,6 +675,8 @@ function renderFrame(f, st) {
   const items = (arr, cls) => '<ul class="sl-items' + (cls ? ' ' + cls : '') + '">' + (arr || []).map((x, i) => S(i + 1, fmt(x), 'li')).join('') + '</ul>';
   const lines = x => Array.isArray(x) ? x : String(x || '').split('\n');
   switch (k) {
+    case 'recall':
+      return recallFrame(f);
     case 'slideimg':
       return { html: '<div class="simg"><img src="' + esc(f.src) + '" alt="' + esc(f.alt) + '" decoding="async"><div class="scap">' + fmt(f.cap, false) + '</div></div>', steps: 0 };
     case 'title':
@@ -1159,6 +1164,7 @@ function startDeck(list, keepOrder, mockLabel) {
   if (!st.deck.length) { toast('조건에 맞는 문제가 없어요'); return; }
   qNext();
 }
+let selfGrade = false;   // 스스로 '맞은 걸로' 바꾼 답이면 펫 코인을 주지 않는다
 function record(q, ok, mine, missing) {
   const petReview = !!(store.wrong[q.id] && !store.wrong[q.id].resolved);
   const s = store.seen[q.id] || { n: 0, ok: 0 }; s.n++; if (ok) s.ok++; store.seen[q.id] = s;
@@ -1170,7 +1176,8 @@ function record(q, ok, mine, missing) {
   }
   store.last = { href: '#/quiz?week=' + q.part + '&level=' + q.level + '&mode=unseen&start=1', label: weekName(q.part) + ' ' + (LEVEL_NAME[q.level] || '') + ' 문제' };
   save(); updateBadges(); updateStat();
-  if (window.SDTPet) window.SDTPet.onAnswer(q, ok, { review: petReview });
+  if (window.SDTPet) window.SDTPet.onAnswer(q, ok, { review: petReview, self: selfGrade });
+  selfGrade = false;
 }
 function unrecord(q, wasOk) {
   const s = store.seen[q.id]; if (s) { s.n--; if (wasOk) s.ok--; if (s.n <= 0) delete store.seen[q.id]; }
@@ -1255,7 +1262,7 @@ function rShort(q) {
   let done = false, verdict = null, mine = '';
   const show = ok => { const e = $('#expl', s); e.className = 'expl on ' + (ok ? 'good' : 'bad'); e.innerHTML = '<span class="lbl">' + (ok ? '정답' : '오답') + '</span>정답: <b>' + fmt(q.a[0]) + '</b>' + (q.a.length > 1 ? ' <span class="muted">(허용: ' + fmt(q.a.slice(1).join(', ')) + ')</span>' : '') + '<br>' + fmt(q.e || '') + srcLine(q); renderMath(e); };
   const check = () => { if (done) return; done = true; mine = $('#ans', s).value.trim(); $('#ans', s).disabled = true; verdict = shortMatch(mine, q); show(verdict); record(q, verdict, mine || '(빈 답)'); $('#after', s).style.display = 'flex'; };
-  const override = ok => { if (!done || verdict === ok) return; unrecord(q, verdict); verdict = ok; show(ok); record(q, ok, mine || '(빈 답)'); toast(ok ? '맞은 걸로 기록했어요' : '틀린 걸로 기록했어요'); };
+  const override = ok => { if (!done || verdict === ok) return; unrecord(q, verdict); verdict = ok; selfGrade = true; show(ok); record(q, ok, mine || '(빈 답)'); toast(ok ? '맞은 걸로 기록했어요' : '틀린 걸로 기록했어요'); };
   $('#chk', s).addEventListener('click', check);
   $('#ans', s).addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.stopPropagation(); ev.preventDefault(); check(); } });
   $('#markOk', s).addEventListener('click', () => override(true));
@@ -1293,7 +1300,7 @@ function rCalc(q) {
     showFinal(); $('#pre', s).style.display = 'none';
     record(q, verdict, mine); $('#after', s).style.display = 'flex';
   };
-  const override = ok => { if (!done || verdict === ok) return; unrecord(q, verdict); verdict = ok; record(q, ok, mine); toast(ok ? '맞은 걸로 기록했어요' : '틀린 걸로 기록했어요'); const e = $('#expl', s); e.className = 'expl on ' + (ok ? 'good' : 'bad'); $('.lbl', e).textContent = ok ? '정답' : '오답'; };
+  const override = ok => { if (!done || verdict === ok) return; unrecord(q, verdict); verdict = ok; selfGrade = true; record(q, ok, mine); toast(ok ? '맞은 걸로 기록했어요' : '틀린 걸로 기록했어요'); const e = $('#expl', s); e.className = 'expl on ' + (ok ? 'good' : 'bad'); $('.lbl', e).textContent = ok ? '정답' : '오답'; };
   $('#chk', s).addEventListener('click', () => check(false));
   $('#giveup', s).addEventListener('click', () => check(true));
   $('#hint', s).addEventListener('click', showStep);
@@ -1443,6 +1450,145 @@ function renderWrongList() {
     else { $('#wlist').innerHTML = ''; const n = st.n; st.n = 0; startDeck([BY_ID[id]]); st.n = n; }
   }));
 }
+
+/* ---------- 가리고 설명하기 (RECALL 블록 시작): 슬라이드의 중요한 말을 단계별로 가리고 혼자 설명하기.
+   데이터는 data/recall_<덱>.js (tools/recall_build.py -> build_site.py). 기록은 store.recall[덱] = { s1: {i, max, done}, s2, s3, secs: {번호: 시각} }
+   바깥에 붙인 곳: routes 의 #/recall, weekSteps 끝의 recallStep, pageWeek 끝의 recallTiles, renderFrame 의 case 'recall', schedule 의 자동 넘김 제외 ---------- */
+const RC_NAME = ['', '1단계', '2단계', '3단계', '마지막 단계'];
+const RC_TITLE = ['', '핵심 말만 가리기', '더 가리기', '많이 가리기', '소단원 이름만'];
+const RC_DESC = ['', '정말 중요한 말만 쪽마다 몇 개씩 가렸어요.', '1단계의 두 배쯤 가렸어요.', '세 배쯤 가렸어요. 제목 속 말도 가려요.', '소단원 이름만 보고 흐름 전체를 설명해요.'];
+const recallInfo = deck => ((META.decks || {})[deck] || {}).recall || null;
+const recallData = deck => (window.SDT_RECALL || window.GNN_RECALL || {})[deck] || null;
+function recallRec(deck) { store.recall = store.recall || {}; return (store.recall[deck] = store.recall[deck] || {}); }
+function recallDone(deck, n) {
+  const r = (store.recall || {})[deck] || {}, info = recallInfo(deck);
+  if (n === 4) return !!(info && info.secs && Object.keys(r.secs || {}).length >= info.secs);
+  return !!(r['s' + n] || {}).done;
+}
+function recallNext(deck) { return [1, 2, 3, 4].find(n => !recallDone(deck, n)) || 1; }
+/* 길잡이 마지막 순서 (잠그지 않고 기출 다음에 둔다) */
+function recallStep(w, steps) {
+  const info = w && w.deck ? recallInfo(w.deck) : null; if (!info) return;
+  const got = [1, 2, 3, 4].filter(n => recallDone(w.deck, n)).length;
+  steps.push({ t: '가리고 설명하기', d: '기출까지 풀고 나서 해요. 슬라이드의 중요한 말을 가려 두고 혼자 설명해 봐요. 마지막에는 소단원 이름만 보고 설명해요.', done: got === 4, href: '#/recall/' + w.deck + '/' + recallNext(w.deck), meta: got + ' / 4단계' });
+}
+/* 주차 페이지의 단계 타일 */
+function recallTiles(week) {
+  const w = weekOf(week), info = w && w.deck ? recallInfo(w.deck) : null; if (!info) return '';
+  const r = (store.recall || {})[w.deck] || {};
+  return '<h2 class="sec">가리고 설명하기 <small>기출까지 풀고 나서 해요</small></h2><div class="ptiles rctiles">' + [1, 2, 3, 4].map(n => {
+    const dn = recallDone(w.deck, n), s = r['s' + n] || {}, said = Object.keys(r.secs || {}).length;
+    const state = dn ? '다 했어요' : n < 4 ? (s.max ? s.max + '쪽까지 봤어요' : '가린 말 ' + info.n[n - 1] + '개') : (said ? said + ' / ' + info.secs + ' 설명했어요' : '소단원 ' + info.secs + '개');
+    return '<a class="ptile' + (dn ? ' done' : '') + '" href="#/recall/' + w.deck + '/' + n + '"><span class="pn">' + RC_NAME[n] + '</span><span class="pt">' + RC_TITLE[n] + '</span><span class="pd">' + RC_DESC[n] + '</span><span class="pf"><span class="num">' + esc(state) + '</span></span></a>';
+  }).join('') + '</div>';
+}
+async function pageRecall(deck, stageStr, subStr) {
+  const w = META.weeks.find(x => x.deck === deck), week = w ? w.id : '';
+  const back = week ? '#/week/' + week : '#/';
+  const d = META.decks[deck];
+  if (!d || !recallInfo(deck)) { location.replace(back); return; }
+  if (!stageStr) { location.replace('#/recall/' + deck + '/' + recallNext(deck)); return; }
+  $$('#nav .tab').forEach(t => t.classList.toggle('on', t.dataset.nav === 'w' + week));
+  if (!recallData(deck)) {
+    APP().innerHTML = '<div class="empty"><b>슬라이드를 불러오는 중</b></div>';
+    try { await loadScript('data/recall_' + deck + '.js'); } catch (e) { /* 아래에서 안내 */ }
+    if ((location.hash || '').indexOf('#/recall/' + deck + '/') !== 0) return;   // 불러오는 사이 다른 화면으로 갔으면 그만
+  }
+  const R = recallData(deck);
+  if (!R) { APP().innerHTML = '<div class="empty"><b>아직 준비되지 않았어요</b><a class="btn" href="' + back + '">돌아가기</a></div>'; return; }
+  const stage = +stageStr, rec = recallRec(deck);
+  const chips = [1, 2, 3, 4].map(n => '<a class="chip' + (n === stage ? ' on' : '') + '" href="#/recall/' + deck + '/' + n + '">' + RC_NAME[n] + '</a>').join('');
+  const secs = [];
+  (R.sections || []).forEach(c => (c.items || []).forEach(it => secs.push(it)));
+  if (stage === 4 && !subStr) { recallList(deck, d, R, chips, back); return; }
+  let from = 1, to = R.pages.length, sec = null, k = 0;
+  if (stage === 4) {
+    k = +subStr; sec = secs[k - 1];
+    if (!sec) { location.replace('#/recall/' + deck + '/4'); return; }
+    from = sec.p[0]; to = sec.p[1]; rec.lastSec = k; save();
+  }
+  const frames = [];
+  for (let p = from; p <= to; p++) frames.push({ kind: 'recall', deck, ar: R.ar, _p: p, lv: stage < 4 ? stage : 0, masks: stage < 4 ? (R.pages[p - 1] || []).filter(m => m[4] <= stage) : [] });
+  if (stage < 4) frames.push({ kind: 'end', big: '가리고 설명하기 ' + RC_NAME[stage] + ' 끝', sub: stage < 3 ? '가린 말을 떠올리며 설명이 됐나요? 다음 단계는 더 많이 가려요.' : '이제 소단원 이름만 보고 흐름 전체를 설명해 봐요.', links: [[RC_NAME[stage + 1] + ' 시작', '#/recall/' + deck + '/' + (stage + 1)], ['길잡이로 돌아가기', back]] });
+  else frames.push({ kind: 'end', big: sec.t, sub: '내가 설명한 흐름과 맞았나요? 목록에서 "설명했어요"를 눌러 표시해요.', links: [['소단원 목록으로', '#/recall/' + deck + '/4'], secs[k] ? ['다음 소단원 원래 슬라이드', '#/recall/' + deck + '/4/' + (k + 1)] : ['길잡이로 돌아가기', back]] });
+  const r = stage < 4 ? (rec['s' + stage] = rec['s' + stage] || {}) : null;
+  const start = r && r.i && r.i < frames.length - 1 ? r.i : 0;
+  startPlayer({
+    frames, groups: frames.map((f, i) => ({ start: i, end: i })), start,
+    backHref: stage === 4 ? '#/recall/' + deck + '/4' : back,
+    chips,
+    imgOf: () => '',
+    inkKey: () => null,
+    title: f => esc(d.title) + ' <small>가리고 설명하기 ' + RC_NAME[stage] + (sec ? ', ' + esc(sec.t) : '') + (f._p ? ', p.' + f._p : '') + '</small>',
+    onProgress: i => {
+      if (!r) return;
+      const f = frames[i];
+      r.i = i; if (f._p) r.max = Math.max(r.max || 0, f._p);
+      if (i === frames.length - 1) r.done = true;
+      store.last = { href: '#/recall/' + deck + '/' + stage, label: d.title + ' 가리고 설명하기' };
+      save();
+    },
+    onEnd: () => { location.hash = back; },
+  });
+  const ac = $('#autoChip'); if (ac) ac.hidden = true;
+  const hint = $('#phint');
+  if (hint) hint.textContent = stage < 4 ? '가린 칸을 누르면 말이 보이고, 한 번 더 누르면 다시 가려요. 쪽은 아래 버튼, 옆으로 밀기, 방향키로 넘겨요. 가운데 쪽 번호를 누르면 원하는 쪽으로 가요.' : '가리지 않은 원래 슬라이드예요. 내가 설명한 흐름과 맞는지 확인해요.';
+  if (start > 0) toast('지난번 본 곳(p.' + frames[start]._p + ')부터 이어서 봐요');
+}
+/* 마지막 단계: 소단원 이름만 */
+function recallList(deck, d, R, chips, back) {
+  const rec = recallRec(deck); rec.secs = rec.secs || {};
+  let k = 0;
+  let h = '<a class="back" href="' + back + '">주차로 돌아가기</a><div class="whead"><div class="eyebrow">가리고 설명하기, 마지막 단계</div><h1>' + esc(d.title) + '</h1>'
+    + '<p>소단원 이름만 보고, 그 안에서 배운 내용을 순서대로 소리 내어 설명해요. 다 말했으면 원래 슬라이드를 열어 맞는지 확인하고 "설명했어요"를 눌러요.</p></div>'
+    + '<div class="pillrow">' + chips + '</div><div class="rclist">';
+  (R.sections || []).forEach(c => {
+    h += '<section class="rcch"><h2 class="sec">' + esc(c.t) + '</h2><ol class="rcsecs">';
+    (c.items || []).forEach(it => {
+      k++;
+      const on = !!rec.secs[k], pr = 'p.' + it.p[0] + (it.p[1] > it.p[0] ? '~' + it.p[1] : '');
+      h += '<li class="rcsec' + (on ? ' done' : '') + '" id="rcs' + k + '"><span class="rcno num">' + k + '</span><span class="rcname">' + esc(it.t) + '</span><span class="rcact">'
+        + '<a class="btn sm" href="#/recall/' + deck + '/4/' + k + '">원래 슬라이드 <span class="num">' + pr + '</span></a>'
+        + '<button class="chip rcsaid' + (on ? ' on' : '') + '" type="button" data-k="' + k + '" aria-pressed="' + on + '">' + (on ? '설명했어요' : '설명했으면 눌러요') + '</button></span></li>';
+    });
+    h += '</ol></section>';
+  });
+  APP().innerHTML = h + '</div>';
+  $$('.rcsaid').forEach(b => b.addEventListener('click', () => {
+    const kk = b.dataset.k, on = !rec.secs[kk];
+    if (on) rec.secs[kk] = Date.now(); else delete rec.secs[kk];
+    save();
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.textContent = on ? '설명했어요' : '설명했으면 눌러요';
+    b.closest('.rcsec').classList.toggle('done', on);
+    const info = recallInfo(deck);
+    if (on && info && Object.keys(rec.secs).length === info.secs) toast('소단원을 전부 설명했어요');
+  }));
+  const last = rec.lastSec && $('#rcs' + rec.lastSec);
+  if (last && last.scrollIntoView) { try { last.scrollIntoView({ block: 'center' }); } catch (e) { /* 무시 */ } }
+}
+/* 플레이어 장면: 슬라이드 그림 위에 가린 칸 */
+function recallFrame(f) {
+  const ms = f.masks || [];
+  const pct = x => (Math.round(x * 100000) / 1000) + '%';
+  const html = '<div class="rcwrap" style="--ar:' + (+f.ar || 1.414) + '"><div class="rcimg"><img src="img/' + esc(f.deck) + '/p' + pad3(f._p) + '.jpg" alt="p.' + f._p + ' 슬라이드" decoding="async" draggable="false">'
+    + ms.map(m => '<button type="button" class="rcm" style="left:' + pct(m[0]) + ';top:' + pct(m[1]) + ';width:' + pct(m[2]) + ';height:' + pct(m[3]) + '" aria-pressed="false" aria-label="가린 말, 누르면 보여요" data-t="' + esc(m[5] || '') + '"></button>').join('')
+    + '</div><div class="rcbar"><span class="rccap num">p.' + f._p + (f.lv ? (ms.length ? ', 가린 말 ' + ms.length + '개 중 <b class="rcopen">0</b>개 봤어요' : ', 이 쪽은 가린 말이 없어요') : '') + '</span>'
+    + (ms.length ? '<button type="button" class="btn sm rcall">전부 보기</button>' : '') + '</div></div>';
+  return {
+    html, steps: 0,
+    after: el => {
+      const box = $('.rcimg', el); if (!box) return;
+      const btns = $$('.rcm', box), all = $('.rcall', el), cnt = $('.rcopen', el);
+      const set = (b, on) => { b.classList.toggle('open', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? b.dataset.t + ', 누르면 다시 가려요' : '가린 말, 누르면 보여요'); };
+      const sync = () => { const n = btns.filter(b => b.classList.contains('open')).length; if (cnt) cnt.textContent = n; if (all) all.textContent = n === btns.length ? '다시 가리기' : '전부 보기'; };
+      box.addEventListener('click', e => { e.stopPropagation(); const b = e.target.closest('.rcm'); if (!b) return; set(b, !b.classList.contains('open')); sync(); });
+      btns.forEach(b => b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }));
+      const bar = $('.rcbar', el); if (bar) bar.addEventListener('click', e => e.stopPropagation());
+      if (all) all.addEventListener('click', e => { e.stopPropagation(); const open = btns.some(b => !b.classList.contains('open')); btns.forEach(b => set(b, open)); sync(); });
+    },
+  };
+}
+/* ---------- (RECALL 블록 끝) ---------- */
 
 /* ---------- 기출 분석, 답안 팁 ---------- */
 function pageStatic(name) {

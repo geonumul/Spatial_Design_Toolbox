@@ -9,6 +9,7 @@
   lesson/<덱>_*.json         회독 레슨 (tools/checkers/lesson_check.py)
   notes/slides_w*.json       정리 슬라이드. 기초 다지기는 slides_wb.json (tools/checkers/slide_check.py)
   bank/*.json                문제은행 JSON 배열 (tools/checkers/bank_check.py)
+  recall/<덱>.json           가리고 설명하기 (tools/recall_build.py 가 만든다, 선택) -> data/recall_<덱>.js
   pages/tips.html, exams.html  답안 팁, 기출 분석 (선택)
   pages/note.html, time.html   정리노트, 연표 (선택, 큰 페이지라 data/page_<이름>.js 로 따로 두고 열 때 읽음.
                                정리노트 항목과 주차 짝은 subject.json 의 noteSections)
@@ -57,6 +58,21 @@ def write(path, text):
 
 def load(path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def pack_recall(src, out, name, deck):
+    """가리고 설명하기 데이터를 사이트용 data/recall_<덱>.js 로. 메타에 넣을 요약을 돌려준다."""
+    if not src.exists():
+        if out.exists():
+            out.unlink()
+        return None
+    r = load(src)
+    pages = [[m[:6] for m in pg["m"]] for pg in r["pages"]]
+    n = [sum(1 for pg in pages for m in pg if m[4] <= lv) for lv in (1, 2, 3)]
+    secs = sum(len(c["items"]) for c in r.get("sections", []))
+    write(out, js_assign(name, deck, {"deck": deck, "ar": r.get("ar", 1.414), "pages": pages, "sections": r.get("sections", [])}))
+    print(f"  가리고 설명하기 {deck}: 칸 {n}, 소단원 {secs}")
+    return {"n": n, "secs": secs}
 
 
 def tid(s):
@@ -129,6 +145,10 @@ def main(slug, skip, home=True):
         elif out.exists():
             out.unlink()
         print(f"  레슨 {deck}: {len(ordered)}/{total}장, 장면 {frames}" + (", PDF 있음" if pdf.exists() else ""))
+        # 1-2) 가리고 설명하기 (tools/recall_build.py 가 만든 work/<slug>/recall/<덱>.json)
+        rinfo = pack_recall(W / "recall" / f"{deck}.json", SITE / "data" / f"recall_{deck}.js", "SDT_RECALL", deck)
+        if rinfo:
+            meta["decks"][deck]["recall"] = rinfo
 
     # 2) 정리 슬라이드, 기초 다지기
     for f in sorted((W / "notes").glob("slides_w*.json")):

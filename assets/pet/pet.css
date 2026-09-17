@@ -166,3 +166,37 @@ body.playing .pet-hud,body.inking .pet-hud,body.paper .pet-hud,body.pet-open .pe
 .wip{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;background:#EEE8F6;color:#8A7AA8;font-size:11px;font-weight:600;opacity:1!important}
 .pet-row.wips{flex-direction:column;gap:0}
 .pet-row.wips .pet-btn.wide{margin-top:8px}
+/* 친구 (pet/ 페이지 #petFriends). 서로 친구 추가한 사람끼리만 데스크톱 펫이 같이 나오고 1:1 채팅 */
+#petFriends:empty{display:none}
+#petFriends .pet-sheet.pf{width:100%;max-height:none;margin-top:16px;border-radius:24px;box-shadow:0 10px 40px rgba(120,80,140,.12);display:flex;flex-direction:column;gap:10px}
+.pf-head b{font-size:19px;font-weight:600}
+.pf-head p{margin:2px 0 0;font-size:13.5px;color:#7A6E8A;word-break:keep-all}
+.pf-empty{margin:4px 2px;font-size:13.5px;color:#9A8FA8;word-break:keep-all}
+.pf-empty .pet-btn{margin-top:8px}
+.pf-code{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:18px;background:#F4F0FF}
+.pf-code span{font-size:13px;color:#7A6E8A}
+.pf-code b{flex:1;font-size:24px;font-weight:700;letter-spacing:3px;font-variant-numeric:tabular-nums;color:#4A3F5C;user-select:all}
+.pf-add{display:flex;gap:8px}
+.pf-add input{flex:1;min-width:0;min-height:42px;border:1.5px solid #F0E3F2;border-radius:999px;padding:6px 16px;font:16px inherit;font-family:inherit;letter-spacing:2px;color:#4A3F5C;background:#fff}
+.pf-add input::placeholder{letter-spacing:0;color:#BDB1C8}
+.pf-add input:focus{outline:none;border-color:#FF9DBB;box-shadow:0 0 0 3px rgba(255,127,166,.15)}
+.pf-add .pet-btn:disabled{opacity:.6;cursor:default}
+.pf-msg{margin:-2px 6px 0;font-size:13px;color:#C8356A;word-break:keep-all}
+.pf-msg.ok{color:#2F9E6B}
+#pfLists h3{margin:12px 4px 6px;font-size:13px;font-weight:600;color:#9A8FA8}
+.pf-row{display:flex;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid #F5ECF3}
+.pf-av{width:42px;height:42px;flex:none;border-radius:50%;background:#FFF0F5;padding:3px}
+.pf-av svg{width:100%;height:100%}
+.pf-col{flex:1;min-width:0;display:flex;flex-direction:column}
+.pf-col b{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-col small{font-size:12.5px;color:#9A8FA8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-row .pet-btn{min-height:34px;padding:5px 12px;font-size:13px;flex:none}
+.pet-btn.warn{background:#E5566D;border-color:#E5566D;color:#fff}
+.pf-wait{font-size:12.5px;color:#9A8FA8}
+@media (max-width:420px){.pf-code b{font-size:21px}.pf-row{flex-wrap:wrap}.pf-row .pf-col{flex-basis:calc(100% - 52px)}.pf-row .pet-btn{margin-left:auto}.pf-row .pet-btn+.pet-btn{margin-left:0}}
+
+.pet-rename{margin-left:2px;padding:2px 8px;border:1px solid #E6DEF0;border-radius:999px;background:#fff;color:#8A7AA8;font:inherit;font-size:12px;cursor:pointer;align-self:center}
+.pet-rename:hover{background:#F6F1FB}
+.pet-rename-form{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 4px 8px}
+.pet-rename-form input{width:9em;max-width:100%;padding:6px 10px;border:1px solid #D9CFE6;border-radius:8px;font:inherit;font-size:16px}
+.pet-rename-form small{color:#9A8FA8;font-size:12px}

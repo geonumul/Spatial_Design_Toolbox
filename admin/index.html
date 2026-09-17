@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>관리자 | TSG</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --primary:#4E3FE5; --primary-soft:#EEEDFF; --accent:#4E3FE5; --accent-ink:#fff;
+  --ink:#1B1B2F; --ink-2:#44445C; --sub:#6B6B84; --line:#E7E6F3; --line-2:#D3D3E3; --bg:#FFFFFF; --soft:#F7F7FC; --surface:#fff;
+  --ok:#1F9D67; --ok-soft:#E6F6EE; --no:#E14B4B; --no-soft:#FDECEC;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--soft);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;font-size:15px;line-height:1.6;word-break:keep-all}
+a{color:var(--primary)}
+header{background:#fff;border-bottom:1px solid var(--line)}
+.hwrap{max-width:1000px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px}
+.brand{font-weight:800;font-size:19px;color:var(--ink);text-decoration:none}
+.hwrap .back{margin-left:auto;font-size:14px;color:var(--sub);text-decoration:none}
+main{max-width:1000px;margin:0 auto;padding:24px 20px 80px}
+h1{font-size:24px;margin:0 0 4px;font-weight:650}
+.lead{margin:0 0 20px;color:var(--sub)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:8px;padding:20px;margin-bottom:16px}
+.panel h2{font-size:18px;margin:0 0 4px;font-weight:600}
+.panel>p{margin:0 0 14px;color:var(--sub);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--sub)}
+input,select{min-height:40px;padding:6px 10px;border:1.5px solid var(--line-2);border-radius:4px;font:inherit;font-size:15px;color:var(--ink);background:#fff}
+input.wide{min-width:260px}
+input.num{width:90px}
+button{min-height:40px;padding:6px 14px;border-radius:4px;border:1.5px solid var(--primary);background:var(--primary);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+button.line{background:#fff;color:var(--primary)}
+button.danger{background:#fff;border-color:var(--no);color:var(--no)}
+button:disabled{opacity:.6;cursor:default}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--sub);font-weight:500;font-size:13px}
+td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4px}
+.tbl{overflow-x:auto}
+.msg{font-size:14px;min-height:1.4em;margin:6px 0 0;color:var(--sub)}
+.msg.ok{color:var(--ok)}.msg.no{color:var(--no)}
+.tag{font-size:12px;border-radius:4px;padding:1px 8px;background:var(--soft);color:var(--sub);white-space:nowrap}
+.tag.on{background:var(--ok-soft);color:var(--ok)}
+.tag.off{background:var(--no-soft);color:var(--no)}
+.who{padding:12px 14px;background:var(--primary-soft);border-radius:6px;margin:10px 0}
+.who b{display:block}
+.pick{cursor:pointer}
+.pick:hover td{background:var(--soft)}
+.uid{font-family:ui-monospace,Consolas,monospace;font-size:13px;word-break:break-all}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="hwrap"><a class="brand" href="../index.html">TSG</a><a class="back" href="../index.html">사이트로 돌아가기</a></div></header>
+<main>
+<h1>관리자</h1>
+<p class="lead">이용권을 주고 회수하고, 이벤트 코드를 만들어요.</p>
+
+<div id="state" class="panel"><p style="margin:0">로그인 정보를 확인하고 있어요.</p></div>
+
+<div id="adminArea" hidden>
+  <section class="panel">
+    <h2>이용권 주기</h2>
+    <p>사이트에 한 번이라도 로그인한 사람만 찾을 수 있어요. 이메일이나 uid 로 찾아요.</p>
+    <form class="row" id="findForm">
+      <label>이메일 또는 uid<input class="wide" name="q" autocomplete="off" required></label>
+      <button type="submit">찾기</button>
+      <button type="button" class="line" id="recentBtn">최근 로그인한 사람</button>
+    </form>
+    <p class="msg" id="findMsg"></p>
+    <div class="tbl" id="findList"></div>
+    <div id="userBox" hidden>
+      <div class="who" id="whoBox"></div>
+      <div class="tbl" id="userPasses"></div>
+      <form class="row" id="grantForm" style="margin-top:12px">
+        <label>종류<select name="kind" data-kind></select></label>
+        <label data-subj>과목<select name="scope" data-subjects></select></label>
+        <label>기간(일)<input class="num" type="number" name="days" min="1" max="400" required></label>
+        <button type="submit">이용권 주기</button>
+      </form>
+      <p class="msg" id="grantMsg"></p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>이벤트 코드 만들기</h2>
+    <p>코드는 추측하기 어렵게 무작위로 만들어 두었어요. 직접 바꿔도 되지만 짧고 쉬운 코드는 다른 사람이 맞힐 수 있어요.</p>
+    <form id="codeForm">
+      <div class="row">
+        <label>코드 (영문 대문자, 숫자 6~32자)<input class="wide" name="code" required pattern="[A-Za-z0-9]{6,32}" autocomplete="off"></label>
+        <button type="button" class="line" id="newCode">다시 만들기</button>
+      </div>
+      <div class="row">
+        <label>종류<select name="kind" data-kind></select></label>
+        <label data-subj>과목<select name="scope" data-subjects></select></label>
+        <label>기간(일)<input class="num" type="number" name="days" min="1" max="400" required></label>
+        <label>쓸 수 있는 인원<input class="num" type="number" name="uses" min="1" value="1" required></label>
+        <label>코드 마감일<input type="date" name="until" required></label>
+      </div>
+      <div class="row">
+        <label>메모 (나만 봐요)<input class="wide" name="note" maxlength="100"></label>
+        <button type="submit">코드 만들기</button>
+      </div>
+    </form>
+    <p class="msg" id="codeMsg"></p>
+  </section>
+
+  <section class="panel">
+    <h2>코드 목록</h2>
+    <p>최근에 만든 100개까지 보여요. 쓴 사람 보기를 누르면 누가 언제 등록했는지 나와요.</p>
+    <div class="row"><button type="button" class="line" id="reloadCodes">새로 읽기</button></div>
+    <div class="tbl" id="codeList"></div>
+    <div id="redBox" hidden style="margin-top:14px">
+      <h2 id="redTitle" style="font-size:16px"></h2>
+      <div class="tbl" id="redList"></div>
+    </div>
+  </section>
+</div>
+</main>
+
+<script src="../assets/firebase-config.js"></script>
+<script src="../assets/sync.js"></script>
+<script src="../assets/access-config.js"></script>
+<script src="../assets/access.js"></script>
+<script>
+(function(){
+  var A = window.SDTAccess, C = window.SDT_ACCESS || {subjects: []}, DAY = 86400000;
+  var KINDS = [["subject", "과목 이용권", 120], ["month", "월간 프리패스", 30], ["year", "연간 프리패스", 365], ["days", "전체 과목 N일", 7]];
+  var built = false, current = null;
+  function $(s){ return document.querySelector(s); }
+  function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function say(el, text, ok){ el.textContent = text; el.className = "msg" + (ok === true ? " ok" : ok === false ? " no" : ""); }
+  function ms(t){ return !t ? 0 : t.toMillis ? t.toMillis() : +t; }
+  function when(t){ var v = ms(t); if(!v) return "-"; var d = new Date(v); return A.fmtDate(v) + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); }
+  function grantText(kind, scope, days){
+    var name = A.passName({kind: kind, scope: scope});
+    return (kind === "days" ? "전체 과목" : name) + ", " + days + "일";
+  }
+  function fail(el, e){ say(el, "안 됐어요. " + (e && e.code === "permission-denied" ? "권한이 없어요. firestore.rules 를 게시했는지 확인해 주세요." : (e && e.message) || ""), false); }
+
+  A.onChange(function(st){
+    var box = $("#state");
+    if(st.error === "sdk" || !(window.SDT && SDT.enabled || window.SDT_ACCESS_TEST)){
+      box.innerHTML = '<p style="margin:0">로그인 기능을 쓸 수 없어요. 인터넷 연결을 확인하고, 사이트 주소(https)로 열어 주세요.</p>'; $("#adminArea").hidden = true; return;
+    }
+    if(!st.user){
+      box.innerHTML = '<p style="margin:0 0 10px">관리자 계정으로 로그인해 주세요.</p><button type="button" id="loginBtn">구글 계정으로 로그인</button>';
+      $("#loginBtn").addEventListener("click", function(){ SDT.login(); });
+      $("#adminArea").hidden = true; return;
+    }
+    if(!st.admin){
+      box.innerHTML = '<p style="margin:0 0 8px">' + esc(st.user.email || "") + ' 계정은 관리자가 아니에요.</p>'
+        + '<p style="margin:0;color:var(--sub);font-size:14px">관리자로 쓰려면 Firebase 콘솔의 Firestore 에서 admins 컬렉션에 아래 uid 를 문서 ID 로 넣어 주세요. 넣은 뒤 새로고침하면 열려요.</p>'
+        + '<p class="uid" style="margin:8px 0 0">' + esc(st.user.uid) + '</p>';
+      $("#adminArea").hidden = true; return;
+    }
+    if(!A.db()){ box.innerHTML = '<p style="margin:0">데이터베이스에 연결하지 못했어요. 새로고침해 주세요.</p>'; $("#adminArea").hidden = true; return; }
+    box.innerHTML = '<p style="margin:0">' + esc(st.user.email || "") + ' 계정으로 관리하고 있어요.</p>';
+    $("#adminArea").hidden = false;
+    if(!built){ built = true; build(); }
+  });
+
+  function db(){ return A.db(); }
+
+  function fillSelects(){
+    document.querySelectorAll("[data-kind]").forEach(function(s){
+      s.innerHTML = KINDS.map(function(k){ return '<option value="' + k[0] + '">' + k[1] + '</option>'; }).join("");
+    });
+    document.querySelectorAll("[data-subjects]").forEach(function(s){
+      s.innerHTML = (C.subjects || []).map(function(x){ return '<option value="' + esc(x.key) + '">' + esc(x.name) + '</option>'; }).join("");
+    });
+    ["#grantForm", "#codeForm"].forEach(function(id){
+      var f = $(id);
+      function sync(){
+        var k = KINDS.filter(function(x){ return x[0] === f.kind.value; })[0];
+        f.querySelector("[data-subj]").hidden = f.kind.value !== "subject";
+        f.days.value = k[2];
+        f.days.readOnly = f.kind.value === "month" || f.kind.value === "year";
+      }
+      f.kind.addEventListener("change", sync); sync();
+    });
+  }
+
+  function randCode(){
+    var abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", a = new Uint32Array(12), s = "";
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    for(var i = 0; i < a.length; i++) s += abc[a[i] % abc.length];
+    return s;
+  }
+
+  function build(){
+    fillSelects();
+    var cf = $("#codeForm");
+    cf.code.value = randCode();
+    var d = new Date(Date.now() + 30 * DAY);
+    cf.until.value = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+    $("#newCode").addEventListener("click", function(){ cf.code.value = randCode(); });
+
+    /* 사람 찾기 */
+    $("#findForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      var q = this.q.value.trim(), msg = $("#findMsg");
+      if(!q) return;
+      say(msg, "찾고 있어요.");
+      var p = q.indexOf("@") > 0
+        ? db().collection("users").where("email", "==", q).limit(10).get().then(function(r){ return r.docs; })
+        : db().collection("users").doc(q).get().then(function(s){ return s.exists ? [s] : []; });
+      p.then(function(docs){ showUsers(docs, docs.length ? "" : "못 찾았어요. 그 계정으로 사이트에 한 번 로그인해야 찾을 수 있어요."); })
+       .catch(function(err){ fail(msg, err); });
+    });
+    $("#recentBtn").addEventListener("click", function(){
+      say($("#findMsg"), "읽고 있어요.");
+      db().collection("users").orderBy("updatedAt", "desc").limit(30).get()
+        .then(function(r){ showUsers(r.docs, r.empty ? "아직 로그인한 사람이 없어요." : ""); })
+        .catch(function(err){ fail($("#findMsg"), err); });
+    });
+    $("#findList").addEventListener("click", function(e){
+      var tr = e.target.closest("[data-uid]"); if(!tr) return;
+      pickUser({uid: tr.getAttribute("data-uid"), email: tr.getAttribute("data-email"), name: tr.getAttribute("data-name")});
+    });
+
+    /* 이용권 주기와 회수 */
+    $("#grantForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      if(!current) return;
+      var f = this, kind = f.kind.value, days = parseInt(f.days.value, 10), scope = kind === "subject" ? f.scope.value : "*", msg = $("#grantMsg");
+      if(!(days > 0 && days <= 400)){ say(msg, "기간은 1일에서 400일 사이로 넣어 주세요.", false); return; }
+      var btn = f.querySelector("button"); btn.disabled = true;
+      db().collection("users").doc(current.uid).collection("passes").add({
+        kind: kind, scope: scope, expiresAt: firebase.firestore.Timestamp.fromMillis(Date.now() + days * DAY),
+        source: "admin", by: SDT.user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(function(){ say(msg, grantText(kind, scope, days) + " 이용권을 줬어요.", true); loadPasses(); })
+        .catch(function(err){ fail(msg, err); })
+        .then(function(){ btn.disabled = false; });
+    });
+    $("#userPasses").addEventListener("click", function(e){
+      var b = e.target.closest("[data-revoke]"); if(!b || !current) return;
+      if(!confirm("이 이용권을 회수할까요? 바로 과목이 잠겨요.")) return;
+      db().collection("users").doc(current.uid).collection("passes").doc(b.getAttribute("data-revoke")).delete()
+        .then(function(){ say($("#grantMsg"), "회수했어요.", true); loadPasses(); })
+        .catch(function(err){ fail($("#grantMsg"), err); });
+    });
+
+    /* 코드 */
+    cf.addEventListener("submit", function(e){
+      e.preventDefault();
+      var id = A.normCode(cf.code.value), msg = $("#codeMsg");
+      var kind = cf.kind.value, days = parseInt(cf.days.value, 10), uses = parseInt(cf.uses.value, 10);
+      var scope = kind === "subject" ? cf.scope.value : "*";
+      var until = new Date(cf.until.value + "T23:59:59");
+      if(!/^[A-Z0-9]{6,32}$/.test(id)){ say(msg, "코드는 영문과 숫자 6~32자로 넣어 주세요.", false); return; }
+      if(!(days > 0 && days <= 400)){ say(msg, "기간은 1일에서 400일 사이로 넣어 주세요.", false); return; }
+      if(!(uses > 0)){ say(msg, "인원은 1명 이상으로 넣어 주세요.", false); return; }
+      if(isNaN(until.getTime()) || until.getTime() <= Date.now()){ say(msg, "코드 마감일은 오늘 이후로 골라 주세요.", false); return; }
+      var ref = db().collection("codes").doc(id), btn = cf.querySelector("button[type=submit]");
+      btn.disabled = true;
+      ref.get().then(function(s){
+        if(s.exists){ say(msg, "이미 있는 코드예요. 다시 만들기를 눌러 주세요.", false); return; }
+        return ref.set({
+          kind: kind, scope: scope, days: days, maxUses: uses, used: 0, active: true,
+          expiresAt: firebase.firestore.Timestamp.fromDate(until), note: cf.note.value.slice(0, 100),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(), createdBy: SDT.user.uid
+        }).then(function(){
+          say(msg, id + " 코드를 만들었어요. " + grantText(kind, scope, days) + ", " + uses + "명까지.", true);
+          cf.code.value = randCode(); cf.note.value = ""; loadCodes();
+        });
+      }).catch(function(err){ fail(msg, err); }).then(function(){ btn.disabled = false; });
+    });
+    $("#reloadCodes").addEventListener("click", loadCodes);
+    $("#codeList").addEventListener("click", function(e){
+      var t = e.target.closest("[data-toggle]"), r = e.target.closest("[data-red]");
+      if(t){
+        db().collection("codes").doc(t.getAttribute("data-toggle")).update({active: t.getAttribute("data-on") !== "1"})
+          .then(loadCodes).catch(function(err){ alert("안 됐어요. " + (err && err.message || "")); });
+      }
+      if(r) loadRedemptions(r.getAttribute("data-red"));
+    });
+    loadCodes();
+  }
+
+  function showUsers(docs, empty){
+    say($("#findMsg"), empty);
+    $("#findList").innerHTML = docs.length ? '<table><tr><th>이름</th><th>이메일</th><th>마지막 로그인</th></tr>' + docs.map(function(s){
+      var u = s.data() || {};
+      return '<tr class="pick" data-uid="' + esc(s.id) + '" data-email="' + esc(u.email) + '" data-name="' + esc(u.name) + '"><td>' + esc(u.name || "-") + '</td><td>' + esc(u.email || "-") + '</td><td>' + when(u.updatedAt) + '</td></tr>';
+    }).join("") + '</table><p class="msg">줄을 누르면 그 사람을 골라요.</p>' : "";
+  }
+
+  function pickUser(u){
+    current = u;
+    $("#userBox").hidden = false;
+    $("#whoBox").innerHTML = '<b>' + esc(u.name || "이름 없음") + ' (' + esc(u.email || "-") + ')</b><span class="uid">' + esc(u.uid) + '</span>';
+    say($("#grantMsg"), "");
+    loadPasses();
+  }
+
+  function loadPasses(){
+    var u = current; if(!u) return;
+    $("#userPasses").innerHTML = '<p class="msg">이용권을 읽고 있어요.</p>';
+    db().collection("users").doc(u.uid).collection("passes").get().then(function(r){
+      if(current !== u) return;
+      var now = Date.now();
+      var rows = r.docs.map(function(s){ var p = s.data(); p.id = s.id; return p; }).sort(function(a, b){ return ms(b.expiresAt) - ms(a.expiresAt); });
+      $("#userPasses").innerHTML = rows.length ? '<table><tr><th>이용권</th><th>끝나는 날</th><th>받은 곳</th><th></th></tr>' + rows.map(function(p){
+        var live = ms(p.expiresAt) > now;
+        return '<tr><td>' + esc(A.passName(p)) + '</td><td>' + when(p.expiresAt) + ' <span class="tag ' + (live ? "on\">쓰는 중" : "off\">끝남") + '</span></td><td>'
+          + (p.source === "code" ? "코드 <code>" + esc(p.code) + "</code>" : "관리자") + '</td><td><button type="button" class="danger" data-revoke="' + esc(p.id) + '">회수</button></td></tr>';
+      }).join("") + '</table>' : '<p class="msg">이용권이 없어요.</p>';
+    }).catch(function(err){ fail($("#grantMsg"), err); });
+  }
+
+  function loadCodes(){
+    $("#codeList").innerHTML = '<p class="msg">읽고 있어요.</p>';
+    db().collection("codes").orderBy("createdAt", "desc").limit(100).get().then(function(r){
+      var now = Date.now();
+      $("#codeList").innerHTML = r.empty ? '<p class="msg">아직 만든 코드가 없어요.</p>' : '<table><tr><th>코드</th><th>주는 것</th><th>쓴 인원</th><th>마감</th><th>상태</th><th>메모</th><th></th></tr>' + r.docs.map(function(s){
+        var c = s.data(), open = c.active && ms(c.expiresAt) > now && c.used < c.maxUses;
+        return '<tr><td><code>' + esc(s.id) + '</code></td><td>' + esc(grantText(c.kind, c.scope, c.days)) + '</td><td>' + (c.used || 0) + ' / ' + c.maxUses + '</td><td>' + when(c.expiresAt) + '</td>'
+          + '<td><span class="tag ' + (open ? 'on">쓸 수 있음' : 'off">' + (!c.active ? "꺼 둠" : ms(c.expiresAt) <= now ? "마감" : "인원 참")) + '</span></td><td>' + esc(c.note || "") + '</td>'
+          + '<td style="white-space:nowrap"><button type="button" class="line" data-red="' + esc(s.id) + '">쓴 사람 보기</button> '
+          + '<button type="button" class="line" data-toggle="' + esc(s.id) + '" data-on="' + (c.active ? "1" : "0") + '">' + (c.active ? "끄기" : "켜기") + '</button></td></tr>';
+      }).join("") + '</table>';
+    }).catch(function(err){ $("#codeList").innerHTML = ""; fail($("#codeMsg"), err); });
+  }
+
+  function loadRedemptions(id){
+    $("#redBox").hidden = false;
+    $("#redTitle").textContent = id + " 코드를 쓴 사람";
+    $("#redList").innerHTML = '<p class="msg">읽고 있어요.</p>';
+    db().collection("codes").doc(id).collection("redemptions").get().then(function(r){
+      var rows = r.docs.map(function(s){ return s.data(); }).sort(function(a, b){ return ms(b.at) - ms(a.at); });
+      $("#redList").innerHTML = rows.length ? '<table><tr><th>이메일</th><th>등록한 때</th><th>uid</th></tr>' + rows.map(function(x){
+        return '<tr><td>' + esc(x.email) + '</td><td>' + when(x.at) + '</td><td class="uid">' + esc(x.uid) + '</td></tr>';
+      }).join("") + '</table>' : '<p class="msg">아직 아무도 안 썼어요.</p>';
+    }).catch(function(err){ $("#redList").innerHTML = ""; fail($("#codeMsg"), err); });
+  }
+})();
+</script>
+</body>
+</html>

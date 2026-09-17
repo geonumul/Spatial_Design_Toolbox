@@ -37,6 +37,10 @@ def main():
     # 사이트 공통 펫 (로그인은 허브의 assets/sync.js)
     page = page.replace('</head>', '<link rel="stylesheet" href="../../assets/pet/pet.css">\n</head>', 1)
     page = page.replace('</body>', '<script src="../../assets/firebase-config.js"></script>\n<script src="../../assets/sync.js"></script>\n<script src="../../assets/pet/pet.js" defer></script>\n</body>', 1)
+    # 이용권 검사: 로그인과 이용권이 없으면 과목 화면을 가린다 (assets/access.js, 설정은 assets/access-config.js)
+    page = page.replace('<script src="../../assets/sync.js"></script>\n',
+                        '<script src="../../assets/sync.js"></script>\n<script src="../../assets/access-config.js"></script>\n'
+                        '<script src="../../assets/access.js" data-gate="subject"></script>\n', 1)
     (DST / "index.html").write_text(page, encoding="utf-8")
     # Colab 링크가 이 저장소(github.io 로 쓰는 곳)의 노트북을 열게
     mj = DST / "data" / "meta.js"

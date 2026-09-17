@@ -2,7 +2,8 @@
    - 처음에 동물을 고르고 이름을 지어 줘요. 퀴즈를 맞히면 간식 돈이 조금씩 모여요(모으기 어렵게).
    - 사료, 간식, 장난감, 옷, 장기(앉아, 손, 빙글빙글, 윙크 애교 ...). 레벨 대신 "친해진 정도"로 자라요.
    - 하트 벌칙(틀리면 하트가 줄고 0이면 새 문제 잠김)은 meta.pet 을 켠 과목(근현대)만.
-   - 로그인하면 presence 를 1분마다 갱신. 데스크톱 펫 프로그램이 이걸 읽어 깨어 있는 펫은 걷고, 아니면 자게 그린다.
+   - 로그인하면 petPresence/{uid} 를 1분마다 갱신. 데스크톱 펫 프로그램은 서로 친구인 사람 것만 읽어 깨어 있는 펫은 걷고, 아니면 자게 그린다.
+   - 내 펫 페이지(pet/)의 "친구" 칸: 친구 코드, 친구 요청, 수락, 끊기. 서로 친구 추가한 사람끼리만 펫이 같이 나오고 1:1 채팅한다.
    저장: localStorage "sdt_pet_v2", 로그인하면 Firebase users/{uid}/stores/pet__state 에도 저장 */
 (function () {
 'use strict';
@@ -209,16 +210,20 @@ function news(title, body, art) {
 function onAnswer(q, ok, info) {
   const s = load(); if (!s.adopted || !q) return;
   info = info || {};
-  const today = dayKey(), u = { coins: 0, heart: 0, love: 0, combo: s.combo };
-  s.daily[today] = (s.daily[today] || 0) + 1;
+  const today = dayKey(), u = { coins: 0, heart: 0, love: 0, combo: s.combo, daily: 0, paid: false };
+  s.paid = s.paid || {}; s.tried = s.tried || {};
+  if (s.tried[q.id] !== today) { s.tried[q.id] = today; s.daily[today] = (s.daily[today] || 0) + 1; u.daily = 1; }
+  // 코인은 퀴즈에서 처음 맞힌 문제에만. 서술형처럼 스스로 채점하거나 '맞은 걸로' 바꾼 답은 코인이 없다
+  const payable = !s.paid[q.id] && !info.self && q.type !== 'essay';
   if (ok) {
     s.combo++;
     const mult = s.combo >= 10 ? 2 : s.combo >= 5 ? 1.5 : 1;
-    let gain = Math.round(RULE.coin * mult);
-    if (info.review) { gain += RULE.reviewBonus; if (s.hearts < RULE.heartsMax) { s.hearts++; u.heart = 1; pop(heartSvg(true) + ' 하트가 돌아왔어요', 'heart'); } }
+    let gain = payable ? Math.round(RULE.coin * mult) : 0;
+    if (payable) { s.paid[q.id] = today; u.paid = true; }
+    if (info.review) { if (payable) gain += RULE.reviewBonus; if (s.hearts < RULE.heartsMax) { s.hearts++; u.heart = 1; pop(heartSvg(true) + ' 하트가 돌아왔어요', 'heart'); } }
     s.coins += gain; u.coins = gain;
     s.love += RULE.love; u.love = RULE.love; s.fun = clamp(s.fun + 2, 0, 100);
-    pop(coinSvg() + ' +' + gain + (mult > 1 ? ' <small>' + s.combo + '연속</small>' : ''), 'coin');
+    if (gain) pop(coinSvg() + ' +' + gain + (mult > 1 ? ' <small>' + s.combo + '연속</small>' : ''), 'coin');
     react('hop');
     if (s.combo === 5) say('다섯 번 연속! 간식 돈이 1.5배예요');
     else if (s.combo === 10) say('열 번 연속! 이제 2배예요');
@@ -240,7 +245,8 @@ function onAnswer(q, ok, info) {
 function onUndo(q, wasOk) {
   const s = load(), u = s.undo[q.id]; if (!u) return;
   s.coins = Math.max(0, s.coins - u.coins); s.hearts = clamp(s.hearts - u.heart, 0, RULE.heartsMax); s.love = Math.max(0, s.love - u.love); s.combo = u.combo;
-  const d = dayKey(); if (s.daily[d]) s.daily[d]--;
+  const d = dayKey(); if (u.daily && s.daily[d]) { s.daily[d]--; if (s.tried) delete s.tried[q.id]; }
+  if (u.paid && s.paid) delete s.paid[q.id];
   if (s.boss && s.boss.active) { if (wasOk) s.boss.right = Math.max(0, s.boss.right - 1); else s.boss.wrong = Math.max(0, s.boss.wrong - 1); }
   delete s.undo[q.id]; save();
 }
@@ -279,7 +285,7 @@ function startBoss(part) {
   location.hash = '#/quiz?week=' + part;
   setTimeout(() => { A.toast('보스전! ' + RULE.bossPass + '개 넘게 맞히면 이겨요'); A.startDeck(list.slice().sort(() => Math.random() - 0.5).slice(0, RULE.bossN), true); }, 120);
 }
-function onRead(id) { const s = load(); if (!s.adopted || !id || s.read[id]) return; s.read[id] = dayKey(); s.coins += 5; s.love += 2; pop(coinSvg() + ' +5 다 읽었어요', 'coin'); save(); }
+function onRead(id) { const s = load(); if (!s.adopted || !id || s.read[id]) return; s.read[id] = dayKey(); s.love += 2; pop(heartSvg(true) + ' 다 읽었어요', 'heart'); save(); }
 
 /* ---------- 돌보기, 옷장 ---------- */
 function feed(id) {
@@ -345,6 +351,7 @@ function adoptView() {
       d.remove(); save(); react('hop'); say('안녕! 나는 ' + s.name + '. 잘 부탁해요');
       const pg = $('#petPage'); if (pg) fillPanel(pg);
       if (window.SDT && SDT.user) startBeat();
+      friendsRender(); friendsLoad(true);
     });
   };
   draw(); document.body.appendChild(d);
@@ -395,7 +402,33 @@ function act(e, p) {
       if (a === 'close') closePanel(); else if (a === 'tab') { tab = v; fillPanel(p); } else if (a === 'feed') feed(v); else if (a === 'wear') wear(v); else if (a === 'boss') startBoss(v); else if (a === 'pet') pet(b);
       else if (a === 'desk') launchDesktop();
       else if (a === 'trick') trick(v);
+      else if (a === 'rename') renameOpen(b);
       else if (a === 'chat') { note(WIP.chat); if (DESKTOP_READY) launchDesktop('&open=chat'); }
+}
+/* 이름 바꾸기: 제목 줄을 입력칸으로 바꾼다. 저장하면 펫 상태, 친구 코드 카드, 화면 펫(presence)에 같이 반영 */
+function renameOpen(btn) {
+  const row = btn.closest('.pet-title'); if (!row || row.querySelector('form')) return;
+  const s = load();
+  const f = document.createElement('form'); f.className = 'pet-rename-form';
+  f.innerHTML = '<input maxlength="8" autocomplete="off" aria-label="새 이름" value="' + esc(s.name || '') + '"><button type="submit" class="pet-btn">저장</button><button type="button" class="pet-btn" data-x>취소</button><small>8글자까지</small>';
+  row.hidden = true; row.after(f);
+  const inp = f.querySelector('input'); inp.focus(); inp.select();
+  const close = () => { f.remove(); row.hidden = false; };
+  f.querySelector('[data-x]').addEventListener('click', e => { e.stopPropagation(); close(); });
+  f.addEventListener('click', e => e.stopPropagation());
+  inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') close(); });
+  f.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = Array.from(inp.value.trim()).slice(0, 8).join('');
+    if (!name) { inp.focus(); return; }
+    const st = load(); if (name === st.name) { close(); return; }
+    st.name = name; save();
+    const db = fs();
+    if (db && window.SDT && SDT.user && FR.code) db.collection('petCodes').doc(FR.code).set({ uid: SDT.user.uid, pet: fcut(name, 8), sp: fsp(st.sp) }).catch(() => {});
+    const p = PAGE() ? $('#petPage') : $('#petPanel'); if (p) fillPanel(p);
+    react('hop'); say('이제 내 이름은 ' + name + '!');
+    if (typeof friendsRender === 'function') try { friendsRender(); } catch (err) { /* 친구 칸 없음 */ }
+  });
 }
 function closePanel() { const p = $('#petPanel'); if (p) p.hidden = true; document.body.classList.remove('pet-open'); }
 function bar(v, cls) { return '<span class="pet-bar ' + cls + '"><i style="width:' + clamp(Math.round(v), 0, 100) + '%"></i></span>'; }
@@ -405,7 +438,7 @@ function fillPanel(p) {
   let h = '<div class="pet-sheet"><div class="pet-head"><div class="pet-tabs">' + [['care', '돌보기'], ['tricks', '장기'], ['closet', '옷장']].map(t => '<button type="button" class="pet-tab' + (tab === t[0] ? ' on' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>').join('') + '</div>' + (PAGE() ? '' : '<button class="pet-x" type="button" data-act="close" aria-label="닫기">닫기</button>') + '</div>';
   if (tab === 'care') {
     h += '<div class="pet-room"><button type="button" class="pet-touch" data-act="pet" aria-label="쓰다듬기">' + spriteHtml(s, 'big walk') + '</button><div class="pet-room-hint">눌러서 쓰다듬기</div></div>'
-      + '<div class="pet-title"><b>' + esc(s.name) + '</b><span>' + esc(SP[s.sp].animal) + ', ' + g.name + '</span><span class="pet-coins">' + coinSvg() + s.coins + '</span></div>'
+      + '<div class="pet-title"><b>' + esc(s.name) + '</b><button type="button" class="pet-rename" data-act="rename" aria-label="이름 바꾸기">이름 바꾸기</button><span>' + esc(SP[s.sp].animal) + ', ' + g.name + '</span><span class="pet-coins">' + coinSvg() + s.coins + '</span></div>'
       + '<div class="pet-meters"><div><span>배부름</span>' + bar(s.food, 'food') + '</div><div><span>기분</span>' + bar(s.fun, 'fun') + '</div>'
       + '<div><span>친해진 정도</span>' + bar(nextG ? (s.love - g.at) / (nextG.at - g.at) * 100 : 100, 'love') + '<small>' + s.love + (nextG ? ', ' + nextG.name + '까지 조금 더' : ', 다 자랐어요') + '</small></div></div>'
       + '<div class="pet-chips"><span>' + [0, 1, 2, 3, 4].map(i => heartSvg(i < s.hearts)).join('') + '</span><span>' + flameSvg() + streakNow(s) + '일째</span><span>오늘 ' + Math.min(today, RULE.goal) + ' / ' + RULE.goal + '문제</span></div>'
@@ -426,28 +459,241 @@ function fillPanel(p) {
       h += '<div class="pet-slot"><span>' + sl[1] + '</span><div class="pet-row">' + WEAR.filter(x => x.slot === sl[0]).map(x => '<button type="button" class="pet-btn' + (s.wear[x.slot] === x.id ? ' on' : '') + '" data-act="wear:' + x.id + '">' + esc(x.name) + (s.owned[x.id] ? '' : ' <small>' + coinSvg() + x.cost + '</small>') + '</button>').join('') + '</div></div>';
     });
   }
-  h += '<div class="pet-row wips"><button type="button" class="pet-btn wide" data-act="desk">노트북 화면에 ' + esc(s.name || '펫') + ' 띄우기' + (DESKTOP_READY ? ' <small class="wip">베타</small>' : ' <small class="wip">작업 중</small>') + '</button><button type="button" class="pet-btn wide" data-act="chat">친구들과 말풍선 채팅 <small class="wip">베타</small></button></div>';
+  h += '<div class="pet-row wips"><button type="button" class="pet-btn wide" data-act="desk">노트북 화면에 ' + esc(s.name || '펫') + ' 띄우기' + (DESKTOP_READY ? ' <small class="wip">베타</small>' : ' <small class="wip">작업 중</small>') + '</button><button type="button" class="pet-btn wide" data-act="chat">친구와 채팅 <small class="wip">베타</small></button></div>';
   p.innerHTML = h + '</div>';
 }
 
 /* ---------- 접속 표시 (데스크톱 펫 프로그램이 읽음) ----------
-   로그인한 사람이 사이트를 열어 두면 1분마다 presence/{uid}.ts 를 갱신한다. 프로그램은 5분 안에 갱신된 펫은 걷게, 아니면 자게 그린다. */
+   로그인한 사람이 사이트를 열어 두면 1분마다 petPresence/{uid}.ts 를 갱신한다. 서로 친구만 읽을 수 있다(firestore.rules).
+   프로그램은 5분 안에 갱신된 펫은 걷게, 아니면 자게 그린다. 예전 plaza/lobby/presence 에는 더 이상 쓰지 않는다. */
 let beatT = null;
 const fs = () => (window.firebase && firebase.firestore) ? firebase.firestore() : null;
 function presenceBeat() {
   const db = fs(), s = load(); if (!db || !(window.SDT && SDT.user) || !s.adopted) return;
   if (document.hidden) return;
-  db.collection('plaza').doc('lobby').collection('presence').doc(SDT.user.uid).set({
-    name: (s.name || '').slice(0, 8), sp: s.sp, wear: s.wear, ts: firebase.firestore.FieldValue.serverTimestamp(),
+  const wear = {}; ['head', 'neck', 'face'].forEach(k => { if (s.wear && typeof s.wear[k] === 'string') wear[k] = s.wear[k].slice(0, 20); });
+  db.collection('petPresence').doc(SDT.user.uid).set({
+    name: Array.from(s.name || '').slice(0, 8).join(''), sp: s.sp, wear, ts: firebase.firestore.FieldValue.serverTimestamp(),
   }).catch(() => { /* 규칙이 아직 없으면 조용히 */ });
 }
 function startBeat() { if (beatT) return; presenceBeat(); beatT = setInterval(presenceBeat, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) presenceBeat(); }); }
+
+/* ---------- 친구 (pet/ 페이지의 "친구" 칸) ----------
+   서로 친구 추가한 사람끼리만 노트북 화면에 펫이 같이 나오고 1:1 로 채팅한다.
+   저장 구조와 권한은 firestore.rules 의 "친구 전용 펫" 블록. 데스크톱 펫 프로그램(src/cloud.js)과 같은 문서를 쓴다. */
+const FCODE_ABC = 'ACDEFGHJKMNPQRTWXY34679';   // 소리 내어 읽기 쉬운 글자만 (0 O 1 I L 2 Z 5 S 8 B U V 없음)
+const FR = { code: '', friends: [], pending: [], requests: [], loaded: false, loading: false, busy: '', msg: '', ok: false, confirm: '', at: 0 };
+const fmtCode = c => (c && c.length === 6 ? c.slice(0, 3) + '-' + c.slice(3) : '');
+const fcut = (v, n) => Array.from(String(v || '')).slice(0, n).join('');
+const fsp = v => (/^[a-z0-9_-]{1,20}$/.test(String(v || '')) ? String(v) : 'cat');
+function fNorm(raw) {
+  const c = String(raw || '').toUpperCase().replace(/[\s-]/g, '');
+  if (c.length !== 6) return { ok: false, why: '친구 코드는 6글자예요' };
+  for (const ch of c) if (!FCODE_ABC.includes(ch)) return { ok: false, why: '코드에 없는 글자가 있어요. 다시 확인해 주세요' };
+  return { ok: true, code: c };
+}
+function fNewCode() {
+  const b = new Uint8Array(6);
+  if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(b); else for (let i = 0; i < 6; i++) b[i] = Math.floor(Math.random() * 256);
+  let s = ''; for (let i = 0; i < 6; i++) s += FCODE_ABC[b[i] % FCODE_ABC.length]; return s;
+}
+const fJosa = (w, a, b) => { const c = String(w || '').slice(-1).charCodeAt(0); return (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28) ? a : b; };
+const fFail = e => (e && e.code === 'permission-denied' ? '권한이 없어요. 새로고침한 뒤 다시 해 주세요' : '잠깐 문제가 생겼어요. 조금 뒤에 다시 해 주세요');
+
+async function friendsEnsureCode(db, me, s) {
+  const mine = await db.collection('petFriends').doc(me).get();
+  const have = mine.exists ? String(mine.data().code || '') : '';
+  if (have && fNorm(have).ok) {
+    const c = await db.collection('petCodes').doc(have).get();
+    if (c.exists && c.data().uid === me) {
+      if (c.data().pet !== fcut(s.name, 8) || c.data().sp !== fsp(s.sp)) await db.collection('petCodes').doc(have).set({ uid: me, pet: fcut(s.name, 8), sp: fsp(s.sp) }).catch(() => {});
+      return have;
+    }
+  }
+  for (let i = 0; i < 6; i++) {
+    const code = fNewCode();
+    const b = db.batch();
+    b.set(db.collection('petCodes').doc(code), { uid: me, pet: fcut(s.name, 8), sp: fsp(s.sp) });
+    b.set(db.collection('petFriends').doc(me), { code });
+    try { await b.commit(); return code; } catch (e) { if (e.code !== 'permission-denied' || i >= 5) throw e; }   // 다른 사람 코드와 겹치면 다시 뽑는다
+  }
+  return '';
+}
+async function friendsLoad(force) {
+  const db = fs(), s = load();
+  if (!db || !(window.SDT && SDT.user) || !s.adopted || FR.loading) return;
+  if (!force && FR.loaded && Date.now() - FR.at < 30000) return;
+  const me = SDT.user.uid;
+  FR.loading = true;
+  try {
+    if (!FR.code) FR.code = await friendsEnsureCode(db, me, s);
+    const root = db.collection('petFriends').doc(me);
+    const [ls, rs] = await Promise.all([root.collection('list').get(), root.collection('requests').get()]);
+    const list = ls.docs.filter(d => d.id !== me).map(d => ({ id: d.id, pet: fcut(d.data().pet, 8) || '친구', sp: fsp(d.data().sp) }));
+    const mutual = await Promise.all(list.map(e => db.collection('petFriends').doc(e.id).collection('list').doc(me).get().then(x => x.exists).catch(() => false)));
+    FR.friends = list.filter((e, i) => mutual[i]);
+    FR.pending = list.filter((e, i) => !mutual[i]);
+    const inList = new Set(list.map(e => e.id));
+    FR.requests = [];
+    rs.docs.forEach(d => {
+      if (d.id === me) return;
+      if (inList.has(d.id)) { d.ref.delete().catch(() => {}); return; }   // 이미 내 목록에 있는 사람의 요청은 치운다
+      const v = d.data();
+      FR.requests.push({ id: d.id, name: fcut(v.name, 60), pet: fcut(v.pet, 8), sp: fsp(v.sp) });
+    });
+    FR.loaded = true; FR.at = Date.now();
+  } catch (e) { FR.msg = fFail(e); FR.ok = false; }
+  FR.loading = false;
+  friendsRender();
+}
+async function friendsAdd(raw) {
+  const db = fs(), s = load();
+  if (!db || !(window.SDT && SDT.user) || FR.busy) return;
+  const me = SDT.user.uid;
+  const say2 = (m, ok) => { FR.busy = ''; FR.msg = m; FR.ok = !!ok; FR.pokeOk = false; friendsRender(); };
+  const n = fNorm(raw);
+  if (!n.ok) { say2(n.why); return; }
+  if (n.code === FR.code) { say2('내 코드예요. 친구의 코드를 넣어 주세요'); return; }
+  FR.busy = 'add'; FR.msg = ''; friendsRender();
+  try {
+    const c = await db.collection('petCodes').doc(n.code).get();
+    if (!c.exists || !c.data().uid) { say2('이 코드를 쓰는 사람이 없어요'); return; }
+    const t = { uid: c.data().uid, pet: fcut(c.data().pet, 8) || '친구', sp: fsp(c.data().sp) };
+    if (t.uid === me) { say2('내 코드예요. 친구의 코드를 넣어 주세요'); return; }
+    if (FR.friends.some(f => f.id === t.uid)) { say2('이미 친구예요'); return; }
+    const req = FR.requests.find(q => q.id === t.uid);
+    if (req) { await friendsAct('accept', t.uid, true); say2(t.pet + fJosa(t.pet, '과', '와') + ' 친구가 됐어요', true); return; }
+    if (FR.pending.some(p => p.id === t.uid)) { say2('이미 요청을 보냈어요. 친구가 수락하면 친구 목록에 나와요'); return; }
+    const TS = firebase.firestore.FieldValue.serverTimestamp();
+    const send = name => {
+      const b = db.batch();
+      b.set(db.collection('petFriends').doc(me).collection('list').doc(t.uid), { pet: t.pet, sp: t.sp, ts: TS });
+      b.set(db.collection('petFriends').doc(t.uid).collection('requests').doc(me), { name, pet: fcut(s.name, 8), sp: fsp(s.sp), code: n.code, ts: TS });
+      return b.commit();
+    };
+    const dn = SDT.user.displayName || '';
+    // 규칙이 이름을 로그인 토큰의 이름과 맞춰 본다. 안 맞으면 이름 없이 보낸다
+    try { await send(Array.from(dn).length <= 60 ? dn : ''); } catch (e) { if (e.code !== 'permission-denied' || !dn) throw e; await send(''); }
+    FR.at = 0;
+    await friendsLoad(true);
+    say2(t.pet + '에게 요청을 보냈어요. 친구가 수락하면 노트북 화면에 펫이 같이 나와요', true);
+  } catch (e) { say2(fFail(e)); }
+}
+async function friendsAct(kind, id, quiet) {
+  const db = fs();
+  if (!db || !(window.SDT && SDT.user) || !id) return;
+  const me = SDT.user.uid, F = db.collection('petFriends');
+  if (!quiet) { FR.busy = id; friendsRender(); }
+  try {
+    const b = db.batch();
+    if (kind === 'accept') {
+      const q = FR.requests.find(x => x.id === id) || { pet: '친구', sp: 'cat' };
+      b.set(F.doc(me).collection('list').doc(id), { pet: fcut(q.pet, 8) || '친구', sp: fsp(q.sp), ts: firebase.firestore.FieldValue.serverTimestamp() });
+      b.delete(F.doc(me).collection('requests').doc(id));
+    } else if (kind === 'decline') {
+      b.delete(F.doc(me).collection('requests').doc(id));
+    } else if (kind === 'remove' || kind === 'cancel') {
+      b.delete(F.doc(me).collection('list').doc(id));
+      b.delete(F.doc(id).collection('list').doc(me));
+      b.delete(F.doc(me).collection('requests').doc(id));
+      b.delete(F.doc(id).collection('requests').doc(me));
+    } else return;
+    await b.commit();
+    if (!quiet) { FR.msg = ''; }
+  } catch (e) { FR.msg = fFail(e); FR.ok = false; }
+  if (!quiet) FR.busy = '';
+  FR.confirm = '';
+  await friendsLoad(true);
+}
+// 콕 찌르기: 친구 알림 문서(petInbox/{친구})의 p_내uid 칸만 지금 시각으로. 규칙이 친구마다 30초에 한 번만 허락한다
+const FPOKE = {};   // 친구 uid -> 마지막으로 찌른 시각 (이 브라우저)
+async function friendsPoke(id) {
+  const db = fs();
+  if (!db || !(window.SDT && SDT.user) || !id) return;
+  const f = FR.friends.find(x => x.id === id); if (!f) return;
+  const left = (FPOKE[id] || 0) + 31000 - Date.now();
+  if (left > 0) { FR.msg = Math.ceil(left / 1000) + '초 뒤에 또 찌를 수 있어요'; FR.ok = false; friendsRender(); return; }
+  FR.busy = id; friendsRender();
+  try {
+    await db.collection('petInbox').doc(id).set({ ['p_' + SDT.user.uid]: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    FPOKE[id] = Date.now();
+    FR.msg = f.pet + fJosa(f.pet, '을', '를') + ' 콕 찔렀어요. 펫 프로그램을 켠 친구에게 알림이 가요'; FR.ok = true; FR.pokeOk = true;
+  } catch (e) {
+    if (e && e.code === 'permission-denied') { FPOKE[id] = Date.now(); FR.msg = '조금 뒤에 또 찌를 수 있어요 (30초에 한 번)'; }
+    else FR.msg = fFail(e);
+    FR.ok = false;
+  }
+  FR.busy = '';
+  friendsRender();
+}
+function friendsRender() {
+  const host = $('#petFriends'); if (!host) return;
+  const s = load();
+  let state = 'ready';
+  if (!(window.SDT && SDT.enabled)) state = 'off';
+  else if (!SDT.user) state = 'login';
+  else if (!s.adopted) state = 'nopet';
+  if (host.dataset.state !== state) {
+    host.dataset.state = state;
+    let h = '<section class="pet-sheet pf"><div class="pf-head"><b>친구</b><p>서로 친구 추가한 사람끼리만 노트북 화면에 펫이 같이 나오고, 둘이서 채팅해요.</p></div>';
+    if (state === 'off') h += '<p class="pf-empty">친구 기능은 사이트 주소(https://geonumul.github.io/Toolbox_Group_Study/)에서 로그인하면 쓸 수 있어요.</p>';
+    else if (state === 'login') h += '<div class="pf-empty"><p>로그인하면 친구 코드를 받고 친구를 추가할 수 있어요.</p><button type="button" class="pet-btn main" data-f="login">로그인</button></div>';
+    else if (state === 'nopet') h += '<p class="pf-empty">펫을 먼저 데려오면 친구를 추가할 수 있어요.</p>';
+    else h += '<div class="pf-code"><span>내 친구 코드</span><b id="pfCode"></b><button type="button" class="pet-btn" data-f="copy">복사</button></div>'
+      + '<form class="pf-add" autocomplete="off"><input id="pfIn" maxlength="7" placeholder="친구 코드 6글자" aria-label="친구 코드" spellcheck="false"><button type="submit" class="pet-btn main" id="pfAddBtn">친구 요청</button></form>'
+      + '<p class="pf-msg" id="pfMsg" hidden></p><div id="pfLists"></div>';
+    host.innerHTML = h + '</section>';
+  }
+  if (state !== 'ready') return;
+  $('#pfCode').textContent = fmtCode(FR.code) || '불러오는 중';
+  $('#pfAddBtn').disabled = FR.busy === 'add';
+  $('#pfAddBtn').textContent = FR.busy === 'add' ? '찾는 중' : '친구 요청';
+  const m = $('#pfMsg'); m.hidden = !FR.msg; m.textContent = FR.msg; m.classList.toggle('ok', FR.ok);
+  if (FR.ok && FR.msg && !FR.pokeOk) $('#pfIn').value = '';   // 콕 찌르기 안내일 때는 쓰던 코드를 지우지 않는다
+  const row = (x, sub, btns) => '<div class="pf-row" data-id="' + esc(x.id) + '"><span class="pf-av">' + petSvg({ sp: x.sp, wear: {} }, { mood: 'happy' }) + '</span><span class="pf-col"><b>' + esc(x.title) + '</b><small>' + esc(sub) + '</small></span>'
+    + (FR.busy === x.id ? '<small class="pf-wait">처리 중</small>' : btns) + '</div>';
+  let h = '';
+  if (!FR.loaded) h = '<p class="pf-empty">친구 목록을 불러오는 중이에요</p>';
+  else {
+    if (FR.requests.length) h += '<h3>받은 친구 요청</h3>' + FR.requests.map(q => row({ id: q.id, sp: q.sp, title: q.name || q.pet || '친구' }, q.name && q.pet ? '펫 ' + q.pet : '친구 하자고 해요',
+      '<button type="button" class="pet-btn main" data-f="accept">수락</button><button type="button" class="pet-btn" data-f="decline">거절</button>')).join('');
+    h += '<h3>친구 ' + FR.friends.length + '명</h3>';
+    h += FR.friends.length ? FR.friends.map(f => row({ id: f.id, sp: f.sp, title: f.pet }, '노트북 화면에 같이 나와요',
+      FR.confirm === f.id ? '<button type="button" class="pet-btn warn" data-f="remove">정말 끊기</button><button type="button" class="pet-btn" data-f="keep">아니요</button>' : '<button type="button" class="pet-btn main" data-f="poke">콕 찌르기</button><button type="button" class="pet-btn" data-f="ask">끊기</button>')).join('')
+      : '<p class="pf-empty">아직 친구가 없어요. 내 코드를 친구에게 알려 주거나 친구 코드를 위에 넣어 보세요.</p>';
+    if (FR.pending.length) h += '<h3>수락 기다리는 중</h3>' + FR.pending.map(p => row({ id: p.id, sp: p.sp, title: p.pet }, '친구가 수락하면 친구 목록으로 옮겨져요', '<button type="button" class="pet-btn" data-f="cancel">요청 취소</button>')).join('');
+  }
+  $('#pfLists').innerHTML = h;
+}
+function friendsBoot() {
+  const host = $('#petFriends'); if (!host) return;
+  host.addEventListener('submit', e => { if (e.target.closest('.pf-add')) { e.preventDefault(); friendsAdd($('#pfIn').value); } });
+  host.addEventListener('input', e => { if (e.target.id === 'pfIn') { const v = e.target.value.toUpperCase(); if (v !== e.target.value) e.target.value = v; if (FR.msg) { FR.msg = ''; $('#pfMsg').hidden = true; } } });
+  host.addEventListener('click', e => {
+    const b = e.target.closest('[data-f]'); if (!b) return;
+    const f = b.dataset.f, r = b.closest('.pf-row'), id = r ? r.dataset.id : '';
+    if (f === 'login') { if (window.SDT) SDT.login(); return; }
+    if (f === 'copy') {
+      const t = fmtCode(FR.code); if (!t) return;
+      const done = () => { b.textContent = '복사했어요'; setTimeout(() => { b.textContent = '복사'; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => {}); else done();
+      return;
+    }
+    if (f === 'poke') { friendsPoke(id); return; }
+    if (f === 'ask') { FR.confirm = id; friendsRender(); return; }
+    if (f === 'keep') { FR.confirm = ''; friendsRender(); return; }
+    if (['accept', 'decline', 'remove', 'cancel'].includes(f)) friendsAct(f, id);
+  });
+  friendsRender();
+  if (window.SDT) SDT.onAuth(u => { FR.code = ''; FR.loaded = false; FR.friends = []; FR.pending = []; FR.requests = []; friendsRender(); if (u) friendsLoad(true); });
+  window.addEventListener('focus', () => friendsLoad(false));
+}
 
 /* ---------- 노트북 화면에 펫 띄우기 (설치한 펫 프로그램을 tsgpet:// 주소로 켜고 끔) ---------- */
 const DESKTOP_READY = true;   // 데스크톱 펫 프로그램을 올리면 true
 const WIP = {
   desk: '노트북 화면 전체에 펫을 띄우는 기능은 지금 만들고 있어요. 다 되면 이 버튼 하나로 켜고 끌 수 있어요.',
-  chat: '채팅은 노트북 화면에 띄운 펫에서 해요. 펫 위 말풍선 버튼을 누르거나 Ctrl+Shift+Space 를 눌러요.',
+  chat: '채팅은 노트북 화면에 띄운 펫에서 친구와 1:1로 해요. 펫 위 말풍선 버튼이나 Ctrl+Shift+Space 로 열어요. 친구 추가는 내 펫 페이지에서 해요.',
 };
 function launchDesktop(extra) {
   if (!DESKTOP_READY) { note(WIP.desk); return; }
@@ -475,8 +721,13 @@ function note(msg, withDownload) {
   d.querySelector('.pet-x').onclick = () => { d.hidden = true; };
   clearTimeout(d._t); d._t = setTimeout(() => { d.hidden = true; }, withDownload ? 12000 : 4000);
 }
+// pet.js 는 늘 저장소의 assets/pet/ 에 있으니, 스크립트 주소를 기준으로 받기 페이지를 찾는다 (pet/, subjects/<과목>/ 어디서 열어도 같은 곳)
 const DOWNLOAD = (function () {
-  const m = location.pathname.match(/^(.*?\/)(subjects\/[^/]+\/)?[^/]*$/);
+  try {
+    const src = (document.currentScript && document.currentScript.src) || [...document.scripts].map(x => x.src).find(x => /assets\/pet\/pet\.js/.test(x));
+    if (src) return new URL('../../desktop-pet/download.html', src).pathname;
+  } catch (e) { /* 아래로 */ }
+  const m = location.pathname.match(/^(.*?\/)(?:subjects\/[^/]+\/|pet\/|admin\/)?[^/]*$/);
   return (m ? m[1] : '/') + 'desktop-pet/download.html';
 })();
 
@@ -491,6 +742,7 @@ function boot() {
   }
   const withPet = !!(window.SDT_META || window.GNN_META) && !pg;   // 과목 페이지면 펫이 같이 다녀요 (허브는 버튼만)
   if (withPet) { document.body.classList.add('pet-on'); hud(); render(); }
+  friendsBoot();
   $$('[data-petlaunch]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); launchDesktop(); }));
   if (window.SDT) SDT.onAuth(u => { if (u) { pullRemote(); startBeat(); } });
   setInterval(() => { tick(load()); if (withPet) render(); }, 60000);
