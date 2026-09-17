@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TSG 펫 프로그램 받기</title>
+<meta name="description" content="내 펫을 노트북 화면 위에 띄워 주는 작은 윈도우 프로그램">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --primary:#4E3FE5; --primary-dark:#3C2FC7; --primary-soft:#EEEDFF;
+  --ink:#1B1B2F; --sub:#6B6B84; --line:#E7E6F3; --bg:#FFFFFF; --soft:#F7F7FC;
+  --warn:#B7791F; --warn-soft:#FFF6E0; --r:6px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;font-size:15.5px;line-height:1.75;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+header{border-bottom:1px solid var(--line)}
+.hwrap{max-width:760px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.4px;text-decoration:none}
+.brand i{width:26px;height:26px;border-radius:4px;background:var(--primary);display:inline-block;position:relative;flex:none}
+.brand i::after{content:"";position:absolute;left:7px;top:7px;width:12px;height:12px;border-radius:50%;background:#fff}
+.back{margin-left:auto;font-size:14px;color:var(--sub);text-decoration:none}
+.back:hover{color:var(--primary)}
+main{max-width:760px;margin:0 auto;padding:40px 24px 64px}
+h1{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1.35;margin:0 0 10px}
+.lead{color:var(--sub);margin:0 0 28px;font-size:16.5px}
+.dl{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding:22px;border:1px solid var(--line);border-radius:var(--r);background:var(--soft)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 22px;border-radius:var(--r);background:var(--primary);color:#fff;font-weight:600;font-size:16px;text-decoration:none}
+.btn:hover{background:var(--primary-dark)}
+.btn svg{width:18px;height:18px}
+.dl small{color:var(--sub);font-size:13.5px}
+h2{font-size:20px;font-weight:600;margin:40px 0 12px}
+ol,ul{margin:0;padding-left:22px}
+li{margin:6px 0}
+.note{margin-top:14px;padding:16px 18px;border-radius:var(--r);background:var(--warn-soft);border:1px solid #F3DFB0}
+.note b{color:var(--warn)}
+.kbd{display:inline-block;padding:0 8px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:#fff;font-size:14px;font-weight:600;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.card b{display:block;font-weight:600;margin-bottom:2px}
+.card span{color:var(--sub);font-size:14.5px}
+footer{color:var(--sub);font-size:13px;margin-top:48px;border-top:1px solid var(--line);padding-top:16px}
+@media (max-width:480px){h1{font-size:25px}.btn{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <a class="brand" href="../index.html"><i></i><span>TSG</span></a>
+    <a class="back" href="../index.html">사이트로 돌아가기</a>
+  </div>
+</header>
+<main>
+  <h1>내 펫을 노트북 화면 위에 띄워요</h1>
+  <p class="lead">사이트에서 키우는 펫이 브라우저 밖으로 나와 화면 아래, 작업 표시줄 위, 열어 둔 창 위를 걸어 다녀요. 공부하는 동안 옆에 두는 작은 친구예요.</p>
+
+  <div class="dl">
+    <a class="btn" href="./TSG-Pet-Setup.exe" download>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>
+      설치 파일 받기
+    </a>
+    <small>윈도우 10, 11 용 (약 95MB). 관리자 권한 없이 내 계정에만 설치돼요.</small>
+  </div>
+
+  <div class="note">
+    <b>파란 경고 창이 떠도 괜찮아요.</b> 이 프로그램은 코드 서명을 하지 않아서 처음 실행할 때 윈도우가
+    "Windows의 PC 보호" 창을 보여 줄 수 있어요. 그럴 때는 <span class="kbd">추가 정보</span> 를 누르고
+    <span class="kbd">실행</span> 을 누르면 설치가 계속돼요.
+  </div>
+
+  <h2>쓰는 법</h2>
+  <ol>
+    <li>받은 <b>TSG-Pet-Setup.exe</b> 를 실행해서 설치해요. 설치가 끝나면 펫이 한 번 나타나요.</li>
+    <li>사이트에서 <span class="kbd">내 펫 화면에 띄우기</span> 버튼을 누르면 펫이 나타나고, 한 번 더 누르면 숨어요.</li>
+    <li>브라우저가 "TSG 펫을 열까요?" 하고 물으면 열기를 눌러 주세요. 항상 허용에 체크하면 다음부터는 안 물어봐요.</li>
+    <li>화면 오른쪽 아래 트레이의 고양이 아이콘에서도 보이기, 숨기기, 끝내기를 할 수 있어요.</li>
+  </ol>
+
+  <h2>펫이랑 놀기</h2>
+  <div class="grid">
+    <div class="card"><b>클릭</b><span>하트가 뿅, 콩 뛰거나 빙글 돌아요</span></div>
+    <div class="card"><b>더블클릭</b><span>그 자리에 앉아서 기다려요</span></div>
+    <div class="card"><b>끌어서 놓기</b><span>살포시 떨어져서 다시 걸어요</span></div>
+    <div class="card"><b>오른쪽 클릭</b><span>채팅, 숨기기, 끝내기</span></div>
+  </div>
+
+  <h2>친구들도 같이 나와요</h2>
+  <ul>
+    <li>사이트에 로그인한 상태로 버튼을 누르면, 지금 사이트에 들어와 있는 친구 펫은 같이 걸어 다니고 나머지 친구 펫은 왼쪽 아래에서 새근새근 자요.</li>
+    <li>오른쪽 클릭의 채팅으로 한마디 남기면 친구들 화면에서 내 펫 위에 말풍선으로 떠요.</li>
+    <li>로그인하지 않으면 내 펫만 나오고 인터넷은 전혀 쓰지 않아요.</li>
+  </ul>
+
+  <h2>지우고 싶을 때</h2>
+  <p>윈도우 설정, 앱, 설치된 앱에서 <b>TSG 펫</b> 을 찾아 제거하면 돼요.</p>
+
+  <footer>맥용은 아직 준비 중이에요.</footer>
+</main>
+</body>
+</html>
