@@ -313,6 +313,8 @@ def main(slug, skip, home=True):
     nav +=[f'<a class="tab" data-nav="w{w["id"]}" href="#/week/{w["id"]}">{html.escape(w["short"])}</a>' for w in weeks]
     nav += ['<a class="tab" data-nav="quiz" href="#/quiz">문제</a>',
             '<a class="tab" data-nav="wrong" href="#/wrong">오답노트 <span id="wrongBadge" class="badge"></span></a>']
+    if any(str(t.get("say") or "").strip() for lst in terms.values() for t in lst):
+        nav.append('<a class="tab" data-nav="game" href="#/game">용어 게임</a>')
     if "exams" in pages:
         nav.append('<a class="tab" data-nav="exams" href="#/exams">기출 분석</a>')
     if "tips" in pages:

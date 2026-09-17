@@ -63,7 +63,7 @@ const store = {};
 function initStore(o) {
   Object.keys(store).forEach(k => { delete store[k]; });
   Object.assign(store, o || {});
-  ['wrong', 'seen', 'lesson', 'units', 'terms', 'pref', 'mockDone', 'notesRead'].forEach(k => { store[k] = store[k] || {}; });
+  ['wrong', 'seen', 'lesson', 'units', 'terms', 'pref', 'mockDone', 'notesRead', 'games'].forEach(k => { store[k] = store[k] || {}; });
   store.extra = store.extra || [];
   store.notebook = store.notebook || { free: 1 };
   if (store.pref.cumulative == null) store.pref.cumulative = false;
@@ -83,7 +83,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) { sav
 
 /* ---------- 동기화 (설정 페이지에서 켬) ---------- */
 let syncReady = false, syncT = null;
-const progressData = () => ({ wrong: store.wrong, seen: store.seen, lesson: store.lesson, units: store.units, terms: store.terms, notebook: store.notebook, mockDone: store.mockDone, notesRead: store.notesRead, days: store.days || {}, pref: store.pref, last: store.last || null });
+const progressData = () => ({ wrong: store.wrong, seen: store.seen, lesson: store.lesson, units: store.units, terms: store.terms, notebook: store.notebook, mockDone: store.mockDone, notesRead: store.notesRead, days: store.days || {}, pref: store.pref, games: store.games, last: store.last || null });
 function syncPushSoon() { const I = INK(); if (!syncReady || !I || !I.Sync.enabled()) return; clearTimeout(syncT); syncT = setTimeout(syncPushNow, 2500); }
 function syncPushNow() { const I = INK(); if (!syncReady || !I || !I.Sync.enabled()) return; clearTimeout(syncT); I.Sync.push('progress', { updated: Date.now(), data: progressData() }); }
 function mergeProgress(d) {
@@ -104,6 +104,7 @@ function mergeProgress(d) {
   Object.keys(d.days || {}).forEach(k => { store.days = store.days || {}; store.days[k] = 1; });
   if (d.pref) Object.keys(d.pref).forEach(k => { if (store.pref[k] == null) store.pref[k] = d.pref[k]; });
   if (!store.last && d.last) store.last = d.last;
+  if (d.games) gMergeGames(d.games);
 }
 async function syncPull(rerender) {
   const I = INK(); if (!I) { syncReady = true; return; }
@@ -215,6 +216,7 @@ const routes = [
   [/^#\/lesson\/([A-Za-z]+\d+)\/([0-9])(?:\/(\d+)(\/all)?)?$/, pageLesson],
   [/^#\/unit\/(w\w+?-\d+)(?:\/(\d+)(\/all)?)?$/, pageUnit],
   [/^#\/terms\/(\w+)$/, pageTerms],
+  [/^#\/game(?:\/(\w+))?(?:\?(.*))?$/, pageGame],   // 용어 게임
   [/^#\/quiz(?:\?(.*))?$/, pageQuiz],
   [/^#\/mock(?:\?(.*))?$/, pageMock],
   [/^#\/wrong$/, pageWrong],
@@ -255,6 +257,7 @@ function setNav(h) {
   else if (/^#\/wrong/.test(h)) key = 'wrong';
   else if (/^#\/notebook/.test(h)) key = 'note';
   else if (/^#\/settings/.test(h)) key = 'set';
+  else if (/^#\/game/.test(h)) key = 'game';
   else if (/^#\/exams/.test(h)) key = 'exams';
   else if (/^#\/tips/.test(h)) key = 'tips';
   else if (/^#\/note(\/|$)/.test(h)) key = 'pnote';
@@ -366,6 +369,7 @@ function pageHome() {
     + (hasLazy('note') ? '<a class="tool" href="#/note"><b>정리노트</b><span>쉬운 설명과 원문, 읽음 ' + nAll.filter(noteRead).length + ' / ' + nAll.length + '</span></a>' : '')
     + (hasLazy('time') ? '<a class="tool" href="#/time"><b>연표</b><span>양식 흐름도와 사건별 연표</span></a>' : '')
     + '<a class="tool" href="#/terms/all"><b>용어 카드</b><span>전 주차 용어 ' + Object.keys(TERM).length + '개' + (dueAll ? ', 오늘 복습 ' + dueAll + '개' : '') + '</span></a>'
+    + (gPool('all').length ? '<a class="tool" href="#/game"><b>용어 게임</b><span>짝 맞추기, 뜻 고르기, 60초 스피드 퀴즈</span></a>' : '')
     + '<a class="tool" href="#/mock"><b>모의고사</b><span>시험지처럼 섞어서</span></a>'
     + '<a class="tool" href="#/wrong"><b>오답노트</b><span>틀린 문제만 다시</span></a>'
     + (PAGES.exams ? '<a class="tool" href="#/exams"><b>기출 분석</b><span>' + esc(META.examsDesc || '시험 모양과 자주 나온 주제') + '</span></a>' : '')
@@ -442,7 +446,7 @@ function pageWeek(week) {
       + (hasLazy('time') ? '<a class="btn" href="#/time">연표</a>' : '') + '</div></div>';
   } else if (!w.exam) h += '<div class="soon">만드는 중이에요.</div>';
   const wt = termsOfWeek(week), known = wt.filter(t => (store.terms[termKey(t)] || {}).known).length;
-  if (wt.length) h += '<div class="termbar"><div><b>용어 카드</b><div class="muted">이 주차 용어 ' + wt.length + '개, 외운 것 ' + known + '개' + (wt.filter(termDue).length ? ', 오늘 복습할 것 ' + wt.filter(termDue).length + '개' : '') + '</div></div><div class="btnrow" style="margin:0"><a class="btn" href="#/terms/' + week + '">카드 넘기기</a><a class="btn" href="#/quiz?week=' + week + '&unit=' + encodeURIComponent('용어') + '&start=1">용어 퀴즈</a></div></div>';
+  if (wt.length) h += '<div class="termbar"><div><b>용어 카드</b><div class="muted">이 주차 용어 ' + wt.length + '개, 외운 것 ' + known + '개' + (wt.filter(termDue).length ? ', 오늘 복습할 것 ' + wt.filter(termDue).length + '개' : '') + '</div></div><div class="btnrow" style="margin:0"><a class="btn" href="#/terms/' + week + '">카드 넘기기</a><a class="btn" href="#/quiz?week=' + week + '&unit=' + encodeURIComponent('용어') + '&start=1">용어 퀴즈</a>' + (gPool(week).length ? '<a class="btn" href="#/game?week=' + week + '">용어 게임</a>' : '') + '</div></div>';
   const sb = weekQuizStat(week, 'basic'), sh = weekQuizStat(week, 'hard');
   if (sb.total || sh.total) {
     h += '<h2 class="sec">문제 풀기</h2><div class="qbtns">'
@@ -1023,6 +1027,420 @@ function pageTerms(week) {
     $('#fAgain').addEventListener('click', () => step(false));
   };
   build(); draw();
+}
+
+/* ---------- 용어 게임 ----------
+   #/game?week=all|<주차>            게임 고르기
+   #/game/<mode>?week=..&only=missed  match 짝 맞추기, pick 이름 보고 뜻, name 뜻 보고 이름 (type=1 직접 쓰기), explain 뜻 설명하기, speed 스피드 퀴즈
+   기록: store.games = { best: { 'mode:범위': { right, n, time, ts } }, missed: { 용어키: { n, ts } }, ts }
+   뜻 설명하기의 자기 평가는 store.terms (용어 카드 복습 날짜)에 들어간다. 펫 코인은 주지 않는다. */
+const GAME_MIN = { match: 3, pick: 4, name: 4, explain: 1, speed: 4 };
+const GAME_ORDER = ['match', 'pick', 'name', 'explain', 'speed'];
+const GAME_ICO = {
+  match: '<rect x="2.5" y="5" width="7.5" height="14" rx="2"/><rect x="14" y="5" width="7.5" height="14" rx="2"/><path d="M10 12h4"/>',
+  pick: '<rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>',
+  name: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/><path d="M8.5 9a2 2 0 1 1 2.6 1.9c-.5.2-.6.5-.6 1v.3"/>',
+  explain: '<path d="M4 5h16v11H10l-4.5 3.5V16H4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+  speed: '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5"/>',
+};
+const GAME_T = { match: '짝 맞추기', pick: '이름 보고 뜻 고르기', name: '뜻 보고 이름 고르기', name1: '뜻 보고 이름 쓰기', explain: '뜻 설명하기', speed: '스피드 퀴즈' };
+const gKey = t => String((t && (t.en || t.ko)) || '').toLowerCase();
+const gFace = t => (t && (t.ko || t.en)) || '';
+const gSub = t => (t && t.ko && t.en && norm(t.ko) !== norm(t.en)) ? t.en : '';
+const gDay = (d0 = new Date()) => d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+const gIco = m => '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + GAME_ICO[m] + '</svg>';
+const gPairs = () => (window.innerWidth || 1024) < 700 ? 6 : 8;
+function gGames() { const g = store.games || (store.games = {}); g.best = g.best || {}; g.missed = g.missed || {}; return g; }
+/* 범위 안에서 뜻이 있는 용어만, 같은 키는 한 번만 */
+function gPool(scope) {
+  const seen = {}, out = [];
+  (termsOfWeek(scope) || []).forEach(t => {
+    const k = gKey(t);
+    if (k.length < 2 || seen[k] || !String(t.say || '').trim()) return;
+    seen[k] = 1; out.push(Object.assign({ week: scope }, t, { _k: k }));
+  });
+  return out;
+}
+function gScopes() { return META.weeks.map(w => [w.id, w.short, gPool(w.id).length]).filter(x => x[2] > 0); }
+function gBetter(key, a, b) {
+  if (!b) return true; if (!a) return false;
+  const m = key.split(':')[0];
+  if (m === 'explain') return (a.ts || 0) > (b.ts || 0);
+  if (m === 'match') return (a.time || 1e9) < (b.time || 1e9);
+  if (m === 'speed') return (a.right || 0) > (b.right || 0);
+  const ra = (a.right || 0) / (a.n || 1), rb = (b.right || 0) / (b.n || 1);
+  return ra > rb || (ra === rb && (a.n || 0) > (b.n || 0));
+}
+function gMergeGames(d) {
+  if (!d) return;
+  const G = gGames();
+  Object.keys(d.best || {}).forEach(k => { if (gBetter(k, d.best[k], G.best[k])) G.best[k] = d.best[k]; });
+  if ((d.ts || 0) > (G.ts || 0)) { G.missed = Object.assign({}, d.missed || {}); G.ts = d.ts; }
+}
+function gBestText(key) {
+  const b = gGames().best[key]; if (!b) return '';
+  const m = key.split(':')[0];
+  if (m === 'match') return '최고 기록 ' + b.time + '초' + (b.miss ? ', 틀린 횟수 ' + b.miss : '');
+  if (m === 'speed') return '최고 기록 60초에 ' + b.right + '개';
+  if (m === 'explain') return '지난번 알았다 ' + b.right + ' / ' + b.n;
+  return '최고 기록 ' + b.right + ' / ' + b.n;
+}
+function gMissSave(t) { const G = gGames(), o = G.missed[t._k] || { n: 0 }; o.n++; o.ts = Date.now(); G.missed[t._k] = o; G.ts = Date.now(); save(); }
+function gHitSave(t) { const G = gGames(); if (G.missed[t._k]) { delete G.missed[t._k]; G.ts = Date.now(); save(); } }
+function gOptions(ans, pool, n) {
+  const used = [norm(ans.say), norm(gFace(ans))], out = [ans];
+  const same = shuffle(pool.filter(x => x.week === ans.week)), other = shuffle(pool.filter(x => x.week !== ans.week));
+  same.concat(other).forEach(x => {
+    if (out.length >= n || x._k === ans._k || used.indexOf(norm(x.say)) >= 0 || used.indexOf(norm(gFace(x))) >= 0) return;
+    out.push(x); used.push(norm(x.say), norm(gFace(x)));
+  });
+  return shuffle(out);
+}
+/* 직접 쓰기 채점: 띄어쓰기, 대소문자, 문장부호 무시. 괄호 안 말, 슬래시로 나눈 말도 정답. 6글자 넘으면 한 글자 오타까지 */
+function gLev(a, b) {
+  if (Math.abs(a.length - b.length) > 1) return 2;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+function gTypeOk(mine, t) {
+  const m = norm(mine); if (!m) return false;
+  const forms = [];
+  [t.ko, t.en].forEach(s => {
+    if (!s) return; s = String(s);
+    forms.push(s, s.replace(/\([^)]*\)/g, ''));
+    (s.match(/\(([^)]*)\)/g) || []).forEach(p => forms.push(p.slice(1, -1)));
+    s.split(/[\/,]/).forEach(p => forms.push(p));
+  });
+  return forms.map(norm).filter(Boolean).some(a => a === m || (a.length >= 6 && gLev(a, m) <= 1));
+}
+let gTimers = [], gCur = null;
+function gStop() { gTimers.forEach(x => { clearTimeout(x); clearInterval(x); }); gTimers = []; gCur = null; keyHandler(null); }
+const gScopeName = s => s === 'all' ? '전체 용어' : weekName(s) + ' 용어';
+
+function pageGame(mode, query) {
+  const q = qs(query);
+  const scope = q.week && q.week !== 'all' && weekOf(q.week) ? q.week : 'all';
+  cleanup = gStop;
+  if (mode && GAME_MIN[mode]) gPlay(mode, scope, q);
+  else gHub(scope);
+}
+function gHub(scope) {
+  gStop();
+  const all = gPool('all'), pool = gPool(scope), G = gGames();
+  const back = scope === 'all' ? '<a class="back" href="#/">홈</a>' : '<a class="back" href="#/week/' + esc(scope) + '">' + esc(weekName(scope)) + '</a>';
+  if (!all.length) { APP().innerHTML = back + '<div class="empty"><b>아직 용어가 없어요</b>용어가 들어오면 여기서 게임을 할 수 있어요.</div>'; return; }
+  const missed = pool.filter(t => G.missed[t._k]);
+  let h = back + '<div class="whead"><div class="eyebrow">용어 게임</div><h1>용어 게임</h1><p>' + esc(gScopeName(scope)) + ' ' + pool.length + '개로 해요. 틀린 용어는 모아 뒀다가 따로 다시 풀 수 있어요.</p></div>';
+  const scopes = gScopes();
+  if (scopes.length > 1) h += '<div class="pillrow gscope"><span class="muted">범위</span><a class="chip' + (scope === 'all' ? ' on' : '') + '" href="#/game?week=all">전체 ' + all.length + '</a>' + scopes.map(x => '<a class="chip' + (scope === x[0] ? ' on' : '') + '" href="#/game?week=' + esc(x[0]) + '">' + esc(x[1]) + ' ' + x[2] + '</a>').join('') + '</div>';
+  if (missed.length) {
+    h += '<div class="gmiss"><div><b>헷갈렸던 용어 ' + missed.length + '개</b><div class="muted">게임에서 틀린 용어예요. 맞히면 목록에서 빠져요.</div></div><div class="btnrow" style="margin:0">'
+      + (pool.length >= GAME_MIN.pick ? '<a class="btn" href="#/game/pick?week=' + esc(scope) + '&only=missed">뜻 고르기로 다시</a>' : '')
+      + '<a class="btn" href="#/game/explain?week=' + esc(scope) + '&only=missed">설명하기로 다시</a><button class="btn sm" id="gClearMiss" type="button">목록 비우기</button></div></div>';
+  }
+  const pairs = Math.min(gPairs(), pool.length), nq = Math.min(10, pool.length);
+  const desc = {
+    match: '용어 하나, 뜻 하나를 눌러 짝을 지어요. 한 판에 ' + pairs + '쌍이고, 빨리 끝낼수록 기록이 좋아요.',
+    pick: '용어를 보고 맞는 뜻을 4개 중에서 골라요. 한 판에 ' + nq + '문제예요.',
+    name: '뜻을 읽고 어떤 용어인지 4개 중에서 골라요. 고르기가 쉬우면 직접 써서 맞혀 봐요.',
+    explain: '용어만 보고 내 말로 먼저 설명해요. 뜻을 확인하고 얼마나 알았는지 고르면 용어 카드 복습에 반영돼요.',
+    speed: '60초 동안 몇 개나 맞히는지 봐요. 용어 보고 뜻, 뜻 보고 용어가 섞여 나와요.',
+  };
+  const shown = GAME_ORDER.filter(m => pool.length >= GAME_MIN[m]);
+  h += '<div class="gmodes">' + shown.map((m, i) => {
+    const bestKey = m + ':' + scope, bt = gBestText(bestKey), bt1 = m === 'name' ? gBestText('name1:' + scope) : '';
+    const href = '#/game/' + m + '?week=' + esc(scope);
+    return '<div class="gmode c' + (GAME_ORDER.indexOf(m) + 1) + '" data-mode="' + m + '"><span class="gico">' + gIco(m) + '</span><b>' + esc(m === 'name' ? '뜻 보고 이름 고르기' : GAME_T[m]) + '</b><p>' + desc[m] + '</p>'
+      + '<span class="gbest' + (bt || bt1 ? ' on' : '') + '">' + esc(bt || (m === 'explain' ? '아직 안 해 봤어요' : '아직 기록이 없어요')) + (bt1 ? '<br>직접 쓰기 ' + esc(bt1) : '') + '</span>'
+      + '<div class="btnrow"><a class="btn primary" href="' + href + '">' + (m === 'name' ? '4개 중 고르기' : '시작') + '</a>' + (m === 'name' ? '<a class="btn" href="' + href + '&type=1">직접 써서 맞히기</a>' : '') + '</div></div>';
+  }).join('') + '</div>';
+  if (!pool.length) h += '<div class="empty"><b>이 범위에는 용어가 없어요</b><a href="#/game?week=all">전체 용어로 하기</a></div>';
+  else if (shown.length < GAME_ORDER.length) h += '<p class="muted gnote">이 범위는 용어가 ' + pool.length + '개뿐이라 몇 가지 게임은 숨겼어요. 범위를 넓히면 다 할 수 있어요.</p>';
+  APP().innerHTML = h;
+  const cm = $('#gClearMiss');
+  if (cm) cm.addEventListener('click', () => { if (!confirm('헷갈렸던 용어 목록을 비울까요?')) return; missed.forEach(t => { delete G.missed[t._k]; }); G.ts = Date.now(); save(); gHub(scope); toast('목록을 비웠어요'); });
+}
+function gPlay(mode, scope, q, list) {
+  gStop();
+  const pool = gPool(scope);
+  const replay = !!list || q.only === 'missed';
+  let terms = list ? list.slice() : q.only === 'missed' ? pool.filter(t => gGames().missed[t._k]) : pool.slice();
+  const typing = mode === 'name' && q.type === '1';
+  const R = { mode, scope, q, pool, terms, replay, typing, miss: [], missK: {}, key: (typing ? 'name1' : mode) + ':' + scope, title: GAME_T[typing ? 'name1' : mode] };
+  gCur = R;
+  if (pool.length < GAME_MIN[mode] || !terms.length) {
+    APP().innerHTML = '<a class="back" href="#/game?week=' + esc(scope) + '">게임 고르기</a><div class="empty"><b>' + (pool.length < GAME_MIN[mode] ? '이 게임을 하기엔 용어가 모자라요' : '다시 풀 용어가 없어요') + '</b>' + (pool.length < GAME_MIN[mode] ? '용어가 ' + GAME_MIN[mode] + '개는 있어야 해요. 지금은 ' + pool.length + '개예요.' : '헷갈렸던 용어를 다 맞혔어요.') + '</div>';
+    return;
+  }
+  ({ match: gMatch, pick: gChoice, name: typing ? gTyping : gChoice, explain: gExplain, speed: gSpeed })[mode](R);
+}
+const gLive = R => gCur === R;
+const gLater = (R, fn, ms) => { gTimers.push(setTimeout(() => { if (gLive(R)) fn(); }, ms)); };
+function gMiss(R, t) { if (!R.missK[t._k]) { R.missK[t._k] = 1; R.miss.push(t); } gMissSave(t); }
+function gHit(R, t) { if (!R.missK[t._k]) gHitSave(t); }
+function gHead(R, stats) {
+  return '<a class="back" href="#/game?week=' + esc(R.scope) + '">게임 고르기</a><div class="gtitle"><div><div class="eyebrow">' + esc(gScopeName(R.scope)) + (R.replay ? ', 헷갈린 것만' : '') + '</div><h1>' + esc(R.title) + '</h1></div><div class="gstats">' + (stats || '') + '</div></div>';
+}
+const gStat = (id, label, v) => '<span class="gstat">' + label + '<b class="num" id="' + id + '">' + v + '</b></span>';
+function gSaveBest(R, rec) {
+  if (R.replay) return { isNew: false, text: '' };
+  const G = gGames(), prev = G.best[R.key]; rec.ts = Date.now();
+  const isNew = R.mode === 'explain' ? false : gBetter(R.key, rec, prev) && !!prev;
+  if (R.mode === 'explain' || gBetter(R.key, rec, prev)) G.best[R.key] = rec;
+  save();
+  return { isNew, first: !prev, text: R.mode === 'explain' ? '' : !prev ? '첫 기록이에요' : isNew ? '' : gBestText(R.key) };
+}
+function gResult(R, o) {
+  gStop(); gCur = R;
+  const miss = R.miss;
+  let h = gHead(R) + '<div class="card result gresult"><div class="big num">' + o.big + '</div><p>' + o.line + '</p>'
+    + (o.best ? '<p class="gbestline">' + o.best + '</p>' : '')
+    + '<div class="btnrow">' + (miss.length ? '<button class="btn primary" id="gReMiss" type="button">헷갈린 ' + miss.length + '개만 다시</button>' : '')
+    + '<button class="btn' + (miss.length ? '' : ' primary') + '" id="gReAll" type="button">한 판 더</button><a class="btn" href="#/game?week=' + esc(R.scope) + '">다른 게임</a></div></div>';
+  if (miss.length) h += '<h2 class="sec">헷갈린 용어 <small>' + miss.length + '개</small></h2><div class="gmisslist">' + miss.map(t => '<div class="gmissitem"><b>' + esc(gFace(t)) + (gSub(t) ? ' <small>' + esc(gSub(t)) + '</small>' : '') + '</b><span>' + fmt(t.say, false) + '</span></div>').join('') + '</div>';
+  else h += '<p class="muted gnote" style="text-align:center">틀린 용어가 없어요.</p>';
+  APP().innerHTML = h; renderMath(APP()); window.scrollTo(0, 0);
+  const again = () => gPlay(R.mode, R.scope, R.q, R.replay && R.q.only !== 'missed' ? R.terms : null);
+  $('#gReAll').addEventListener('click', again);
+  const rm = $('#gReMiss'); if (rm) rm.addEventListener('click', () => gPlay(R.mode, R.scope, R.q, miss.slice()));
+  keyHandler(k => { if (k === 'Enter') again(); });
+}
+
+/* 1. 짝 맞추기 */
+function gMatch(R) {
+  const n = Math.min(gPairs(), R.pool.length), used = {}, set = [];
+  const take = t => { const a = 's' + norm(t.say), b = 'f' + norm(gFace(t)); if (set.length >= n || used[a] || used[b] || set.indexOf(t) >= 0) return; used[a] = used[b] = 1; set.push(t); };
+  shuffle(R.terms.slice()).forEach(take);
+  if (set.length < Math.min(3, n)) shuffle(R.pool.slice()).forEach(t => { if (set.length < Math.min(R.replay ? 3 : n, n)) take(t); });
+  const L = shuffle(set.slice()), M = shuffle(set.slice());
+  const t0 = Date.now();
+  let left = set.length, mistakes = 0, sel = { term: null, mean: null }, busy = false;
+  APP().innerHTML = gHead(R, gStat('gLeft', '남은 짝', left) + gStat('gMist', '틀린 횟수', 0) + gStat('gTime', '시간', '0초'))
+    + '<p class="muted gtip">왼쪽 용어와 오른쪽 뜻을 하나씩 눌러요.</p><div class="gmatch"><div class="gcol">'
+    + L.map(t => '<button class="gtile gterm" data-k="' + esc(t._k) + '" type="button"><b>' + esc(gFace(t)) + '</b>' + (gSub(t) ? '<small>' + esc(gSub(t)) + '</small>' : '') + '</button>').join('')
+    + '</div><div class="gcol">' + M.map(t => '<button class="gtile gmean" data-k="' + esc(t._k) + '" type="button"><span>' + fmt(t.say, false) + '</span></button>').join('') + '</div></div>';
+  renderMath(APP());
+  const byK = {}; set.forEach(t => { byK[t._k] = t; });
+  const secs = () => Math.max(1, Math.round((Date.now() - t0) / 1000));
+  gTimers.push(setInterval(() => { const e = $('#gTime'); if (e && gLive(R)) e.textContent = Math.floor((Date.now() - t0) / 1000) + '초'; }, 250));
+  const tap = b => {
+    if (busy || b.classList.contains('gone')) return;
+    const side = b.classList.contains('gterm') ? 'term' : 'mean';
+    if (sel[side] === b) { b.classList.remove('sel'); sel[side] = null; return; }
+    if (sel[side]) sel[side].classList.remove('sel');
+    sel[side] = b; b.classList.add('sel');
+    if (!sel.term || !sel.mean) return;
+    const a = sel.term, m = sel.mean; sel = { term: null, mean: null };
+    if (a.dataset.k === m.dataset.k) {
+      const t = byK[a.dataset.k]; gHit(R, t);
+      [a, m].forEach(x => { x.classList.remove('sel'); x.classList.add('good'); x.disabled = true; });
+      gLater(R, () => [a, m].forEach(x => x.classList.add('gone')), 260);
+      gLater(R, () => [a, m].forEach(x => x.classList.add('out')), 560);
+      left--; $('#gLeft').textContent = left;
+      if (!left) {
+        const time = secs();
+        gLater(R, () => {
+          const b0 = gSaveBest(R, { right: set.length, n: set.length, time, miss: mistakes });
+          gResult(R, { big: time + '<small>초</small>', line: set.length + '쌍을 ' + (mistakes ? mistakes + '번 틀리고' : '한 번도 안 틀리고') + ' 다 맞혔어요.', best: b0.isNew ? '새 최고 기록이에요' : b0.text });
+        }, 520);
+      }
+    } else {
+      mistakes++; $('#gMist').textContent = mistakes;
+      gMiss(R, byK[a.dataset.k]); gMiss(R, byK[m.dataset.k]);
+      busy = true; [a, m].forEach(x => { x.classList.remove('sel'); x.classList.add('bad'); });
+      gLater(R, () => { [a, m].forEach(x => x.classList.remove('bad')); busy = false; }, 450);
+    }
+  };
+  $$('.gtile').forEach(b => b.addEventListener('click', () => tap(b)));
+}
+
+/* 2, 3. 이름 보고 뜻 고르기, 뜻 보고 이름 고르기 */
+function gChoice(R) {
+  const list = shuffle(R.terms.slice()).slice(0, R.replay ? 20 : 10);
+  const askName = R.mode === 'pick';
+  let i = 0, right = 0;
+  const show = () => {
+    if (!gLive(R)) return;
+    if (i >= list.length) {
+      const b0 = gSaveBest(R, { right, n: list.length });
+      gResult(R, { big: right + '<small> / ' + list.length + '</small>', line: right === list.length ? '다 맞혔어요.' : list.length + '문제 중 ' + right + '문제 맞혔어요.', best: b0.isNew ? '새 최고 기록이에요' : b0.text });
+      return;
+    }
+    const t = list[i], opts = gOptions(t, R.pool, 4);
+    const prompt = askName ? '<div class="gprompt"><b>' + esc(gFace(t)) + '</b>' + (gSub(t) ? '<small>' + esc(gSub(t)) + '</small>' : '') + '</div>' : '<div class="gprompt say">' + fmt(t.say, false) + '</div>';
+    APP().innerHTML = gHead(R, gStat('gRight', '맞힌 개수', right))
+      + '<div class="card gcard"><div class="qmeta"><span>' + (askName ? '이 용어의 뜻은?' : '이 뜻을 가진 용어는?') + '</span><span class="num">' + (i + 1) + ' / ' + list.length + '</span></div><div class="progress"><i style="width:' + Math.round(i / list.length * 100) + '%"></i></div>'
+      + prompt + '<div class="choices">' + opts.map((o, k) => '<button class="ch" data-k="' + esc(o._k) + '" type="button"><b>' + (k + 1) + '</b><span>' + (askName ? fmt(o.say, false) : esc(gFace(o)) + (gSub(o) ? ' <small class="muted">' + esc(gSub(o)) + '</small>' : '')) + '</span></button>').join('') + '</div>'
+      + '<div class="expl" id="gExpl"></div><div class="btnrow" id="gAfter" style="display:none"><button class="btn primary" id="gNext" type="button">' + (i + 1 >= list.length ? '결과 보기' : '다음') + '</button><span class="muted gkeys gkbd">Enter로 넘어가요</span></div></div>';
+    renderMath(APP());
+    let done = false;
+    const pick = b => {
+      if (done) return; done = true;
+      const ok = b.dataset.k === t._k;
+      $$('.ch').forEach(x => { x.disabled = true; if (x.dataset.k === t._k) x.classList.add('correct'); else if (x === b) x.classList.add('wrong'); });
+      if (ok) { right++; gHit(R, t); } else gMiss(R, t);
+      $('#gRight').textContent = right;
+      const e = $('#gExpl'); e.className = 'expl on ' + (ok ? 'good' : 'bad');
+      e.innerHTML = '<span class="lbl">' + (ok ? '맞았어요' : '아쉬워요') + '</span><b>' + esc(gFace(t)) + '</b>' + (gSub(t) ? ' (' + esc(gSub(t)) + ')' : '') + ': ' + fmt(t.say, false) + (t.more ? '<br><span class="muted">' + fmt(t.more, false) + '</span>' : '');
+      renderMath(e); $('#gAfter').style.display = 'flex';
+    };
+    $$('.ch').forEach(b => b.addEventListener('click', () => pick(b)));
+    $('#gNext').addEventListener('click', () => { i++; show(); });
+    keyHandler(k => { if (done) { if (k === 'Enter') { i++; show(); } return; } const n = parseInt(k, 10); const bs = $$('.ch'); if (n >= 1 && n <= bs.length) pick(bs[n - 1]); });
+  };
+  show();
+}
+
+/* 3-1. 뜻 보고 이름 쓰기 */
+function gTyping(R) {
+  const list = shuffle(R.terms.slice()).slice(0, R.replay ? 20 : 10);
+  let i = 0, right = 0;
+  const show = () => {
+    if (!gLive(R)) return;
+    if (i >= list.length) {
+      const b0 = gSaveBest(R, { right, n: list.length });
+      gResult(R, { big: right + '<small> / ' + list.length + '</small>', line: right === list.length ? '다 맞혔어요. 직접 써서 다 맞히다니 대단해요.' : list.length + '문제 중 ' + right + '문제 맞혔어요.', best: b0.isNew ? '새 최고 기록이에요' : b0.text });
+      return;
+    }
+    const t = list[i];
+    APP().innerHTML = gHead(R, gStat('gRight', '맞힌 개수', right))
+      + '<div class="card gcard"><div class="qmeta"><span>이 뜻을 가진 용어를 써요</span><span class="num">' + (i + 1) + ' / ' + list.length + '</span></div><div class="progress"><i style="width:' + Math.round(i / list.length * 100) + '%"></i></div>'
+      + '<div class="gprompt say">' + fmt(t.say, false) + '</div>'
+      + '<input type="text" id="gAns" placeholder="한글이나 영어로 써요" autocomplete="off" autocapitalize="off" spellcheck="false">'
+      + '<div class="muted gkeys" style="margin-top:6px">띄어쓰기와 대소문자는 달라도 괜찮아요.</div>'
+      + '<div class="btnrow" id="gPre"><button class="btn primary" id="gChk" type="button">확인</button><button class="btn" id="gSkip" type="button">모르겠어요</button></div>'
+      + '<div class="expl" id="gExpl"></div><div class="btnrow" id="gAfter" style="display:none"></div></div>';
+    renderMath(APP());
+    const inp = $('#gAns'); try { inp.focus(); } catch (e) { /* 무시 */ }
+    let done = false, verdict = false;
+    const answer = ok => {
+      const e = $('#gExpl'); e.className = 'expl on ' + (ok ? 'good' : 'bad');
+      e.innerHTML = '<span class="lbl">' + (ok ? '맞았어요' : '아쉬워요') + '</span>정답: <b>' + esc(gFace(t)) + '</b>' + (gSub(t) ? ' (' + esc(gSub(t)) + ')' : '') + (t.more ? '<br><span class="muted">' + fmt(t.more, false) + '</span>' : '');
+      renderMath(e);
+      $('#gAfter').innerHTML = (!ok && inp.value.trim() ? '<button class="btn sm" id="gOk" type="button">맞게 쓴 것 같아요</button>' : '') + '<button class="btn primary" id="gNext" type="button">' + (i + 1 >= list.length ? '결과 보기' : '다음') + '</button>';
+      $('#gAfter').style.display = 'flex';
+      $('#gNext').addEventListener('click', () => { i++; show(); });
+      const go = $('#gOk'); if (go) go.addEventListener('click', () => { verdict = true; right++; R.miss = R.miss.filter(x => x !== t); delete R.missK[t._k]; gHitSave(t); $('#gRight').textContent = right; answer(true); toast('맞은 걸로 할게요'); });
+    };
+    const check = skip => {
+      if (done) return; done = true;
+      verdict = !skip && gTypeOk(inp.value, t);
+      inp.disabled = true; $('#gPre').style.display = 'none';
+      if (verdict) { right++; gHit(R, t); } else gMiss(R, t);
+      $('#gRight').textContent = right;
+      answer(verdict);
+    };
+    $('#gChk').addEventListener('click', () => check(false));
+    $('#gSkip').addEventListener('click', () => check(true));
+    keyHandler(k => { if (k !== 'Enter') return; if (!done) check(false); else { i++; show(); } });
+  };
+  show();
+}
+
+/* 4. 뜻 설명하기: 자기 평가를 용어 카드 복습 기록(store.terms)에 넣는다 */
+function gExplain(R) {
+  const today = gDay();
+  const rec = t => store.terms[t._k] || {};
+  const rank = t => { const r = rec(t); return r.seen > 0 && r.due && r.due <= today ? 0 : !r.known ? 1 : 2; };
+  const list = shuffle(R.terms.slice()).sort((a, b) => rank(a) - rank(b)).slice(0, R.replay ? 20 : 10);
+  const cnt = [0, 0, 0];
+  let i = 0;
+  const show = () => {
+    if (!gLive(R)) return;
+    if (i >= list.length) {
+      gSaveBest(R, { right: cnt[2], n: list.length });
+      gResult(R, { big: cnt[2] + '<small> / ' + list.length + '</small>', line: '알았다 ' + cnt[2] + ', 애매했다 ' + cnt[1] + ', 몰랐다 ' + cnt[0] + '. 고른 대로 용어 카드 복습 날짜를 정해 뒀어요.' });
+      return;
+    }
+    const t = list[i];
+    APP().innerHTML = gHead(R, gStat('gDone', '알았다', cnt[2]))
+      + '<div class="card gcard"><div class="qmeta"><span>이 용어를 내 말로 설명해요</span><span class="num">' + (i + 1) + ' / ' + list.length + '</span></div><div class="progress"><i style="width:' + Math.round(i / list.length * 100) + '%"></i></div>'
+      + '<div class="gprompt"><b>' + esc(gFace(t)) + '</b>' + (gSub(t) ? '<small>' + esc(gSub(t)) + '</small>' : '') + '</div>'
+      + '<textarea id="gMine" rows="3" placeholder="써도 되고 소리 내어 말해도 돼요"></textarea>'
+      + '<div class="btnrow" id="gPre"><button class="btn primary" id="gReveal" type="button">뜻 보기</button></div>'
+      + '<div id="gAfter" style="display:none"><div class="gmodel"><span class="eyebrow">뜻</span><div class="gsay">' + fmt(t.say, false) + '</div>' + (t.more ? '<div class="muted gmore">' + fmt(t.more, false) + '</div>' : '') + '<div class="gmine" id="gMineShow" hidden></div></div>'
+      + '<p class="muted gkeys" style="margin:14px 0 0">얼마나 알았나요?<span class="gkbd"> 숫자 키 1, 2, 3으로 골라도 돼요.</span></p><div class="grate"><button class="r2" data-r="2" type="button"><b>1</b>알았다</button><button class="r1" data-r="1" type="button"><b>2</b>애매했다</button><button class="r0" data-r="0" type="button"><b>3</b>몰랐다</button></div></div></div>';
+    renderMath(APP());
+    let open = false;
+    const reveal = () => {
+      if (open) return; open = true;
+      const mine = $('#gMine').value.trim(); $('#gMine').disabled = true; $('#gMine').hidden = true;
+      if (mine) { const m = $('#gMineShow'); m.hidden = false; m.innerHTML = '<span class="eyebrow">내 설명</span><div>' + esc(mine) + '</div>'; }
+      $('#gPre').style.display = 'none'; $('#gAfter').style.display = 'block';
+      const k = t._k, r = store.terms[k] || (store.terms[k] = { seen: 0 }); r.seen = (r.seen || 0) + 1; save();
+    };
+    const rate = v => {
+      if (!open) return;
+      const r = store.terms[t._k] || (store.terms[t._k] = { seen: 1 });
+      let days = 0;
+      if (v === 2) { r.known = true; r.box = Math.min(5, (r.box || 0) + 1); days = [1, 2, 4, 7, 15][r.box - 1]; gHit(R, t); }
+      else if (v === 1) { r.known = false; r.box = 1; days = 1; gMiss(R, t); }
+      else { r.known = false; r.box = 1; days = 0; gMiss(R, t); }
+      const dd = new Date(); dd.setDate(dd.getDate() + days); r.due = gDay(dd);
+      cnt[v]++; save(); i++; show();
+    };
+    $('#gReveal').addEventListener('click', reveal);
+    $$('.grate button').forEach(b => b.addEventListener('click', () => rate(+b.dataset.r)));
+    keyHandler(k => { if (!open) { if (k === 'Enter') reveal(); return; } if (k === '1') rate(2); else if (k === '2') rate(1); else if (k === '3') rate(0); });
+  };
+  show();
+}
+
+/* 5. 스피드 퀴즈: 60초 */
+function gSpeed(R) {
+  const DUR = 60000;
+  APP().innerHTML = gHead(R) + '<div class="card gcard gready"><div class="gprompt"><b>60초</b><small>시작을 누르면 바로 시간이 흘러요</small></div><p>용어 보고 뜻, 뜻 보고 용어가 섞여 나와요. 틀려도 점수는 안 깎여요.<span class="gkbd"> 숫자 키 1~4로 골라도 돼요.</span></p>'
+    + (gBestText(R.key) && !R.replay ? '<p class="gbestline">' + esc(gBestText(R.key)) + '</p>' : '') + '<div class="btnrow" style="justify-content:center"><button class="btn primary" id="gGo" type="button">시작</button></div></div>';
+  let started = false;
+  const start = () => {
+    if (!gLive(R) || started) return; started = true;
+    const end = Date.now() + DUR;
+    let right = 0, tried = 0, prev = null, lock = false, over = false;
+    APP().innerHTML = gHead(R, gStat('gSec', '남은 시간', '60초') + gStat('gRight', '맞힌 개수', 0))
+      + '<div class="gclock" id="gClock"><i style="width:100%"></i></div><div class="card gcard" id="gQ"></div>';
+    const finish = () => {
+      if (over) return; over = true;
+      const b0 = gSaveBest(R, { right, n: tried });
+      gResult(R, { big: right + '<small>개</small>', line: '60초 동안 ' + tried + '문제를 풀고 ' + right + '개 맞혔어요.', best: b0.isNew ? '새 최고 기록이에요' : b0.text });
+    };
+    const tick = () => {
+      if (!gLive(R) || over) return;
+      const rem = end - Date.now();
+      if (rem <= 0) { finish(); return; }
+      const c = $('#gClock'); if (c) { c.firstChild.style.width = (rem / DUR * 100).toFixed(1) + '%'; c.classList.toggle('low', rem < 10000); }
+      const s = $('#gSec'); if (s) s.textContent = Math.ceil(rem / 1000) + '초';
+    };
+    const next = () => {
+      if (!gLive(R) || over) return;
+      if (end - Date.now() <= 0) { finish(); return; }
+      let t = R.terms[Math.floor(Math.random() * R.terms.length)];
+      if (R.terms.length > 1) { let g = 0; while (t === prev && g++ < 8) t = R.terms[Math.floor(Math.random() * R.terms.length)]; }
+      prev = t; lock = false;
+      const askName = Math.random() < 0.5, opts = gOptions(t, R.pool, 4);
+      $('#gQ').innerHTML = (askName ? '<div class="gprompt sm"><b>' + esc(gFace(t)) + '</b>' + (gSub(t) ? '<small>' + esc(gSub(t)) + '</small>' : '') + '</div>' : '<div class="gprompt say sm">' + fmt(t.say, false) + '</div>')
+        + '<div class="choices">' + opts.map((o, k) => '<button class="ch" data-k="' + esc(o._k) + '" type="button"><b>' + (k + 1) + '</b><span>' + (askName ? fmt(o.say, false) : esc(gFace(o))) + '</span></button>').join('') + '</div>';
+      renderMath($('#gQ'));
+      const pick = b => {
+        if (lock || over) return; lock = true; tried++;
+        const ok = b.dataset.k === t._k;
+        $$('#gQ .ch').forEach(x => { x.disabled = true; if (x.dataset.k === t._k) x.classList.add('correct'); else if (x === b) x.classList.add('wrong'); });
+        if (ok) { right++; gHit(R, t); } else gMiss(R, t);
+        $('#gRight').textContent = right;
+        gLater(R, next, ok ? 280 : 700);
+      };
+      $$('#gQ .ch').forEach(b => b.addEventListener('click', () => pick(b)));
+      keyHandler(k => { const n = parseInt(k, 10), bs = $$('#gQ .ch'); if (n >= 1 && n <= bs.length) pick(bs[n - 1]); });
+    };
+    gTimers.push(setInterval(tick, 100));
+    next();
+  };
+  $('#gGo').addEventListener('click', start);
+  keyHandler(k => { if (k === 'Enter') start(); });
 }
 
 /* ---------- 필기 노트 ---------- */
