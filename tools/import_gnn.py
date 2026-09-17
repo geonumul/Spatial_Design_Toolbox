@@ -32,8 +32,8 @@ def main():
         shutil.copytree(s, d)
     page = (SRC / "index.html").read_text(encoding="utf-8")
     # 과목 목록(허브)으로 돌아가는 탭
-    page = page.replace('<nav id="nav" aria-label="주요 메뉴">',
-                        '<nav id="nav" aria-label="주요 메뉴">\n      <a class="tab" href="../../index.html">과목</a>', 1)
+    page = page.replace('<a class="brand" href="#/"',
+                        '<a class="hubback" href="../../index.html" aria-label="전체 과목으로">전체 과목</a>\n    <a class="brand" href="#/"', 1)
     (DST / "index.html").write_text(page, encoding="utf-8")
 
     meta = load_js(SRC / "data" / "meta.js", "GNN_META")

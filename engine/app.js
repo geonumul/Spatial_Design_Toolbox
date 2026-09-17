@@ -1417,6 +1417,8 @@ $('#topBtn').addEventListener('click', () => window.scrollTo({ top: 0, behavior:
 window.addEventListener('scroll', () => { $('#hdr').classList.toggle('scrolled', window.scrollY > 8); }, { passive: true });
 window.addEventListener('hashchange', route);
 applyPref();
+/* 메뉴 줄: 마우스 휠을 옆으로 스크롤로 */
+(function () { const nv = document.getElementById('nav'); if (!nv) return; nv.addEventListener('wheel', e => { if (nv.scrollWidth > nv.clientWidth + 2 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) { nv.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false }); })();
 route();
 if (window.SDT) window.SDT.onAuth(onAuth); else syncReady = true;
 })();

@@ -215,7 +215,7 @@ def main(slug, skip, home=True):
     write(SITE / "data" / "pages.js", js_assign("SDT_PAGES", None, pages))
 
     # 5) 껍데기
-    nav = ['<a class="tab" href="../../index.html">과목</a>', '<a class="tab" data-nav="home" href="#/">홈</a>']
+    nav = ['<a class="tab" data-nav="home" href="#/">홈</a>']
     nav += [f'<a class="tab" data-nav="w{w["id"]}" href="#/week/{w["id"]}">{html.escape(w["short"])}</a>' for w in weeks]
     nav += ['<a class="tab" data-nav="quiz" href="#/quiz">문제</a>',
             '<a class="tab" data-nav="wrong" href="#/wrong">오답노트 <span id="wrongBadge" class="badge"></span></a>',
@@ -229,7 +229,7 @@ def main(slug, skip, home=True):
     page = ((ENGINE / "index.html").read_text(encoding="utf-8")
             .replace("__VER__", ver).replace("__TITLE__", html.escape(name + " 회독 스터디"))
             .replace("__BRAND__", html.escape(cfg.get("brand") or name))
-            .replace("__LOGO__", LOGOS.get(slug, DEFAULT_LOGO))
+            .replace("__LOGO__", "" if slug in ("eco-architecture", "modern-space-design") else LOGOS.get(slug, DEFAULT_LOGO))
             .replace("__DESC__", html.escape(name + ": 강의 회독, 정리 슬라이드, 용어 카드, 필기, 문제은행"))
             .replace("__NAV__", "\n".join("      " + x for x in nav)))
     write(SITE / "index.html", page)
