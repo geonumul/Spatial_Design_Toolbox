@@ -2104,6 +2104,7 @@ function pageStatic(name) {
   APP().innerHTML = '<div class="wrap" id="' + name + '">' + html + '</div>';
   renderMath(APP());
   countTerms(APP());
+  if (window.SDTViz) window.SDTViz.embedAll(APP(), { fmt: s => fmt(s, false), renderMath });   /* 페이지 속 움직이는 그림 (engine/viz/README.md) */
 }
 
 /* ---------- 정리노트, 연표 (meta.lazyPages 에 있을 때만. data/page_<이름>.js 를 그 화면을 열 때 읽는다) ---------- */
@@ -2163,6 +2164,7 @@ function buildNote(html) {
     + '<nav id="toc" aria-label="정리노트 목차"><span class="lbl">목차</span>' + toc + '</nav>'
     + '<div class="onlybar"><button class="btn sm" type="button" data-only="prev">이전</button><b class="onlyname"></b><button class="btn sm" type="button" data-only="next">다음</button><button class="btn sm" type="button" data-only="all">전체 보기</button></div>';
   root.insertBefore(head, root.firstChild);
+  if (window.SDTViz) window.SDTViz.embedAll(root, { fmt: s => fmt(s, false), renderMath });   /* 정리노트 속 움직이는 그림: build_site.py 가 pages/viz_note.json 자리에 넣은 .vz-embed */
   root.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || !root.contains(b)) return;
     if (b.dataset.nmode) { store.pref.noteView = b.dataset.nmode; save(); noteSync(root); }

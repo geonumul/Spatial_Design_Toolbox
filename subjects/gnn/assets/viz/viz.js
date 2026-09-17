@@ -117,8 +117,19 @@
 .vz-seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
 .vz-note{font-size:14.5px;color:var(--sub);margin:0}
 .vz-miss{padding:18px;color:var(--sub)}
+.vz-embed{margin:18px 0 22px;padding:16px 18px;border:1px solid var(--line);border-radius:var(--r-lg,8px);background:var(--stage-bg,var(--surface));box-shadow:var(--shadow)}
+.vz-embed .vz .sh{font-size:21px}
+.vz-embed .vz-btn:disabled{opacity:.45;cursor:default}
+.vz-check{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.vz-check .vz-q{font-size:17px;margin:6px 0 10px;font-weight:550}
+.vz-choices{display:flex;flex-direction:column;gap:8px}
+.vz-choices .vz-btn{text-align:left;font-weight:450}
+.vz-choices .vz-btn.correct{border-color:var(--ok);background:var(--ok-soft);opacity:1}
+.vz-choices .vz-btn.wrong{border-color:var(--no);background:var(--no-soft);opacity:1}
+.vz-why{margin:10px 0 0;font-size:15.5px;line-height:1.6}
 @media (max-width:640px){
   #pslide:has(.vz){padding:14px 10px 16px}
+  .vz-embed{padding:12px 10px;margin:14px -4px 18px}
   .vz .sh{font-size:19px}
   .vz-cap{font-size:16px;padding:8px 11px}
   .vz-svg{max-height:none;font-size:17.5px}
@@ -175,6 +186,7 @@
 .vz-svg .vz-dot.tl{fill:var(--teal)}
 .vz-svg .vz-dot.cr{fill:var(--coral)}
 .vz-svg .vz-dot.am{fill:var(--amber)}
+.vz-svg .vz-dot.mu{fill:var(--line-2)}
 .vz-svg .vz-hl{fill:none;stroke:var(--coral);stroke-width:3}
 .vz-svg .vz-hl.on{stroke:var(--accent)}
 .vz-svg .vz-bar{fill:var(--accent)}
@@ -223,7 +235,8 @@
       + '<div class="vz-top"><span class="sk">움직이는 그림</span></div>' + head
       + '<div class="vz-stage"><svg class="vz-svg" xmlns="' + NS + '" role="img" aria-label="' + escH(f.alt || f.head || def.title || '') + '"></svg></div>'
       + '<div class="vz-caps" aria-live="polite">' + caps.map((c, i) => S(i, c, 'div', 'vz-cap')).join('') + '</div>'
-      + '<div class="vz-bar"><button type="button" class="vz-btn vz-play" aria-label="처음부터 끝까지 움직이기">▶ 재생</button><button type="button" class="vz-btn vz-reset">처음부터</button><span class="vz-n-of"></span>' + ctls + '</div>'
+      + '<div class="vz-bar">' + (h && h.nav ? '<button type="button" class="vz-btn vz-prev" aria-label="이전 단계">이전</button><button type="button" class="vz-btn vz-next" aria-label="다음 단계">다음</button>' : '')
+      + '<button type="button" class="vz-btn vz-play" aria-label="처음부터 끝까지 움직이기">▶ 재생</button><button type="button" class="vz-btn vz-reset">처음부터</button><span class="vz-n-of"></span>' + ctls + '</div>'
       + (f.caption ? '<p class="vz-note">' + fmt(f.caption) + '</p>' : '')
       + '</div>';
     let inst = null;
@@ -245,7 +258,7 @@
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     const user = {};   // 사용자가 바꾼 조절값
     const ctx = { svg, W, H, u: U, p: {}, t: 0, root, f, reduced: reduced() || !!SDTViz.instant };
-    let cur = -1, anim = null, raf = 0, t0 = 0, playing = false, playT = 0, expect = null, dead = false;
+    let cur = -1, anim = null, raf = 0, t0 = 0, playing = false, playT = 0, expect = null;
     const setKeys = new Set();
     statesOf(def, base).forEach(x => Object.keys(x.set || {}).forEach(k => setKeys.add(k)));
     const params = s => { const st = statesOf(def, Object.assign({}, base, user)); return Object.assign({}, base, (st[s] || {}).set || {}, user); };
@@ -268,7 +281,7 @@
     const live = () => !!def.live && !ctx.reduced && !SDTViz.freeze;
     const loop = now => {
       raf = 0;
-      if (dead || !root.isConnected) { stop(); dead = true; return; }
+      if (!root.isConnected) { if (anim) { anim = null; paint(1); } stop(); return; }   // 화면에서 떼어졌으면 끝 모습으로 두고 멈춤 (다시 붙이면 다음 단계부터 또 움직임)
       if (!t0) t0 = now;
       if (def.live && !SDTViz.freeze) ctx.t = (now - t0) / 1000;
       if (anim) {
@@ -308,7 +321,7 @@
     const go = s => { expect = s; if (h.go) h.go(s); else show(s, true); expect = null; };
     function playNext() {
       if (!playing) return;
-      if (dead || !root.isConnected) { stop(); return; }
+      if (!root.isConnected) { stop(); return; }
       if (cur >= n - 1) { stop(); return; }
       go(cur + 1);
       const cap = (root.querySelectorAll('.vz-cap')[cur] || {}).textContent || '';
@@ -348,7 +361,54 @@
     return inst;
   }
 
+  /* ---------- 플레이어 밖에 끼워 넣기 (정리노트 같은 긴 페이지) ----------
+     <div class="vz-embed" data-vp="자리 이름" data-frame='{"kind":"viz","viz":"...","head":"...","check":{q,choices,a,why}}'></div>
+     엔진이 페이지를 그린 뒤 SDTViz.embedAll(root, {fmt, renderMath}) 를 부른다. 이전/다음 단추로 단계를 넘긴다. */
+  function embed(el, h) {
+    if (el._vzDone) return el._vzDone;
+    let f;
+    try { f = JSON.parse(el.getAttribute('data-frame') || '{}'); } catch (e) { return null; }
+    const fmt = (h && h.fmt) || escH;
+    let cur = 0, r = null;
+    const apply = () => {
+      el.querySelectorAll('.vz-caps [data-s]').forEach(e => e.classList.toggle('hide', +e.dataset.s > cur));
+      r.onStep(cur);
+      const p = el.querySelector('.vz-prev'), nx = el.querySelector('.vz-next');
+      if (p) p.disabled = cur <= 0;
+      if (nx) nx.disabled = cur >= r.steps;
+    };
+    const go = n => { cur = clamp(n | 0, 0, r.steps); apply(); };
+    r = frame(f, { fmt, renderMath: h && h.renderMath, nav: true, go });
+    let chk = '';
+    const c = f.check;
+    if (c && Array.isArray(c.choices)) {
+      chk = '<div class="vz-check"><div class="sk">확인 퀴즈</div><p class="vz-q">' + fmt(c.q) + '</p><div class="vz-choices">'
+        + c.choices.map((x, i) => '<button type="button" class="vz-btn" data-i="' + i + '">' + fmt(x) + '</button>').join('') + '</div><p class="vz-why" hidden></p></div>';
+    }
+    el.innerHTML = r.html + chk;
+    if (r.after) r.after(el);
+    const p = el.querySelector('.vz-prev'), nx = el.querySelector('.vz-next');
+    if (p) p.addEventListener('click', () => go(cur - 1));
+    if (nx) nx.addEventListener('click', () => go(cur + 1));
+    el.querySelectorAll('.vz-choices button').forEach(b => b.addEventListener('click', () => {
+      if (el.querySelector('.vz-choices button[disabled]')) return;
+      const ok = +b.dataset.i === c.a;
+      el.querySelectorAll('.vz-choices button').forEach(x => { x.disabled = true; if (+x.dataset.i === c.a) x.classList.add('correct'); else if (x === b) x.classList.add('wrong'); });
+      const w = el.querySelector('.vz-why'); w.hidden = false; w.innerHTML = '<b>' + (ok ? '맞아요. ' : '아쉬워요. ') + '</b>' + fmt(c.why || '');
+      if (h && h.renderMath) h.renderMath(w);
+    }));
+    apply();
+    el._vzDone = { go, state: () => cur, steps: r.steps };
+    return el._vzDone;
+  }
+  function embedAll(root, h) {
+    injectCss();
+    return Array.from((root || document).querySelectorAll('.vz-embed')).map(el => embed(el, h)).filter(Boolean);
+  }
+
   window.SDTViz = {
+    embed,
+    embedAll,
     add(name, def) { REG[name] = def; return def; },
     has: name => !!REG[name],
     get: name => REG[name],

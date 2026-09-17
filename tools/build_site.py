@@ -126,11 +126,24 @@ def tid(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:40] or hashlib.md5(s.encode()).hexdigest()[:8]
 
 
+def viz_page(W, name, text):
+    """pages/viz_<이름>.json 이 있으면 그 자리에 움직이는 그림(.vz-embed)을 넣는다. 원본 pages/<이름>.html 은 그대로 둔다"""
+    spec = W / "pages" / f"viz_{name}.json"
+    if not spec.exists():
+        return text
+    sys.path.insert(0, str(ROOT / "tools"))
+    sys.dont_write_bytecode = True   # tools/__pycache__ 를 남기지 않음
+    import viz_tool
+    text, n = viz_tool.inject_page(text, spec)
+    print(f"  {name} 페이지 움직이는 그림 {n}개")
+    return text
+
+
 def viz_tags(W, ver):
     """움직이는 그림(kind "viz")을 쓰는 과목이면 engine/viz/viz.js 와 쓰는 묶음(<묶음>.js)만 넣는다.
     그림 이름은 "<묶음>.<이름>" (예: iot.packet 이면 engine/viz/iot.js). 설명은 engine/viz/README.md"""
     packs = set()
-    for f in list((W / "notes").glob("*.json")) + list((W / "lesson").glob("*.json")):
+    for f in list((W / "notes").glob("*.json")) + list((W / "lesson").glob("*.json")) + list((W / "pages").glob("viz_*.json")):
         raw = f.read_text(encoding="utf-8")
         if '"viz"' not in raw:
             continue
@@ -317,14 +330,14 @@ def main(slug, skip, home=True):
     for name in ("tips", "exams"):
         p = W / "pages" / f"{name}.html"
         if p.exists():
-            pages[name] = p.read_text(encoding="utf-8")
+            pages[name] = viz_page(W, name, p.read_text(encoding="utf-8"))
     write(SITE / "data" / "pages.js", js_assign("SDT_PAGES", None, pages))
     # 4-1) 큰 정적 페이지 (정리노트, 연표): 그 화면을 열 때만 읽는다
     lazy = []
     for name in LAZY_PAGES:
         p, out = W / "pages" / f"{name}.html", SITE / "data" / f"page_{name}.js"
         if p.exists():
-            text = p.read_text(encoding="utf-8")
+            text = viz_page(W, name, p.read_text(encoding="utf-8"))
             write(out, js_assign("SDT_PAGES_LAZY", name, text))
             lazy.append(name)
             if name == "note":

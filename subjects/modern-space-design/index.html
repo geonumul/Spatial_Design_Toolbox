@@ -15,9 +15,9 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-<link rel="stylesheet" href="../../engine/app.css?v=202609171506">
-<link rel="stylesheet" href="../../engine/site.css?v=202609171506">
-<link rel="stylesheet" href="../../assets/pet/pet.css?v=202609171506">
+<link rel="stylesheet" href="../../engine/app.css?v=202609171715">
+<link rel="stylesheet" href="../../engine/site.css?v=202609171715">
+<link rel="stylesheet" href="../../assets/pet/pet.css?v=202609171715">
 </head>
 <body>
 <header id="hdr">
@@ -49,20 +49,23 @@
 <main id="app"><div class="empty"><b>불러오는 중</b>잠시만요.</div></main>
 <button class="top" id="topBtn" type="button">맨 위로</button>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="../../assets/firebase-config.js?v=202609171506"></script>
-<script src="../../assets/sync.js?v=202609171506"></script>
+<script src="../../assets/firebase-config.js?v=202609171715"></script>
+<script src="../../assets/sync.js?v=202609171715"></script>
 <!-- 이용권 검사: 로그인과 이용권이 없으면 과목 화면을 가린다 (assets/access.js) -->
-<script src="../../assets/access-config.js?v=202609171506"></script>
-<script src="../../assets/access.js?v=202609171506" data-gate="subject"></script>
+<script src="../../assets/access-config.js?v=202609171715"></script>
+<script src="../../assets/access.js?v=202609171715" data-gate="subject"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" defer></script>
-<script src="data/meta.js?v=202609171506" defer></script>
-<script src="data/terms.js?v=202609171506" defer></script>
-<script src="data/bank.js?v=202609171506" defer></script>
-<script src="data/pages.js?v=202609171506" defer></script>
-<script src="../../engine/ink.js?v=202609171506" defer></script>
-<script src="../../engine/app.js?v=202609171506" defer></script>
-<script src="../../assets/pet/pet.js?v=202609171506" defer></script>
-<script src="../../assets/footer.js?v=202609171506"></script>
+<script src="data/meta.js?v=202609171715" defer></script>
+<script src="data/terms.js?v=202609171715" defer></script>
+<script src="data/bank.js?v=202609171715" defer></script>
+<script src="data/pages.js?v=202609171715" defer></script>
+<script src="../../engine/ink.js?v=202609171715" defer></script>
+<!-- 움직이는 그림: 쓰는 과목만 build_site.py 가 engine/viz/ 스크립트를 넣는다 -->
+<script src="../../engine/viz/viz.js?v=202609171715" defer></script>
+<script src="../../engine/viz/modern.js?v=202609171715" defer></script>
+<script src="../../engine/app.js?v=202609171715" defer></script>
+<script src="../../assets/pet/pet.js?v=202609171715" defer></script>
+<script src="../../assets/footer.js?v=202609171715"></script>
 </body>
 </html>

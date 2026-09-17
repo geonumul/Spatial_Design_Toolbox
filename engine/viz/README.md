@@ -15,9 +15,13 @@
 | `engine/viz/viz.js` | 틀. `window.SDTViz` 등록부, 프레임 HTML, 단계 넘기기, 재생 단추, 조절 막대, 스타일(한 번만 넣음) |
 | `engine/viz/gnn.js` | 그래프 신경망 그림 10개 |
 | `engine/viz/iot.js` | IoT 스마트홈 그림 8개 |
+| `engine/viz/eco.js` | 친환경건축(건축환경) 그림 8개 |
+| `engine/viz/modern.js` | 근현대 공간디자인 그림 7개 |
+| `engine/viz/interior.js` | 실내디자인시공과실무 그림 6개 |
 | `engine/app.js` (`renderFrame` 의 `case 'viz'`) | 플레이어와 잇는 곳. GNN 은 `_작업/html/app.js` 에 같은 코드 |
 | `tools/build_site.py` (`viz_tags`) | 과목 JSON 에 `"kind": "viz"` 가 있으면 `viz.js` 와 쓰는 묶음만 `index.html` 에 넣어요 |
-| `tools/viz_tool.py` | `list` 등록 이름, `place` 자리표대로 슬라이드에 끼우기, `sync-gnn` GNN 으로 복사 |
+| `tools/viz_tool.py` | `list` 등록 이름, `place` 자리표대로 슬라이드에 끼우기, `check-page` 페이지 자리표 확인, `sync-gnn` GNN 으로 복사 |
+| `tools/build_site.py` (`viz_page`) | `work/<과목>/pages/viz_<페이지>.json` 이 있으면 빌드할 때 그 페이지(정리노트, 답안 팁) 항목 안에 그림을 넣어요 |
 | `tools/checkers/slide_check.py`, `lesson_check.py` | `viz` kind 를 알아보고, 슬라이드의 그림 이름이 등록돼 있는지 봐요 |
 
 ## JSON 모양 (프레임 하나)
@@ -43,6 +47,28 @@
 정리 슬라이드 단원 안이든, 레슨의 `pass1`~`pass4` 목록 안이든 같은 모양으로 넣으면 돼요.
 (레슨의 `pass1` 과 `pass4` 는 lesson_check 가 kind 종류를 제한하니, 넣으려면 그 목록에 `viz` 를 더해요.)
 
+## 정리노트 같은 긴 페이지에 넣기 (정리 슬라이드가 없는 과목)
+
+근현대, 시공실무처럼 정리 슬라이드 단원이 없고 `pages/note.html` 이 중심인 과목은 페이지 안에 그림을 끼워요.
+`note.html` 원본은 건드리지 않아요(시공실무는 `_src/build_note.py` 가 새로 만들기 때문). 대신 자리표를 둬요.
+
+`work/<과목>/pages/viz_note.json` (답안 팁이면 `viz_tips.json`)
+
+```json
+{"places": [
+  {"id": "ic-stud-s12", "section": "s12", "where": "afterEasy",
+   "frame": {"kind": "viz", "viz": "interior.stud", "head": "움직여 보기: 스터드 벽체 시공 순서",
+             "caption": "숫자는 노트 그대로예요.",
+             "check": {"q": "벽 두께는?", "choices": ["103mm", "84mm"], "a": 0, "why": "9.5 × 4 + 65 = 103"}}}
+]}
+```
+
+- `section`: 노트의 `<section id="s12">`. `where`: `start`(h2 제목 바로 뒤), `afterEasy`(쉬운 설명 상자 뒤, 기본), `end`(항목 끝).
+- `frame`: 슬라이드 프레임과 같은 모양. `check` 를 주면 그림 아래에 확인 퀴즈가 붙어요.
+- 확인: `python tools/viz_tool.py check-page <과목> note` (넣을 자리와 그림 이름, 금지 문자를 봐요).
+- 빌드: `python tools/build_site.py <과목> --no-home`. `data/page_note.js` 안에 `<div class="vz-embed" data-frame="...">` 로 들어가요.
+- 화면: 엔진이 정리노트(`buildNote`)와 답안 팁 같은 정적 페이지(`pageStatic`)를 그린 뒤 `SDTViz.embedAll(root, {fmt, renderMath})` 를 불러요. 끼운 그림은 자기 `이전`, `다음` 단추로 단계를 넘기고, 재생, 처음부터, 조절 막대는 슬라이드와 같아요.
+
 ## 플레이어에서 어떻게 움직이나
 
 - 그림은 상태 0, 1, 2, ... 를 가져요. 상태 수가 곧 플레이어의 단계 수예요 (`steps = 상태 수 - 1`).
@@ -66,7 +92,7 @@
   const u = V.u;
   const at = u.at, seg = u.seg, num = u.num;
 
-  V.add('eco.heat', {
+  V.add('mypack.example', {   // 이름은 '<묶음 파일 이름>.<그림 이름>'
     title: '벽을 지나는 열',          // 개발용 이름
     w: 480, h: 300,                    // viewBox. 폰에서 줄어드니 글씨는 viewBox 기준 15 이상
     dur: 1100,                         // 한 단계 움직임 시간(ms). 함수 (s, p) => ms 도 돼요
@@ -139,7 +165,9 @@
 2. 자리표 `work/<과목>/notes/viz_place.json` 을 만들어요. 모양은 `tools/viz_tool.py` 머리 설명과 `work/iot-smart-home/notes/viz_place.json` 을 봐요. 그림 바로 뒤에 확인 퀴즈(`check`)를 하나 두면 좋아요.
 3. `python tools/viz_tool.py place work/<과목>/notes/viz_place.json`
    - 자리표에 나온 슬라이드 파일에서 `"vp"` 표시가 있는 프레임을 지우고 다시 넣어요. 몇 번 돌려도 결과가 같아요.
-   - `build_slides_*.py` 로 슬라이드 JSON 을 새로 만들었으면 이 명령을 다시 돌려요.
+   - `build_slides_*.py` 로 슬라이드 JSON 을 새로 만들었으면 이 명령을 다시 돌려요. 예를 들어 친환경건축은
+     `python work/eco-architecture/notes/build_slides_wb.py` 다음에 꼭 `python tools/viz_tool.py place work/eco-architecture/notes/viz_place.json` 을 돌려요.
+     (IoT: `work/iot-smart-home/notes/viz_place.json`, GNN: `2026/최종정리/_작업/html/viz_place.json`)
 4. `python tools/checkers/slide_check.py work/<과목>/notes/slides_w*.json`
 5. `python tools/build_site.py <과목> --no-home`. `index.html` 에 `engine/viz/viz.js` 와 묶음 파일이 자동으로 들어가요.
 
@@ -186,18 +214,33 @@ python tools/viz_tool.py check-gnn     # 같은지만 확인
 | `iot.nat` | 사설 주소, MAC, 공유기의 주소 바꾸기 표와 답장 | wb-7 |
 | `iot.secure` | 문제 번호와 도장으로 인증, 1234 를 4567 로 암호화, 가짜 앱 차단 | wb-10 |
 
-## 다음 과목 아이디어 (아직 안 만듦)
+| `eco.heat3` | 벽을 지나 새는 열, 전도, 대류, 복사 칸이 차례로, 단열재 기포 | wb-1 |
+| `eco.uvalue` | 단열재 두께로 R, U, 열손실(0.1 m: 2.5, 0.4, 200 W). 두께 막대 | wb-2 |
+| `eco.lag` | 하루 기온과 가벼운 건물, 뚝배기 건물의 실내 곡선(시간 지연), 42 와 21 kJ/K 그릇. 열용량 막대 | wb-3 |
+| `eco.dew` | 실내 공기의 이슬점 선과 창 유리 8℃, 벽 16℃ 표면 결로 판정. 온도, 습도 막대 | wb-4, wb-5 |
+| `eco.bridge` | 내단열 벽의 열교, 표면 온도 18.9℃ 대 11.8℃ 와 결로, 외단열로 해결. 단열 위치 단추 | wb-4 |
+| `eco.vent` | 60 m³ 방, 5명 × 24 m³/h = 120, 한 시간에 공기 2번 바뀜. 재실자 막대 | wb-7, w1-10 |
+| `eco.sun` | 계절별 태양 고도와 바깥 차양 그늘, 안쪽 블라인드. 계절 단추, 차양 길이 막대 | wb-9, w1-7 |
+| `eco.sound` | 음압 10배에 20 dB, 60 dB 두 개는 63 dB, 확산, 흡음, 차음, 벽 무게와 차음. 벽 무게 막대 | wb-10 |
+| `modern.timeline` | 1850~1940 연표가 1강부터 6강까지 채워지고 세 덩어리로 묶임 | 정리노트 s0 |
+| `modern.influence` | 퓨진, 러스킨에서 미술공예운동, 아르누보, 빈, 독일공작연맹, 바우하우스, 바이센호프, 국제주의 양식 | 정리노트 s22 |
+| `modern.bauhaus` | 바이마르, 데사우, 베를린과 세 학장, 선언문, 입문과정에서 건축부서까지 | 정리노트 s23 |
+| `modern.destijl` | 직선, 3원색, 면이 떨어져 뜨기, 슈뢰더 하우스 미닫이, 카페 로베뜨 대각선 | 정리노트 s26 |
+| `modern.gardencity` | 58,000명 중심도시와 32,000명 전원도시 6개, 철도, 중앙공원, 가로수길, 농지, 레치워스 | 정리노트 s4 |
+| `modern.weissenhof` | 33개 번호와 건축가(미스, 오우트, 르 코르뷔지에, 그로피우스 ...) 개념도 | 정리노트 s28 |
+| `modern.chicago` | 조적조 두꺼운 벽(모나드녹 1.8m)과 철골조, 시카고 창, base, shaft, attic | 정리노트 s14 |
+| `interior.stud` | 먹매김부터 조인트 처리까지 스터드 벽체 10단계와 벽 두께 103mm 단면 | 정리노트 s12 |
+| `interior.ceiling` | 앵커, 몰딩, 행거, 캐링, 마이너, M-Bar, 수평, 1ply, 2ply(타카 금지), C-형강 보강 | 정리노트 s15 |
+| `interior.scaffold` | 강관비계 기둥 1.85m, 띠장 2m, 가새 40~60도, 난간, 400kg, 보양재. 기둥 간격 막대 | 정리노트 s8 |
+| `interior.contract` | 직영, 일식, 분할, 공동도급, 턴키 흐름과 정액, 단가(6,000,000원), 실비정산(1억 1,000만) | 정리노트 s2 |
+| `interior.gantt` | 네트워크와 바차트가 쌓이고 주공정선 10일, 여유시간, 지연. 지연 작업 단추와 날수 막대 | 정리노트 s5 |
+| `interior.demolish` | 배관 막기, 분진 대비, 마감재 철거, 구조체 해체(압쇄기, 브레이커), 폐기물 분리, 3년 보관 | 정리노트 s9 |
 
-같은 틀로 이렇게 만들면 돼요. 숫자는 그 과목 정리 슬라이드 손계산에서 가져와요.
+강의 자료에 없는 숫자는 각 자리표의 `caption` 에 가정이라고 적었어요. 예: 이슬점 공식, 열교 부위 U 3.0, 서울 태양 고도, 질량 법칙, 바깥 기온 10~30℃, 바이센호프 칸 자리.
 
-- 친환경건축 `eco.js`
-  - `eco.heat` 벽 단면 속 열 흐름: 실내외 온도 두 칸, 층마다 온도 떨어지는 계단 선, 단열재 두께 막대로 U값과 열손실(W) 숫자가 바뀜.
-  - `eco.insulation` 외단열과 내단열 비교: 열교(기둥, 슬래브 끝)에서 새는 화살표 굵기. `choice` 단추로 두 방식.
-  - `eco.condense` 결로: 벽 안 온도 선과 이슬점 선이 만나는 곳에 물방울. 실내 습도 막대로 이슬점이 오르내림.
-  - 도우미: 온도 선은 `path` 를 `draw` 에서 매번 새로 그리고, 물방울은 `u.op`.
-- 근현대 공간디자인 `modern.js`
-  - `modern.timeline` 가로 연표: 상태마다 한 시기를 확대, 인물과 작품 점이 나타남. 너무 길면 두 그림으로 나눠요.
-  - `modern.influence` 영향 관계도: 사람과 운동 노드, 상태마다 영향 화살표가 하나씩 켜짐 (`u.arrow`, `u.setArrow`).
-- 실내건축 시공실무 `interior.js`
-  - `interior.sequence` 시공 순서: 벽 단면이나 평면 위에 공정이 차례로 쌓임 (먹매김, 경량 철골, 석고보드, 퍼티, 도장). 상태마다 한 공정, 캡션에 "왜 이 순서인지".
-  - `interior.gantt` 공정표 막대가 하루씩 채워지고, 선행 공정이 늦으면 뒤 막대가 밀림. 지연 일수 막대.
+## 새 과목에 붙일 때 순서 요약
+
+1. 과목 자료(정리 슬라이드, 정리노트, 손계산)에서 움직여 보여 줄 개념과 숫자를 고른다.
+2. `engine/viz/<묶음>.js` 에 그림을 등록하고 `README.md` 표에 한 줄 더한다.
+3. 정리 슬라이드가 있으면 `notes/viz_place.json` + `viz_tool.py place`, 정리노트만 있으면 `pages/viz_note.json` + `viz_tool.py check-page`.
+4. `slide_check.py` 와 빌드, jsdom 시험(viz_checks), 1280 과 390 스크린샷.

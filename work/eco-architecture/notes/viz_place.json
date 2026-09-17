@@ -1,0 +1,103 @@
+{
+ "about": "움직이는 그림 자리표. 정리 슬라이드를 build_slides_*.py 로 다시 만들었으면 꼭 이어서 python tools/viz_tool.py place work/eco-architecture/notes/viz_place.json 을 돌려요 (다시 돌려도 같은 결과). 설명은 engine/viz/README.md",
+ "places": [
+  {
+   "id": "eco-heat3-wb1", "file": "slides_wb.json", "unit": "wb-1", "after": "세 가지 길을 그림으로",
+   "frames": [
+    {"kind": "viz", "viz": "eco.heat3", "head": "움직여 보기: 열이 옮겨 가는 세 가지 길",
+     "caption": "한 단계에 한 가지씩 칸이 밝아져요. 마지막 단계에서 벽에 단열재가 들어가요."},
+    {"kind": "check", "q": "난로 앞에 앉으면 공기가 차가운데도 얼굴이 따뜻해요. 어떤 길로 온 열일까요?",
+     "choices": ["복사", "전도", "대류"], "a": 0,
+     "why": "매개체 없이 전자기파로 오는 **복사(Radiation)**예요. 공기가 돌아서 오면 **대류(Convection)**, 맞닿아서 오면 **전도(Conduction)**예요."}
+   ]
+  },
+  {
+   "id": "eco-uvalue-wb2", "file": "slides_wb.json", "unit": "wb-2", "after": "손계산 2: 겨울 외벽의 열손실",
+   "frames": [
+    {"kind": "viz", "viz": "eco.uvalue", "head": "움직여 보기: 단열재 두께를 바꾸면",
+     "caption": "숫자는 손계산 1, 2 와 같아요(표면 열전달저항 무시). 두께 막대를 움직이면 R, U, Q 가 바로 바뀌어요."},
+    {"kind": "check", "q": "열전도율 0.04 W/mK 단열재를 0.05 m 로 얇게 하면 U값은? (표면 열전달저항 무시)",
+     "choices": ["0.8 W/m²K", "0.2 W/m²K", "0.4 W/m²K"], "a": 0,
+     "why": "R = 0.05 ÷ 0.04 = 1.25, U = 1 ÷ 1.25 = 0.8 이에요. 두께가 절반이면 **열관류율(U-value)**은 두 배예요."}
+   ]
+  },
+  {
+   "id": "eco-lag-wb3", "file": "slides_wb.json", "unit": "wb-3", "after": "바깥 기온과 뚝배기형 실내",
+   "frames": [
+    {"kind": "viz", "viz": "eco.lag", "head": "움직여 보기: 뚝배기 건물의 하루",
+     "caption": "바깥 기온 10~30℃ 는 이해를 돕는 가정 숫자이고, 실내 곡선은 단순한 모형이에요. 열용량 막대를 움직여 늦어지는 시간을 봐요."},
+    {"kind": "check", "q": "열용량이 큰 건물의 실내 온도를 바르게 설명한 것은?",
+     "choices": ["작게 흔들리고 가장 더운 때가 늦게 와요", "크게 흔들리고 바깥과 같은 때 더워요", "하루 종일 바깥과 똑같아요"], "a": 0,
+     "why": "**열용량(Heat Capacity)**이 크면 온도가 천천히 조금만 변해요. 최고점이 늦게 오는 것이 **시간 지연(Time Lag)**이에요."}
+   ]
+  },
+  {
+   "id": "eco-dew-wb4", "file": "slides_wb.json", "unit": "wb-4", "after": "판정 연습: 결로가 생길까",
+   "frames": [
+    {"kind": "viz", "viz": "eco.dew", "head": "움직여 보기: 이슬점과 두 표면",
+     "caption": "창 유리 8℃, 벽 표면 16℃ 는 판정 연습 숫자예요. 이슬점은 온도와 습도로 구하는 일반 공식의 근삿값이에요. 두 막대를 움직여 봐요."}
+   ]
+  },
+  {
+   "id": "eco-bridge-wb4", "file": "slides_wb.json", "unit": "wb-4", "after": "열교가 결로를 부르는 순서",
+   "frames": [
+    {"kind": "viz", "viz": "eco.bridge", "head": "움직여 보기: 열교 부위의 표면 온도",
+     "caption": "표면 온도는 실내외 25℃ 차이, 실내 표면 열전달저항 0.11, 보통 벽 U 0.4, 열교 부위 U 3.0 으로 잡은 가정 계산이에요."}
+   ]
+  },
+  {
+   "id": "eco-dew-wb5", "file": "slides_wb.json", "unit": "wb-5", "after": "수증기는 그대로, 한계만 줄어요",
+   "frames": [
+    {"kind": "viz", "viz": "eco.dew", "head": "움직여 보기: 습도를 올리고 내리면",
+     "caption": "상대습도 막대를 올리면 이슬점 선이 올라가요. 이슬점은 일반 공식의 근삿값이에요."},
+    {"kind": "check", "q": "실내 온도는 그대로 두고 상대습도만 60% 에서 80% 로 올리면 이슬점 온도는?",
+     "choices": ["올라가요", "내려가요", "그대로예요"], "a": 0,
+     "why": "수증기가 많을수록 조금만 식어도 100% 가 돼요. 그래서 **이슬점 온도(Dew Point)**가 올라가 **결로(Condensation)**가 생기기 쉬워요."}
+   ]
+  },
+  {
+   "id": "eco-vent-wb7", "file": "slides_wb.json", "unit": "wb-7", "after": "손계산 1: 답안 캡처 15번 그대로",
+   "frames": [
+    {"kind": "viz", "viz": "eco.vent", "head": "움직여 보기: 한 시간에 두 번 바뀌는 공기",
+     "caption": "답안 캡처 15번 숫자예요. 점의 색이 바뀌는 횟수가 환기횟수예요. 재실자 막대를 움직여 봐요."},
+    {"kind": "check", "q": "실의용적 60 m³ 방에 3명이 있고 1인당 필요환기량이 24 m³/h 라면 환기횟수는?",
+     "choices": ["1.2회/h", "2회/h", "0.4회/h"], "a": 0,
+     "why": "24 × 3 = 72, 72 ÷ 60 = 1.2 예요. **환기횟수(Air Change Rate)** = (필요환기량 × 재실자수) ÷ 실의용적."}
+   ]
+  },
+  {
+   "id": "eco-vent-w110", "file": "slides_w1.json", "unit": "w1-10", "after": "방법을 쉬운 말로",
+   "frames": [
+    {"kind": "viz", "viz": "eco.vent", "head": "움직여 보기: 실내 공기가 바뀌는 속도",
+     "caption": "기초 다지기 wb-7 의 환기횟수 계산이에요. 사람이 많을수록 더 자주 바꿔야 해요."}
+   ]
+  },
+  {
+   "id": "eco-sun-wb9", "file": "slides_wb.json", "unit": "wb-9", "after": "바깥 차양과 안쪽 블라인드",
+   "frames": [
+    {"kind": "viz", "viz": "eco.sun", "head": "움직여 보기: 계절과 차양",
+     "caption": "태양 고도(하지 76도, 춘추분 52.5도, 동지 29도)는 서울 위도 약 37.5도로 계산한 일반 값이에요. 창 높이와 차양 길이는 가정 숫자예요."},
+    {"kind": "check", "q": "창 위 바깥 차양이 여름에는 햇빛을 막고 겨울에는 들이는 까닭은?",
+     "choices": ["여름 해는 높고 겨울 해는 낮아서", "여름 해가 더 약해서", "차양이 계절마다 저절로 움직여서"], "a": 0,
+     "why": "높이 뜬 여름 해의 빛은 차양에 걸리고, 낮게 뜬 겨울 해의 빛은 차양 아래로 들어와요. **차양장치(Shading Device)**는 창 바깥에 달아야 열을 더 잘 막아요."}
+   ]
+  },
+  {
+   "id": "eco-sun-w17", "file": "slides_w1.json", "unit": "w1-7", "after": "나무가 하는 일 (일반 원리)",
+   "frames": [
+    {"kind": "viz", "viz": "eco.sun", "head": "움직여 보기: 여름 그늘, 겨울 햇빛",
+     "caption": "남쪽 활엽수도 같은 원리예요. 여름 높은 해는 잎이 가리고, 겨울 낮은 해는 잎 진 가지 사이로 들어와요. 고도는 서울 위도로 계산한 일반 값이에요."}
+   ]
+  },
+  {
+   "id": "eco-sound-wb10", "file": "slides_wb.json", "unit": "wb-10", "after": "손계산 2: 60 dB 소리 두 개가 함께 나면?",
+   "frames": [
+    {"kind": "viz", "viz": "eco.sound", "head": "움직여 보기: 데시벨과 벽",
+     "caption": "벽이 막는 dB 는 질량 법칙(500 Hz, 투과손실 약 20 log(면밀도 × 주파수) - 47)으로 잡은 가정 계산이에요. 무게가 두 배면 약 6 dB 더 막아요."},
+    {"kind": "check", "q": "음압이 0.002 Pa 인 소리는 몇 dB 일까요? (기준음압 0.00002 Pa)",
+     "choices": ["40 dB", "20 dB", "100 dB"], "a": 0,
+     "why": "0.002 ÷ 0.00002 = 100 배, log 100 = 2, 20 × 2 = 40 dB 예요. 음압 10배마다 20 dB 씩 올라가요."}
+   ]
+  }
+ ]
+}

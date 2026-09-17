@@ -6,6 +6,7 @@
   python tools/viz_tool.py place <자리표.json>      정리 슬라이드에 그림(과 확인 퀴즈)을 끼워 넣는다
   python tools/viz_tool.py sync-gnn                engine/viz/viz.js, gnn.js, README.md 를 GNN 사이트(_작업/html/viz/)로 복사
   python tools/viz_tool.py check-gnn               두 곳 파일이 같은지만 본다
+  python tools/viz_tool.py check-page <과목> <페이지>  pages/viz_<페이지>.json 이 그 페이지에 들어가는지 확인 (넣기는 build_site.py 가 빌드 때 함)
 
 자리표(place) 모양
   {"places": [
@@ -96,6 +97,59 @@ def place(spec_path):
         print(f"{fp.name}: 지운 프레임 {removed}, 넣은 프레임 {added}")
 
 
+def _div_end(text, start):
+    """start 에서 열린 <div ...> 가 닫히는 위치(</div> 뒤)"""
+    depth, i = 0, start
+    for m in re.finditer(r"<(/?)div\b[^>]*>", text[start:]):
+        depth += -1 if m.group(1) else 1
+        if depth == 0:
+            return start + m.end()
+    raise ValueError("div 가 닫히지 않음")
+
+
+def inject_page(text, spec_path, names=None):
+    """페이지 HTML(정리노트, 답안 팁)에 자리표(pages/viz_<페이지>.json)대로 <div class="vz-embed"> 를 넣은 새 HTML 과 넣은 개수.
+    자리 "where": "start"(h2 바로 뒤), "afterEasy"(쉬운 설명 상자 뒤, 기본), "end"(항목 끝)"""
+    import html as _html
+    spec = json.loads(pathlib.Path(spec_path).read_text(encoding="utf-8"))
+    names = registered() if names is None else names
+    groups = {}
+    for pl in spec["places"]:
+        f = dict(pl["frame"])
+        if f.get("viz") not in names:
+            raise SystemExit(f"{pl['id']}: 등록 안 된 그림 '{f.get('viz')}'")
+        raw = json.dumps(f, ensure_ascii=False)
+        for ch in BAD:
+            if ch in raw:
+                raise SystemExit(f"{pl['id']}: 금지 문자 {ch!r}")
+        c = f.get("check")
+        if c and not (isinstance(c.get("a"), int) and 0 <= c["a"] < len(c.get("choices", [])) and c.get("q") and c.get("why")):
+            raise SystemExit(f"{pl['id']}: check 모양 (q, choices, a, why)")
+        key = (pl["section"], pl.get("where", "afterEasy"))
+        groups.setdefault(key, []).append('<div class="vz-embed" data-vp="' + _html.escape(pl["id"]) + '" data-frame="' + _html.escape(raw, quote=True) + '"></div>')
+    n = 0
+    for (sid, where), blocks in groups.items():
+        m = re.search(r'<section id="' + re.escape(sid) + r'">', text)
+        if not m:
+            raise SystemExit(f"{spec_path}: 항목 {sid} 없음")
+        s0 = m.end()
+        s1 = text.index("</section>", s0)
+        if where == "start":
+            h = text.find("</h2>", s0, s1)
+            at = h + 5 if h >= 0 else s0
+        elif where == "end":
+            at = s1
+        else:
+            e = text.find('<div class="easy">', s0, s1)
+            if e < 0:
+                raise SystemExit(f"{spec_path}: {sid} 에 쉬운 설명 상자 없음 (where 를 start 나 end 로)")
+            at = _div_end(text, e)
+        block = "\n" + "\n".join(blocks) + "\n"
+        text = text[:at] + block + text[at:]
+        n += len(blocks)
+    return text, n
+
+
 def sha(p):
     return hashlib.sha256(p.read_bytes()).hexdigest()[:12]
 
@@ -125,6 +179,11 @@ def main():
         place(sys.argv[2])
     elif cmd == "sync-gnn":
         check_gnn(True)
+    elif cmd == "check-page":
+        W = ROOT / "work" / sys.argv[2]
+        src = (W / "pages" / f"{sys.argv[3]}.html").read_text(encoding="utf-8")
+        out, n = inject_page(src, W / "pages" / f"viz_{sys.argv[3]}.json")
+        print(f"{sys.argv[2]} {sys.argv[3]}: 그림 {n}개 들어감, {len(src)} -> {len(out)} 글자")
     elif cmd == "check-gnn":
         sys.exit(0 if check_gnn(False) else 1)
     else:
