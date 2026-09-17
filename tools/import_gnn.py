@@ -37,7 +37,7 @@ def main():
     (DST / "index.html").write_text(page, encoding="utf-8")
     # Colab 링크가 이 저장소(github.io 로 쓰는 곳)의 노트북을 열게
     mj = DST / "data" / "meta.js"
-    mj.write_text(mj.read_text(encoding="utf-8").replace('"repo":"geonumul/Graph-Neural-Networks-Fall-2026"', '"repo":"geonumul/Spatial_Design_Toolbox"'), encoding="utf-8")
+    mj.write_text(mj.read_text(encoding="utf-8").replace('"repo":"geonumul/Graph-Neural-Networks-Fall-2026"', '"repo":"geonumul/Toolbox_Group_Study"'), encoding="utf-8")
     aj = DST / "assets" / "app.js"
     aj.write_text(aj.read_text(encoding="utf-8").replace("'/blob/main/practice/'", "'/blob/main/subjects/gnn/practice/'"), encoding="utf-8")
 

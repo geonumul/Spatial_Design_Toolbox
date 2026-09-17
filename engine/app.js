@@ -969,7 +969,7 @@ async function pageSettings() {
   h += '<div class="card stack" style="margin-top:16px"><div class="row" style="justify-content:space-between"><b style="font-size:18px">계정</b><span class="state ' + (u ? 'ok' : 'warn') + '">' + (!A || !A.enabled ? '로그인 쓸 수 없음' : u ? '로그인됨' : '로그인 안 됨') + '</span></div>';
   if (A && A.enabled && u) h += '<p style="margin:0">' + esc(u.displayName || u.email || '내 계정') + ' 님으로 로그인했어요. 기록은 자동으로 저장돼요.</p><div class="row"><button class="btn" id="syncNow" type="button">지금 맞추기</button><button class="btn" id="logoutBtn" type="button">로그아웃</button><span class="muted" id="syncMsg" style="font-size:14px"></span></div>';
   else if (A && A.enabled) h += '<div class="row"><button class="btn primary" id="loginBtn" type="button">Google 계정으로 로그인</button></div><p class="muted" style="margin:0;font-size:14px">카카오톡 안에서 열었다면 외부 브라우저로 다시 열려요.</p>';
-  else h += '<p class="muted" style="margin:0;font-size:14px">사이트 주소 https://geonumul.github.io/Spatial_Design_Toolbox/ 로 열면 로그인할 수 있어요. 파일로 열면 이 기기에만 저장돼요.</p>';
+  else h += '<p class="muted" style="margin:0;font-size:14px">사이트 주소 https://geonumul.github.io/Toolbox_Group_Study/ 로 열면 로그인할 수 있어요. 파일로 열면 이 기기에만 저장돼요.</p>';
   h += '</div>';
   // 내 공부 한눈에
   const ks = Object.keys(store.seen); let okN = 0, attN = 0;

@@ -2,7 +2,7 @@
 
 공간디자인 수업 과목별 정리노트, 암기 팁, 문제은행.
 
-사이트: https://geonumul.github.io/Spatial_Design_Toolbox/
+사이트: https://geonumul.github.io/Toolbox_Group_Study/
 
 ## 과목
 
