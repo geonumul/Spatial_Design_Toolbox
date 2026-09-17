@@ -175,9 +175,9 @@ body.playing .pet-hud,body.inking .pet-hud,body.paper .pet-hud,body.pet-open .pe
 .pf-empty .pet-btn{margin-top:8px}
 .pf-code{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:18px;background:#F4F0FF}
 .pf-code span{font-size:13px;color:#7A6E8A}
-.pf-code b{flex:1;font-size:24px;font-weight:700;letter-spacing:3px;font-variant-numeric:tabular-nums;color:#4A3F5C;user-select:all}
+.pf-code b{flex:1;font-size:22px;font-weight:700;letter-spacing:.5px;color:#4A3F5C;user-select:all;overflow-wrap:anywhere}
 .pf-add{display:flex;gap:8px}
-.pf-add input{flex:1;min-width:0;min-height:42px;border:1.5px solid #F0E3F2;border-radius:999px;padding:6px 16px;font:16px inherit;font-family:inherit;letter-spacing:2px;color:#4A3F5C;background:#fff}
+.pf-add input{flex:1;min-width:0;min-height:42px;border:1.5px solid #F0E3F2;border-radius:999px;padding:6px 16px;font:16px inherit;font-family:inherit;color:#4A3F5C;background:#fff}
 .pf-add input::placeholder{letter-spacing:0;color:#BDB1C8}
 .pf-add input:focus{outline:none;border-color:#FF9DBB;box-shadow:0 0 0 3px rgba(255,127,166,.15)}
 .pf-add .pet-btn:disabled{opacity:.6;cursor:default}
@@ -200,3 +200,15 @@ body.playing .pet-hud,body.inking .pet-hud,body.paper .pet-hud,body.pet-open .pe
 .pet-rename-form{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 4px 8px}
 .pet-rename-form input{width:9em;max-width:100%;padding:6px 10px;border:1px solid #D9CFE6;border-radius:8px;font:inherit;font-size:16px}
 .pet-rename-form small{color:#9A8FA8;font-size:12px}
+/* 이름 겹침, 다른 동물로 바꾸기 */
+.pet-name-rule{margin-top:-6px;font-size:12px;color:#9A8FA8}
+.pet-adopt-msg{margin:2px 0 0!important;padding:8px 12px;border-radius:14px;background:#FFF0F3;color:#C8356A!important;font-size:13.5px}
+.pet-adopt-btns{justify-content:center;gap:8px}
+.pet-adopt-btns .pet-btn{min-width:120px}
+.pet-change-rule{display:flex;flex-direction:column;gap:2px;margin:2px 0;padding:10px 12px;border-radius:14px;background:#F4F0FF;text-align:left;font-size:13px;color:#6B5E80;word-break:keep-all}
+.pet-change-rule b{font-size:14px!important;font-weight:600!important;color:#4A3F5C}
+.pet-change-rule.warn{background:#FFF6E0}
+.pet-btn.pet-change{margin-top:10px;background:#F7F3FF;border-color:#E3D9F5;color:#6B5AA6}
+.pet-rename-msg{flex-basis:100%;margin:2px 0 0;font-size:13px;color:#C8356A;word-break:keep-all}
+.pf-issue{margin:0;padding:10px 12px;border-radius:14px;background:#FFF0F3;color:#C8356A;font-size:13.5px;word-break:keep-all}
+.pf-issue .pet-btn{margin-left:6px;min-height:32px;padding:4px 12px;font-size:13px}

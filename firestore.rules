@@ -120,165 +120,191 @@ service cloud.firestore {
           && existsAfter(/databases/$(database)/documents/users/$(uid)/passes/$('c_' + code));
       }
     }
-
-    // [사용 중단 예정] 예전 펫 광장. 새 펫 프로그램과 사이트는 맨 아래 "친구 전용 펫" 블록을 쓴다.
-    // 예전 버전 펫 프로그램이 아직 남아 있어서 당분간 둔다. 다들 새 버전으로 바꾸면 이 두 match 를 지운다.
-    // 펫 광장: 로그인한 사람만 보고, 자기 펫 자리만 쓴다
-    match /plaza/lobby/presence/{uid} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['name', 'sp', 'wear', 'ts'])
-        && request.resource.data.name is string && request.resource.data.name.size() <= 8
-        && request.resource.data.sp is string && request.resource.data.sp.size() <= 20;
-    }
-
-    // [사용 중단 예정] 펫 광장 채팅: 로그인한 사람만 보고, 자기 이름으로만 쓰고, 자기 글만 지운다
-    match /plaza/lobby/messages/{id} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.keys().hasOnly(['uid', 'name', 'sp', 'text', 'ts'])
-        && request.resource.data.text is string
-        && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 120
-        && request.resource.data.name is string && request.resource.data.name.size() <= 8;
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
-    }
   }
 
-  // ===================== 친구 전용 펫 (2026-09-17 추가, 펫 프로그램 새 버전과 사이트 pet/) =====================
-  // 서로 친구 추가한 사람끼리만 펫이 보이고 1:1 로 채팅한다. 위 블록과 따로 떨어진 match 라서 서로 영향이 없다.
-  //   petCodes/{code}                   친구 코드 {uid, pet, sp}. 코드를 정확히 알 때 한 개만 읽는다 (목록 금지)
-  //   petFriends/{uid}                  내 코드 {code}. 나만 읽고 쓴다
-  //   petFriends/{uid}/list/{other}     "나는 other 와 친구 하고 싶다" {pet, sp, ts}. 양쪽에 다 있어야 친구
-  //   petFriends/{uid}/requests/{from}  받은 친구 요청 {name, pet, sp, code, ts}. 보낸 사람이 만든다
-  //   petPresence/{uid}                 접속 표시 {name, sp, wear, ts}. 나와 서로 친구인 사람만 읽는다
-  //   petChats/{a_b}/messages/{id}      1:1 대화 {from, text, ts}. a_b 는 두 uid 를 정렬해 _ 로 이은 것
-  //   petInbox/{uid}                    새 메시지 알림 {보낸 친구 uid: 시각, p_보낸 친구 uid: 콕 찌르기 시각}. 친구는 자기 칸 두 개만 고친다
+  // ===================== 친구 전용 펫 v3 (2026-09-17, 펫 프로그램 1.3.0 과 사이트 pet/) =====================
+  // 모두 새로 시작: 예전 petCodes, petFriends, petPresence, petChats, petInbox, plaza 는 규칙이 없어서 아무도 못 읽고 못 쓴다 (콘솔에서 지워도 된다).
+  // 펫 이름은 모두 달라야 하고 한 사람은 이름 하나만 가진다. 친구 추가는 친구의 펫 이름으로 한다.
+  //   pet3Owners/{uid}                   내 펫 이름표 {name: 이름 열쇠, pet: 보이는 이름, sp, ts}. 나만 읽는다
+  //   pet3Names/{열쇠}                    이름 자리 {uid, pet, sp}. 이름을 정확히 알 때 한 장만 읽는다 (목록 금지)
+  //        열쇠 = 보이는 이름에서 띄어쓰기를 빼고 영문을 소문자로 바꾼 것. 한글, 영문, 숫자 1~8글자
+  //        이름표와 이름 자리는 한 요청 안에서 같이 쓴다. 새 이름 자리를 잡으면서 예전 이름 자리는 비워야 한다
+  //   pet3Friends/{uid}/list/{other}     "나는 other 와 친구 하고 싶다" {pet, sp, ts}. 양쪽에 다 있어야 친구
+  //   pet3Friends/{uid}/requests/{from}  받은 친구 요청 {name, pet, sp, via, ts}. via = 받는 사람 펫 이름 열쇠
+  //   pet3Presence/{uid}                 접속 표시 {name, sp, wear, ts}. name 은 내 이름표의 pet 과 같아야 한다. 서로 친구만 읽는다
+  //   pet3Chats/{a_b}/messages/{id}      1:1 대화 {from, text, ts}. a_b 는 두 uid 를 정렬해 _ 로 이은 것
+  //   pet3Board/{uid}/messages/{id}      전체 채팅: 내 친구 모두에게 한 말 {from, text, ts}. 나와 서로 친구만 읽는다
+  //   pet3Inbox/{uid}                    알림 {보낸 친구 uid: 1:1 새 메시지, p_uid: 콕 찌르기, b_uid: 전체 채팅 새 글}. 친구는 자기 칸 세 개만 고친다
+  //   users/{uid}/stores/pet3__state     펫 상태 (위 stores 규칙). 사이트와 펫 프로그램이 같이 쓴다
   match /databases/{database}/documents {
-    function pfIn() { return request.auth != null; }
-    function pfMe(uid) { return request.auth != null && request.auth.uid == uid; }
-    function pfWants(a, b) { return exists(/databases/$(database)/documents/petFriends/$(a)/list/$(b)); }
+    function p3In() { return request.auth != null; }
+    function p3Me(uid) { return request.auth != null && request.auth.uid == uid; }
+    function p3Doc(rel) { return path('/databases/' + database + '/documents/' + rel); }
+    function p3Wants(a, b) { return exists(/databases/$(database)/documents/pet3Friends/$(a)/list/$(b)); }
     // 서로 친구: 내 목록에 상대가, 상대 목록에 내가 있다
-    function pfMutual(other) {
+    function p3Mutual(other) {
       return request.auth != null && other != request.auth.uid
-        && pfWants(request.auth.uid, other) && pfWants(other, request.auth.uid);
+        && p3Wants(request.auth.uid, other) && p3Wants(other, request.auth.uid);
     }
-    function pfStr(v, n) { return v is string && v.size() <= n; }
-    function pfSp(v) { return v is string && v.matches('[a-z0-9_-]{1,20}'); }
-    function pfCode(c) { return c is string && c.matches('[ACDEFGHJKMNPQRTWXY34679]{6}'); }
-    function pfWear(w) {
+    function p3Str(v, n) { return v is string && v.size() <= n; }
+    function p3Sp(v) { return v is string && v.matches('[a-z0-9_-]{1,20}'); }
+    function p3Key(k) { return k is string && k.matches('[a-z0-9가-힣]{1,8}'); }
+    // 보이는 이름: 한글, 영문, 숫자, 글자 사이 띄어쓰기 한 칸. 8글자까지
+    function p3Pet(v) { return v is string && v.size() <= 8 && v.matches('[A-Za-z0-9가-힣]( ?[A-Za-z0-9가-힣])*'); }
+    function p3KeyOf(v) { return v.lower().replace(' ', ''); }
+    function p3Wear(w) {
       return w is map && w.keys().hasOnly(['head', 'neck', 'face'])
-        && (!('head' in w) || pfStr(w.head, 20))
-        && (!('neck' in w) || pfStr(w.neck, 20))
-        && (!('face' in w) || pfStr(w.face, 20));
+        && (!('head' in w) || p3Str(w.head, 20))
+        && (!('neck' in w) || p3Str(w.neck, 20))
+        && (!('face' in w) || p3Str(w.face, 20));
     }
-    // 대화방 id 가 "내uid_상대uid" 또는 "상대uid_내uid" 이고 상대와 서로 친구
-    function pfInPair(pair) {
+    function p3InPair(pair) {
       let p = pair.split('_');
       return p.size() == 2
-        && ((p[0] == request.auth.uid && pfMutual(p[1])) || (p[1] == request.auth.uid && pfMutual(p[0])));
+        && ((p[0] == request.auth.uid && p3Mutual(p[1])) || (p[1] == request.auth.uid && p3Mutual(p[0])));
     }
 
-    // 친구 코드: 코드를 알 때 한 개만 읽는다. 없는 코드만 새로 만들고, 내 코드만 고치고 지운다
-    match /petCodes/{code} {
-      allow get: if pfIn();
+    // 내 펫 이름표: 새 이름 자리가 (같은 요청이 끝난 뒤) 내 것이어야 하고, 이름을 바꾸면 예전 자리는 비워야 한다
+    function p3OwnerOk(uid, oldName) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'pet', 'sp', 'ts'])
+        && p3Key(d.name) && p3Pet(d.pet) && p3KeyOf(d.pet) == d.name && p3Sp(d.sp)
+        && d.ts == request.time
+        && getAfter(p3Doc('pet3Names/' + d.name)).data.uid == uid
+        && (oldName == '' || oldName == d.name
+          || !existsAfter(p3Doc('pet3Names/' + oldName))
+          || getAfter(p3Doc('pet3Names/' + oldName)).data.uid != uid);
+    }
+    match /pet3Owners/{uid} {
+      allow get: if p3Me(uid);
       allow list: if false;
-      allow create: if pfIn() && pfCode(code)
-        && request.resource.data.keys().hasOnly(['uid', 'pet', 'sp'])
-        && request.resource.data.uid == request.auth.uid
-        && pfStr(request.resource.data.pet, 8) && pfSp(request.resource.data.sp);
-      allow update: if pfIn() && resource.data.uid == request.auth.uid
-        && request.resource.data.keys().hasOnly(['uid', 'pet', 'sp'])
-        && request.resource.data.uid == request.auth.uid
-        && pfStr(request.resource.data.pet, 8) && pfSp(request.resource.data.sp);
-      allow delete: if pfIn() && resource.data.uid == request.auth.uid;
+      allow create: if p3Me(uid) && p3OwnerOk(uid, '');
+      // 이름이나 종을 바꾸는 것은 5초에 한 번까지
+      allow update: if p3Me(uid) && p3OwnerOk(uid, resource.data.name) && request.time > resource.data.ts + duration.value(5, 's');
+      allow delete: if false;
     }
 
-    // 내 코드 기록: 같은 요청 안에서 그 코드 문서가 내 것이어야 한다
-    match /petFriends/{owner} {
-      allow get, delete: if pfMe(owner);
+    // 이름 자리: 먼저 잡은 사람 것. 없는 자리만 만들 수 있고, 내 자리만 고치거나 비운다
+    match /pet3Names/{key} {
+      allow get: if p3In();
       allow list: if false;
-      allow create, update: if pfMe(owner)
-        && request.resource.data.keys().hasOnly(['code'])
-        && pfCode(request.resource.data.code)
-        && getAfter(/databases/$(database)/documents/petCodes/$(request.resource.data.code)).data.uid == owner;
+      allow create: if p3In() && p3Key(key)
+        && request.resource.data.keys().hasOnly(['uid', 'pet', 'sp'])
+        && request.resource.data.uid == request.auth.uid
+        && p3Pet(request.resource.data.pet) && p3KeyOf(request.resource.data.pet) == key
+        && p3Sp(request.resource.data.sp)
+        && getAfter(p3Doc('pet3Owners/' + request.auth.uid)).data.name == key;
+      allow update: if p3In() && resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'pet', 'sp'])
+        && request.resource.data.uid == request.auth.uid
+        && p3Pet(request.resource.data.pet) && p3KeyOf(request.resource.data.pet) == key
+        && p3Sp(request.resource.data.sp)
+        && getAfter(p3Doc('pet3Owners/' + request.auth.uid)).data.name == key;
+      // 이름표가 아직 이 자리를 가리키면 못 비운다 (이름을 바꿀 때 같은 요청에서 비운다)
+      allow delete: if p3In() && resource.data.uid == request.auth.uid
+        && getAfter(p3Doc('pet3Owners/' + request.auth.uid)).data.name != key;
+    }
+
+    match /pet3Friends/{owner} {
+      allow read, write: if false;
 
       // 친구 목록: 내 목록은 나만 만든다. 상대는 "자기를 가리키는 문서" 하나를 확인(get)하거나 지울(친구 끊기) 수만 있다
       match /list/{other} {
-        allow get: if pfIn() && (request.auth.uid == owner || request.auth.uid == other);
-        allow list: if pfMe(owner);
-        allow create, update: if pfMe(owner) && owner != other
+        allow get: if p3In() && (request.auth.uid == owner || request.auth.uid == other);
+        allow list: if p3Me(owner);
+        allow create, update: if p3Me(owner) && owner != other
           && request.resource.data.keys().hasOnly(['pet', 'sp', 'ts'])
-          && pfStr(request.resource.data.pet, 8) && pfSp(request.resource.data.sp)
+          && p3Str(request.resource.data.pet, 8) && p3Sp(request.resource.data.sp)
           && request.resource.data.ts == request.time;
-        allow delete: if pfIn() && (request.auth.uid == owner || request.auth.uid == other);
+        allow delete: if p3In() && (request.auth.uid == owner || request.auth.uid == other);
       }
 
-      // 친구 요청: 보내는 사람이 받는 사람의 코드를 알아야 하고, 같은 요청 안에서 자기 목록에도 받는 사람을 적어야 한다
+      // 친구 요청: 받는 사람의 지금 펫 이름을 알아야 하고, 보내는 펫 이름은 내 이름표와 같아야 하고,
+      // 같은 요청 안에서 내 목록에도 받는 사람을 적어야 한다. 받는 사람이 수락(자기 목록에 적기)해야 친구가 된다
       match /requests/{from} {
-        allow get, delete: if pfIn() && (request.auth.uid == owner || request.auth.uid == from);
-        allow list: if pfMe(owner);
-        allow create, update: if pfMe(from) && from != owner
-          && request.resource.data.keys().hasOnly(['name', 'pet', 'sp', 'code', 'ts'])
-          && pfStr(request.resource.data.name, 60)
+        allow get, delete: if p3In() && (request.auth.uid == owner || request.auth.uid == from);
+        allow list: if p3Me(owner);
+        allow create, update: if p3Me(from) && from != owner
+          && request.resource.data.keys().hasOnly(['name', 'pet', 'sp', 'via', 'ts'])
+          && p3Str(request.resource.data.name, 60)
           && (request.resource.data.name == '' || request.resource.data.name == request.auth.token.get('name', ''))
-          && pfStr(request.resource.data.pet, 8) && pfSp(request.resource.data.sp)
-          && pfCode(request.resource.data.code)
-          && get(/databases/$(database)/documents/petCodes/$(request.resource.data.code)).data.uid == owner
+          && p3Key(request.resource.data.via)
+          && get(p3Doc('pet3Names/' + request.resource.data.via)).data.uid == owner
+          && request.resource.data.pet == get(p3Doc('pet3Owners/' + from)).data.pet
+          && p3Sp(request.resource.data.sp)
           && request.resource.data.ts == request.time
-          && existsAfter(/databases/$(database)/documents/petFriends/$(from)/list/$(owner));
+          && existsAfter(p3Doc('pet3Friends/' + from + '/list/' + owner));
       }
     }
 
-    // 접속 표시: 나와 서로 친구만 읽는다 (문서 id 로 한 장씩, 목록 금지)
-    match /petPresence/{uid} {
-      allow get: if pfMe(uid) || pfMutual(uid);
+    // 접속 표시: 나와 서로 친구만 읽는다 (문서 id 로 한 장씩, 목록 금지). 이름은 내 이름표 그대로
+    match /pet3Presence/{uid} {
+      allow get: if p3Me(uid) || p3Mutual(uid);
       allow list: if false;
-      allow create, update: if pfMe(uid)
+      allow create, update: if p3Me(uid)
         && request.resource.data.keys().hasOnly(['name', 'sp', 'wear', 'ts'])
-        && pfStr(request.resource.data.name, 8) && pfSp(request.resource.data.sp)
-        && (!('wear' in request.resource.data) || pfWear(request.resource.data.wear))
+        && request.resource.data.name == get(p3Doc('pet3Owners/' + uid)).data.pet
+        && p3Sp(request.resource.data.sp)
+        && (!('wear' in request.resource.data) || p3Wear(request.resource.data.wear))
         && request.resource.data.ts == request.time;
-      allow delete: if pfMe(uid);
+      allow delete: if p3Me(uid);
     }
 
     // 1:1 대화: 두 사람이 서로 친구일 때만 읽고 쓴다. 내 이름으로만 쓰고, 고치지 못하고, 내 글만 지운다
-    match /petChats/{pair}/messages/{id} {
-      allow read: if pfIn() && pfInPair(pair);
-      allow create: if pfIn() && id.size() <= 40 && pfInPair(pair)
+    match /pet3Chats/{pair}/messages/{id} {
+      allow read: if p3In() && p3InPair(pair);
+      allow create: if p3In() && id.size() <= 40 && p3InPair(pair)
         && request.resource.data.keys().hasOnly(['from', 'text', 'ts'])
         && request.resource.data.from == request.auth.uid
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 120
         && request.resource.data.ts == request.time;
       allow update: if false;
-      allow delete: if pfIn() && resource.data.from == request.auth.uid;
+      allow delete: if p3In() && resource.data.from == request.auth.uid;
     }
 
-    // 새 메시지 알림과 콕 찌르기: 주인만 읽는다. 서로 친구인 사람은 자기 칸 두 개만 지금 시각으로 바꾼다
-    //   {내 uid}   새 메시지를 보냈다
-    //   p_{내 uid} 콕 찌르기. 같은 칸의 이전 시각에서 30초가 지나야 다시 쓸 수 있다 (추가 읽기 없음)
+    // 전체 채팅: 내 게시판에 나만 쓰고, 나와 서로 친구인 사람만 읽는다
+    match /pet3Board/{owner}/messages/{id} {
+      allow read: if p3Me(owner) || p3Mutual(owner);
+      allow create: if p3Me(owner) && id.size() <= 40
+        && request.resource.data.keys().hasOnly(['from', 'text', 'ts'])
+        && request.resource.data.from == owner
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 120
+        && request.resource.data.ts == request.time;
+      allow update: if false;
+      allow delete: if p3Me(owner);
+    }
+
+    // 알림: 주인만 읽는다. 서로 친구인 사람은 자기 칸 세 개만 지금 시각으로 바꾼다
+    //   {내 uid}   1:1 새 메시지
+    //   p_{내 uid} 콕 찌르기. 같은 칸의 이전 시각에서 30초가 지나야 다시 쓸 수 있다
+    //   b_{내 uid} 전체 채팅에 새 글
     // 칸을 지우는 것은 주인만 (문서 삭제) 할 수 있어서 보낸 사람이 기다리는 시간을 없앨 수 없다
-    function pfPokeKey() { return 'p_' + request.auth.uid; }
-    function pfNowIfSet(k) { return !(k in request.resource.data) || request.resource.data[k] == request.time; }
-    match /petInbox/{owner} {
-      allow get, delete: if pfMe(owner);
+    function p3PokeKey() { return 'p_' + request.auth.uid; }
+    function p3BoardKey() { return 'b_' + request.auth.uid; }
+    function p3NowIfSet(k) { return !(k in request.resource.data) || request.resource.data[k] == request.time; }
+    function p3NowIfChanged(k) {
+      return !(k in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data[k] == request.time;
+    }
+    match /pet3Inbox/{owner} {
+      allow get, delete: if p3Me(owner);
       allow list: if false;
-      allow create: if pfIn() && request.auth.uid != owner
-        && request.resource.data.keys().hasOnly([request.auth.uid, pfPokeKey()])
+      allow create: if p3In() && request.auth.uid != owner
+        && request.resource.data.keys().hasOnly([request.auth.uid, p3PokeKey(), p3BoardKey()])
         && request.resource.data.size() > 0
-        && pfNowIfSet(request.auth.uid) && pfNowIfSet(pfPokeKey())
-        && pfMutual(owner);
-      allow update: if pfIn() && request.auth.uid != owner
+        && p3NowIfSet(request.auth.uid) && p3NowIfSet(p3PokeKey()) && p3NowIfSet(p3BoardKey())
+        && p3Mutual(owner);
+      allow update: if p3In() && request.auth.uid != owner
         && request.resource.data.diff(resource.data).affectedKeys().size() > 0
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([request.auth.uid, pfPokeKey()])
-        && (!(request.auth.uid in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data[request.auth.uid] == request.time)
-        && (!(pfPokeKey() in request.resource.data.diff(resource.data).affectedKeys())
-          || (request.resource.data[pfPokeKey()] == request.time
-            && (!(pfPokeKey() in resource.data) || request.time > resource.data[pfPokeKey()] + duration.value(30, 's'))))
-        && request.resource.data.size() <= 300
-        && pfMutual(owner);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([request.auth.uid, p3PokeKey(), p3BoardKey()])
+        && p3NowIfChanged(request.auth.uid) && p3NowIfChanged(p3BoardKey())
+        && (!(p3PokeKey() in request.resource.data.diff(resource.data).affectedKeys())
+          || (request.resource.data[p3PokeKey()] == request.time
+            && (!(p3PokeKey() in resource.data) || request.time > resource.data[p3PokeKey()] + duration.value(30, 's'))))
+        && request.resource.data.size() <= 450
+        && p3Mutual(owner);
     }
   }
-  // ===================== 친구 전용 펫 끝 =====================
+  // ===================== 친구 전용 펫 v3 끝 =====================
 }
