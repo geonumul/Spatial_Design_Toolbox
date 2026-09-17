@@ -13,42 +13,64 @@
   --warn:#B7791F; --warn-soft:#FFF6E0; --r:6px;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;font-size:15.5px;line-height:1.75;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;font-size:15.5px;line-height:1.75;word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
 a{color:inherit}
-header{border-bottom:1px solid var(--line)}
-.hwrap{max-width:760px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:12px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.4px;text-decoration:none}
-.brand i{width:26px;height:26px;border-radius:4px;background:var(--primary);display:inline-block;position:relative;flex:none}
-.brand i::after{content:"";position:absolute;left:7px;top:7px;width:12px;height:12px;border-radius:50%;background:#fff}
-.back{margin-left:auto;font-size:14px;color:var(--sub);text-decoration:none}
-.back:hover{color:var(--primary)}
+b,strong{font-weight:500}
+header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.hwrap{max-width:1120px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:36px}
+.brand{font-weight:800;font-size:19px;letter-spacing:-.4px;text-decoration:none;white-space:nowrap}
+nav{display:flex;gap:4px}
+.tab{padding:8px 14px;border-radius:4px;font-weight:400;color:#3A3A52;font-size:14.5px;text-decoration:none;white-space:nowrap}
+.tab:hover{background:var(--soft)}
+.tab.on{color:var(--primary)}
 main{max-width:760px;margin:0 auto;padding:40px 24px 64px}
-h1{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1.35;margin:0 0 10px}
+h1{font-size:30px;font-weight:600;letter-spacing:-.6px;line-height:1.35;margin:0 0 10px}
 .lead{color:var(--sub);margin:0 0 28px;font-size:16.5px}
 .dl{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding:22px;border:1px solid var(--line);border-radius:var(--r);background:var(--soft)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 22px;border-radius:var(--r);background:var(--primary);color:#fff;font-weight:600;font-size:16px;text-decoration:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 22px;border-radius:var(--r);background:var(--primary);color:#fff;font-weight:500;font-size:16px;text-decoration:none}
 .btn:hover{background:var(--primary-dark)}
 .btn svg{width:18px;height:18px}
 .dl small{color:var(--sub);font-size:13.5px}
-h2{font-size:20px;font-weight:600;margin:40px 0 12px}
+h2{font-size:20px;font-weight:500;margin:40px 0 12px}
 ol,ul{margin:0;padding-left:22px}
 li{margin:6px 0}
 .note{margin-top:14px;padding:16px 18px;border-radius:var(--r);background:var(--warn-soft);border:1px solid #F3DFB0}
 .note b{color:var(--warn)}
-.kbd{display:inline-block;padding:0 8px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:#fff;font-size:14px;font-weight:600;line-height:1.7}
+.kbd{display:inline-block;padding:0 8px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:#fff;font-size:14px;font-weight:500;line-height:1.7}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
 .card{border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
-.card b{display:block;font-weight:600;margin-bottom:2px}
+.card b{display:block;font-weight:500;margin-bottom:2px}
 .card span{color:var(--sub);font-size:14.5px}
-footer{color:var(--sub);font-size:13px;margin-top:48px;border-top:1px solid var(--line);padding-top:16px}
+footer.site{background:var(--soft);border-top:1px solid var(--line);color:var(--sub);font-size:14px}
+footer.site .fwrap{max-width:1120px;margin:0 auto;padding:48px 24px 28px}
+footer.site .fcols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:28px}
+footer.site .fbrand{font-weight:800;font-size:19px;letter-spacing:-.4px;color:var(--ink);margin-bottom:12px}
+footer.site .finfo{line-height:1.9;word-break:keep-all}
+footer.site h4{margin:2px 0 12px;font-size:14px;font-weight:600;color:var(--ink)}
+footer.site ul{list-style:none;margin:0;padding:0;line-height:2.2}
+footer.site a{color:#50506A}
+footer.site a:hover{color:var(--primary)}
+footer.site .fbottom{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:36px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:#9A9AB0}
+footer.site .flegal{display:flex;gap:18px}
+.totop{position:fixed;right:18px;bottom:18px;z-index:40;width:48px;height:48px;border-radius:8px;border:0;background:var(--ink);color:#fff;font:inherit;font-size:11px;font-weight:600;line-height:1.1;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s}
+.totop.on{opacity:.92;pointer-events:auto}
+.totop b{display:block;font-size:14px}
+@media (max-width:720px){.hwrap{padding:12px 16px;gap:14px;flex-wrap:wrap}nav{width:100%;overflow-x:auto}main{padding:28px 16px 56px}}
+@media (max-width:720px){footer.site .fcols{grid-template-columns:1fr 1fr}footer.site .fcols>div:first-child{grid-column:1/-1}.totop{right:12px;bottom:12px;width:44px;height:44px}}
 @media (max-width:480px){h1{font-size:25px}.btn{width:100%}}
+.macnote{margin-top:10px;color:var(--sub);font-size:14px}
 </style>
 </head>
 <body>
 <header>
   <div class="hwrap">
-    <a class="brand" href="../index.html"><i></i><span>TSG</span></a>
-    <a class="back" href="../index.html">사이트로 돌아가기</a>
+    <a class="brand" href="../index.html">TSG</a>
+    <nav>
+      <a class="tab" href="../index.html#subjects">과목</a>
+      <a class="tab" href="../index.html#howto">사용법</a>
+      <a class="tab" href="../index.html#pass">이용권</a>
+      <a class="tab" href="../pet/index.html">내 펫</a>
+    </nav>
   </div>
 </header>
 <main>
@@ -94,6 +116,7 @@ footer{color:var(--sub);font-size:13px;margin-top:48px;border-top:1px solid var(
   <ol>
     <li>먼저 친구를 추가해요. <a href="../pet/index.html">내 펫 페이지</a>의 <b>친구</b> 칸이나 펫 채팅 창에 내 <b>친구 코드</b>(예: ACD-479)가 있어요. 이 코드를 친구에게 알려 주고, 친구 코드는 칸에 넣어 <span class="kbd">친구 요청</span>을 눌러요.</li>
     <li>요청을 받은 친구가 <span class="kbd">수락</span>을 누르면 친구가 돼요. 둘 다 동의해야 해서, 코드만 안다고 마음대로 친구가 되지는 않아요.</li>
+    <li>화면 <b>오른쪽 끝에 붙은 분홍 채팅 버튼</b>을 누르면 채팅 창이 옆에서 나오고, 한 번 더 누르면 쏙 들어가요. 버튼은 위아래로 끌어 옮길 수 있고 트레이 메뉴에서 숨길 수 있어요.</li>
     <li>내 펫에 마우스를 올리면 머리 위에 동그란 버튼 두 개가 떠요. 분홍 <b>말풍선 버튼</b>을 누르면 펫 옆에 채팅 창이 열리고 친구 목록이 나와요. 이야기할 친구를 눌러요.</li>
     <li>아래 칸에 한마디 쓰고 <span class="kbd">Enter</span> 를 누르면 그 친구 화면에서 내 펫 위에 말풍선으로 떠요. 다른 친구에게는 안 보여요. 닫을 때는 <span class="kbd">Esc</span> 나 X 를 눌러요.</li>
     <li>키보드로는 <span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">Space</span> 로 언제든 열고 닫을 수 있어요. 옆의 <b>친구 버튼</b>을 누르면 친구 목록이 나오고, 친구를 고르면 내 펫이 놀러 가요.</li>
@@ -111,8 +134,27 @@ footer{color:var(--sub);font-size:13px;margin-top:48px;border-top:1px solid var(
   <h2>지우고 싶을 때</h2>
   <p>윈도우 설정, 앱, 설치된 앱에서 <b>TSG 펫</b> 을 찾아 제거하면 돼요.</p>
 
-  <footer>맥용은 아직 준비 중이에요.</footer>
+  <p class="macnote">맥용은 아직 준비 중이에요.</p>
 </main>
+<footer class="site">
+  <div class="fwrap">
+    <div class="fcols">
+      <div>
+        <div class="fbrand">TSG</div>
+        <div class="finfo">같은 수업을 듣는 친구들이 같이 쓰는 스터디 사이트예요.<br>문의 <a href="mailto:8268go@naver.com">8268go@naver.com</a></div>
+      </div>
+      <div><h4>공부</h4><ul><li><a href="../index.html#subjects">과목</a></li><li><a href="../index.html#pass">이용권</a></li><li><a href="../index.html#howto">사용법</a></li></ul></div>
+      <div><h4>펫</h4><ul><li><a href="../pet/index.html">내 펫</a></li><li><a href="download.html">펫 프로그램 받기</a></li></ul></div>
+      <div><h4>함께하기</h4><ul><li><a href="mailto:8268go@naver.com?subject=%5BTSG%5D%20%EB%AC%B8%EC%9D%98">문의하기</a></li><li><a href="../legal/faq.html">자주 묻는 질문</a></li></ul></div>
+    </div>
+    <div class="fbottom">
+      <span>&copy; 2026 TSG. All rights reserved.</span>
+      <span class="flegal"><a href="../legal/privacy.html">개인정보처리방침</a><a href="../legal/terms.html">이용약관</a></span>
+    </div>
+  </div>
+</footer>
+<button type="button" class="totop" id="toTop" aria-label="맨 위로"><b>&#8963;</b>TOP</button>
+<script>(function(){var b=document.getElementById("toTop");if(!b)return;var f=function(){b.classList.toggle("on",window.pageYOffset>600)};window.addEventListener("scroll",f,{passive:true});f();b.addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"})});})();</script>
 <script src="../assets/firebase-config.js"></script>
 <script src="../assets/sync.js"></script>
 <script src="../assets/access-config.js"></script>
