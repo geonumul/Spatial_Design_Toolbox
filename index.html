@@ -167,7 +167,15 @@ footer.site .flegal{display:flex;gap:18px}
 </div></header>
 
 <div class="hero">
-  <video class="bgv" id="heroVideo" autoplay muted loop playsinline preload="metadata" poster="assets/media/hero.jpg" aria-hidden="true"><source src="assets/media/hero.mp4" type="video/mp4"></video>
+  <video class="bgv" id="heroVideo" autoplay muted loop playsinline preload="metadata" aria-hidden="true"></video>
+  <script>
+  /* 들어올 때마다 배경 영상 둘 중 하나를 무작위로 */
+  (function(){
+    var list = [["assets/media/hero.mp4", "assets/media/hero.jpg"], ["assets/media/hero2.mp4", "assets/media/hero2.jpg"]];
+    var pick = list[Math.floor(Math.random() * list.length)], v = document.getElementById("heroVideo");
+    v.poster = pick[1]; v.src = pick[0];
+  })();
+  </script>
   <button class="vtoggle" id="vtoggle" type="button" aria-label="배경 영상 멈춤">II</button>
   <p class="eyebrow">Toolbox Group Study</p>
   <h1>시험 전날 밤새지 않게<br>매주 조금씩 쌓아 둡니다</h1>
