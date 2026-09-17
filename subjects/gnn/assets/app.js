@@ -312,9 +312,9 @@ function overallNext() {
 function pageHome() {
   const nx = overallNext();
   let h = '<section class="intro"><div><div class="eyebrow">그래프 신경망 2026 가을</div>'
-    + '<h1>버튼 하나만 따라가면<br>되게 만들었어요</h1>'
+    + '<h1>' + (nx ? esc(weekName(nx.week)) + '<br>' + esc(nx.step.t) : '남은 건<br>모의고사예요') + '</h1>'
     + '<p>기초 다지기, 1주차, 2주차, 3주차 순서예요. 각 주차 안에서는 길잡이가 지금 할 일을 하나씩 알려 줘요. 모르는 용어는 눌러서 뜻을 봐요.</p>'
-    + '<div class="cta">' + (nx ? '<a class="btn primary" href="' + esc(nx.step.href) + '">지금 할 차례: ' + esc(weekName(nx.week)) + ', ' + esc(nx.step.t) + '</a>' : '<a class="btn primary" href="#/mock">모의고사</a>')
+    + '<div class="cta">' + (nx ? '<a class="btn primary" href="' + esc(nx.step.href) + '">이어서 하기</a>' : '<a class="btn primary" href="#/mock">모의고사</a>')
     + (store.last ? '<a class="btn" href="' + esc(store.last.href) + '">마지막으로 본 곳</a>' : '') + '</div></div>'
     + '<div class="pathcard"><div class="pc-h"><span>기초, 1~7주차, 8주차 중간고사</span><span class="num">' + overallPct() + '% 진행</span></div>' + weekPathSvg() + '</div></section>';
   h += '<h2 class="sec">주차별로 공부하기</h2><div class="weekcards">';

@@ -344,9 +344,9 @@ function pageHome() {
   const nx = overallNext();
   const dueAll = Object.keys(TERM).filter(k => termDue(TERM[k])).length;
   let h = '<section class="intro"><div><div class="eyebrow">' + esc(META.eyebrow || META.name || '') + '</div>'
-    + '<h1>버튼 하나만 따라가면<br>되게 만들었어요</h1>'
+    + '<h1>' + (nx ? esc(weekName(nx.week)) + '<br>' + esc(nx.step.t) : '남은 건<br>모의고사예요') + '</h1>'
     + '<p>' + esc(META.intro || '위에서부터 순서대로 가면 돼요. 각 주차 안에서는 길잡이가 지금 할 일을 하나씩 알려 줘요. 모르는 용어는 눌러서 뜻을 봐요.') + '</p>'
-    + '<div class="cta">' + (nx ? '<a class="btn primary" href="' + esc(nx.step.href) + '">지금 할 차례: ' + esc(weekName(nx.week)) + ', ' + esc(nx.step.t) + '</a>' : '<a class="btn primary" href="#/mock">모의고사</a>')
+    + '<div class="cta">' + (nx ? '<a class="btn primary" href="' + esc(nx.step.href) + '">이어서 하기</a>' : '<a class="btn primary" href="#/mock">모의고사</a>')
     + (dueAll ? '<a class="btn" href="#/terms/all">오늘의 용어 복습 ' + dueAll + '개</a>' : '')
     + (store.last ? '<a class="btn" href="' + esc(store.last.href) + '">마지막으로 본 곳</a>' : '') + '</div></div>'
     + '<div class="pathcard"><div class="pc-h"><span>' + esc(META.pathLabel || '공부 순서') + '</span><span class="num">' + overallPct() + '% 진행</span></div>' + weekPathSvg() + '</div></section>';
