@@ -132,13 +132,28 @@ service cloud.firestore {
   //   pet3Friends/{uid}/list/{other}     "나는 other 와 친구 하고 싶다" {pet, sp, ts}. 양쪽에 다 있어야 친구
   //   pet3Friends/{uid}/requests/{from}  받은 친구 요청 {name, pet, sp, via, ts}. via = 받는 사람 펫 이름 열쇠
   //   pet3Presence/{uid}                 접속 표시 {name, sp, wear, tricks(배운 개인기 id 목록), owner(이름표의 who), act(하는 일), mood, ev(최근 일 10개 {k, a, t}), ct(쓴 기기 시각), ts}. name 은 내 이름표의 pet 과 같아야 한다. 서로 친구만 읽는다
-  //   pet3Chats/{a_b}/messages/{id}      1:1 대화 {from, text, ts}. a_b 는 두 uid 를 정렬해 _ 로 이은 것
-  //   pet3Board/{uid}/messages/{id}      전체 채팅: 내 친구 모두에게 한 말 {from, text, ts}. 나와 서로 친구만 읽는다
+  //   pet3Chats/{a_b}/messages/{id}      1:1 대화 {from, text, ts, deleted?, deletedAt?}. a_b 는 두 uid 를 정렬해 _ 로 이은 것
+  //   pet3Board/{uid}/messages/{id}      전체 채팅: 내 친구 모두에게 한 말 {from, text, ts, deleted?, deletedAt?}. 나와 서로 친구만 읽는다
+  //        2026-09-18 (펫 프로그램 1.4.7): 대화 기록은 지우지 않고 서버에 남긴다. 보낸 사람이 지우면 deleted, deletedAt 만 붙인다(소프트 삭제).
+  //        관리자(admins/{uid})는 안전과 운영을 위해 모든 대화(지운 것 포함)와 이름표, 친구 목록을 읽을 수 있다 (사이트 관리자 페이지 "대화 기록")
   //   pet3Inbox/{uid}                    알림 {보낸 친구 uid: 1:1 새 메시지, p_uid: 콕 찌르기, b_uid: 전체 채팅 새 글}. 친구는 자기 칸 세 개만 고친다
   //   users/{uid}/stores/pet3__state     펫 상태 (위 stores 규칙). 사이트와 펫 프로그램이 같이 쓴다
   match /databases/{database}/documents {
     function p3In() { return request.auth != null; }
     function p3Me(uid) { return request.auth != null && request.auth.uid == uid; }
+    function p3Admin() { return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    // 소프트 삭제: deleted, deletedAt 만 바꾸고 deleted 는 true, deletedAt 은 지금 시각 (글은 못 고친다)
+    function p3SoftDelete() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt'])
+        && request.resource.data.deleted == true && request.resource.data.deletedAt == request.time;
+    }
+    // 관리자: 지운 메시지를 되살리거나(삭제 취소: deleted, deletedAt 을 없애고 restoredBy, restoredAt 을 적음) 운영상 삭제 표시만. 글은 못 고친다
+    function p3AdminMark() {
+      let d = request.resource.data;
+      return p3Admin() && d.diff(resource.data).affectedKeys().hasOnly(['deleted', 'deletedAt', 'restoredBy', 'restoredAt'])
+        && (((!('deleted' in d) || d.deleted == false) && d.restoredBy == request.auth.uid && d.restoredAt == request.time)
+          || (d.deleted == true && d.deletedAt == request.time));
+    }
     function p3Doc(rel) { return path('/databases/' + database + '/documents/' + rel); }
     function p3Wants(a, b) { return exists(/databases/$(database)/documents/pet3Friends/$(a)/list/$(b)); }
     // 서로 친구: 내 목록에 상대가, 상대 목록에 내가 있다
@@ -179,8 +194,8 @@ service cloud.firestore {
           || getAfter(p3Doc('pet3Names/' + oldName)).data.uid != uid);
     }
     match /pet3Owners/{uid} {
-      allow get: if p3Me(uid);
-      allow list: if false;
+      allow get: if p3Me(uid) || p3Admin();
+      allow list: if p3Admin();
       allow create: if p3Me(uid) && p3OwnerOk(uid, '');
       // 이름이나 종을 바꾸는 것은 5초에 한 번까지
       allow update: if p3Me(uid) && p3OwnerOk(uid, resource.data.name) && request.time > resource.data.ts + duration.value(5, 's');
@@ -217,8 +232,8 @@ service cloud.firestore {
 
       // 친구 목록: 내 목록은 나만 만든다. 상대는 "자기를 가리키는 문서" 하나를 확인(get)하거나 지울(친구 끊기) 수만 있다
       match /list/{other} {
-        allow get: if p3In() && (request.auth.uid == owner || request.auth.uid == other);
-        allow list: if p3Me(owner);
+        allow get: if p3In() && (request.auth.uid == owner || request.auth.uid == other || p3Admin());
+        allow list: if p3Me(owner) || p3Admin();
         allow create, update: if p3Me(owner) && owner != other
           && request.resource.data.keys().hasOnly(['pet', 'sp', 'who', 'ts'])
           && p3Str(request.resource.data.pet, 8) && p3Sp(request.resource.data.sp)
@@ -265,30 +280,31 @@ service cloud.firestore {
       allow delete: if p3Me(uid);
     }
 
-    // 1:1 대화: 두 사람이 서로 친구일 때만 읽고 쓴다. 내 이름으로만 쓰고, 고치지 못하고, 내 글만 지운다
+    // 1:1 대화: 두 사람이 서로 친구일 때만 읽고 쓴다. 내 이름으로만 쓰고, 글은 못 고친다.
+    // 지우기는 내 글에 삭제 표시만 (문서는 남는다). 관리자는 모든 방을 읽는다
     match /pet3Chats/{pair}/messages/{id} {
-      allow read: if p3In() && p3InPair(pair);
+      allow read: if (p3In() && p3InPair(pair)) || p3Admin();
       allow create: if p3In() && id.size() <= 40 && p3InPair(pair)
         && request.resource.data.keys().hasOnly(['from', 'text', 'ts'])
         && request.resource.data.from == request.auth.uid
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 120
         && request.resource.data.ts == request.time;
-      allow update: if false;
-      allow delete: if p3In() && resource.data.from == request.auth.uid;
+      allow update: if (p3In() && resource.data.from == request.auth.uid && p3SoftDelete()) || p3AdminMark();
+      allow delete: if false;
     }
 
-    // 전체 채팅: 내 게시판에 나만 쓰고, 나와 서로 친구인 사람만 읽는다
+    // 전체 채팅: 내 게시판에 나만 쓰고, 나와 서로 친구인 사람만 읽는다. 지우기는 삭제 표시만, 관리자는 모두 읽는다
     match /pet3Board/{owner}/messages/{id} {
-      allow read: if p3Me(owner) || p3Mutual(owner);
+      allow read: if p3Me(owner) || p3Mutual(owner) || p3Admin();
       allow create: if p3Me(owner) && id.size() <= 40
         && request.resource.data.keys().hasOnly(['from', 'text', 'ts'])
         && request.resource.data.from == owner
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 120
         && request.resource.data.ts == request.time;
-      allow update: if false;
-      allow delete: if p3Me(owner);
+      allow update: if (p3Me(owner) && p3SoftDelete()) || p3AdminMark();
+      allow delete: if false;
     }
 
     // 알림: 주인만 읽는다. 서로 친구인 사람은 자기 칸 세 개만 지금 시각으로 바꾼다

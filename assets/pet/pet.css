@@ -281,3 +281,7 @@ body.playing .pet-hud,body.inking .pet-hud,body.paper .pet-hud,body.pet-open .pe
 @keyframes pfPokeWiggle{0%,100%{transform:none}25%{transform:rotate(-10deg)}75%{transform:rotate(10deg)}}
 @media (max-width:420px){.pf-poke{flex-wrap:wrap}.pf-poke .pf-col{flex-basis:calc(100% - 52px)}.pf-poke .pet-btn{margin-left:auto}.pf-poke .pet-btn+.pet-btn{margin-left:0}}
 @media (prefers-reduced-motion:reduce){.pf-poke,.pf-poke .pf-av{animation:none}}
+/* 대화 보관 안내 (2026-09-18) */
+.pf-lognote{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:9px 12px;border-radius:14px;background:#F2F6FF;border:1px solid #D9E3FA;color:#4A5A7C;font-size:13.5px;line-height:1.5;word-break:keep-all}
+.pf-lognote span{flex:1}
+.pf-lognote[hidden]{display:none}

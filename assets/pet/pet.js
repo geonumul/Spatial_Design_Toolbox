@@ -696,6 +696,7 @@ function adoptView(mode) {
     } else {
       const spChanged = pick !== st.sp;
       if (spChanged) { st.sp = pick; st.love = 0; st.food = 80; st.fun = 80; st.born = dayKey(); st.changedAt = dayKey(); }
+      if (st.name !== n.pet) st.nameTs = Date.now();
       st.name = n.pet;
       save(); react('hop');
       if (spChanged) news('새 친구 ' + st.name, SP[pick].animal + ro(SP[pick].animal) + ' 바뀌었어요. 간식 돈과 옷장, 배운 장기는 그대로예요.', petSvg(st, { mood: 'happy', cls: 'big' }));
@@ -704,6 +705,7 @@ function adoptView(mode) {
     const pg = $('#petPage'); if (pg) bootPage(pg);
     const pn = $('#petPanel'); if (pn && !pn.hidden) fillPanel(pn);
     if (window.SDT && SDT.user) { startBeat(); presenceBeat(); }
+    if (change) resendRequests();
     friendsRender(); friendsLoad(true);
   };
   d.addEventListener('click', e => { if (e.target === d && !busy) close(); });
@@ -762,15 +764,14 @@ async function leaveCloud() {
   if (!db || !(window.SDT && SDT.user)) return { ok: true, local: true };
   const me = SDT.user.uid, F = db.collection('pet3Friends');
   try {
-    const [own, ls, rs, bs] = await Promise.all([
+    // 2026-09-18: 전체 채팅 글은 지우지 않는다 (대화 기록은 서버에 남긴다. 친구 목록이 없어지니 친구에게는 안 보인다)
+    const [own, ls, rs] = await Promise.all([
       db.collection('pet3Owners').doc(me).get(),
       F.doc(me).collection('list').get(), F.doc(me).collection('requests').get(),
-      db.collection('pet3Board').doc(me).collection('messages').get().catch(() => ({ docs: [] })),
     ]);
     const ops = [];
     ls.docs.forEach(x => { if (x.id === me) return; ops.push(['del', F.doc(me).collection('list').doc(x.id)], ['del', F.doc(x.id).collection('list').doc(me)], ['del', F.doc(x.id).collection('requests').doc(me)]); });
     rs.docs.forEach(x => { if (x.id === me) return; ops.push(['del', F.doc(me).collection('requests').doc(x.id)], ['del', F.doc(x.id).collection('list').doc(me)]); });
-    bs.docs.forEach(x => ops.push(['del', x.ref]));
     ops.push(['del', db.collection('pet3Presence').doc(me)], ['del', db.collection('pet3Inbox').doc(me)]);
     // 이름표와 이름 자리는 같은 묶음에서 지운다 (규칙)
     const first = db.batch();
@@ -854,6 +855,17 @@ async function nameClaim(n, sp, whoWanted) {
 async function nameSync() {
   const s = load();
   if (!s.adopted || !fs() || !(window.SDT && SDT.user)) return;
+  // 이름표가 있고 이 브라우저의 이름과 다르면: 이 브라우저에서 그 뒤에 바꾼 게 아니면(nameTs) 이름표를 따른다.
+  // (펫 프로그램에서 바꾼 이름을 예전 이름으로 되돌려 잡지 않게. 친구 관계는 uid 라서 이름과 상관없다)
+  try {
+    const cur = await fs().collection('pet3Owners').doc(SDT.user.uid).get();
+    const o = cur.exists ? cur.data() : null;
+    if (o && o.pet && o.name && o.pet !== s.name && nameCheck(o.pet).ok && (s.nameTs || 0) <= tsMs(o.ts)) {
+      s.name = o.pet; save();
+      FR.me = { key: o.name, pet: o.pet, sp: fsp(o.sp), who: o.who || '' }; FR.nameIssue = '';
+      if (fsp(o.sp) === fsp(s.sp)) return;
+    }
+  } catch (e) { /* 아래에서 다시 */ }
   const n = nameCheck(s.name);
   if (!n.ok) { FR.nameIssue = 'bad'; return; }
   const r = await nameClaim(n, s.sp);
@@ -937,11 +949,11 @@ function renameOpen(btn) {
     const r = await nameClaim(n, st.sp);
     busy = false; f.querySelector('[type=submit]').textContent = '저장';
     if (!r.ok) { tell(r.why); inp.select(); return; }
-    st.name = n.pet; save();
+    st.name = n.pet; st.nameTs = Date.now(); save();
     close();
     const p = PAGE() ? $('#petPage') : $('#petPanel'); if (p) fillPanel(p);
     react('hop'); say('이제 내 이름은 ' + n.pet + '!');
-    presenceBeat(); friendsRender();
+    presenceBeat(); friendsRender(); resendRequests();
   });
 }
 function closePanel() { const p = $('#petPanel'); if (p) p.hidden = true; document.body.classList.remove('pet-open'); }
@@ -1059,6 +1071,7 @@ async function friendsLoad(force) {
     const root = db.collection('pet3Friends').doc(me);
     const [ls, rs] = await Promise.all([root.collection('list').get(), root.collection('requests').get()]);
     const list = ls.docs.filter(d => d.id !== me).map(d => ({ id: d.id, pet: fcut(d.data().pet, 8) || '친구', sp: fsp(d.data().sp), who: fcut(d.data().who, 20) }));
+    list.forEach(e => { e.cached = { pet: e.pet, sp: e.sp, who: e.who }; });   // 내 목록에 적어 둔 이름 (친구가 이름을 바꾸면 옛 이름)
     const mutual = await Promise.all(list.map(e => db.collection('pet3Friends').doc(e.id).collection('list').doc(me).get().then(x => x.exists).catch(() => false)));
     FR.friends = list.filter((e, i) => mutual[i]);
     FR.pending = list.filter((e, i) => !mutual[i]);
@@ -1074,6 +1087,13 @@ async function friendsLoad(force) {
       const last = ev[ev.length - 1];   // 막 배우고 바로 한 장기면 "배웠어요" 를 보여 준다
       f.trick = last ? (ev.find(e => e.k === 'learn' && e.a === last.a && e.t >= last.t - 1000) || last) : null;
     }).catch(() => {})));
+    // 1.4.7 친구가 펫 이름(동물, 키우는 사람 이름)을 바꿨으면 내 목록에 적어 둔 것도 고친다 (바뀐 것만. 접속 표시가 없을 때 이 이름이 보인다)
+    FR.cacheJob = Promise.all(FR.friends.map(f => {
+      const c = f.cached;
+      if (!c || !nameCheck(f.pet).ok || (c.pet === f.pet && c.sp === f.sp && (c.who || '') === (f.who || ''))) return null;
+      return root.collection('list').doc(f.id).set(Object.assign({ pet: f.pet, sp: f.sp, ts: firebase.firestore.FieldValue.serverTimestamp() }, f.who ? { who: f.who } : {}))
+        .then(() => { f.cached = { pet: f.pet, sp: f.sp, who: f.who }; }).catch(() => {});
+    }));
     const inList = new Set(list.map(e => e.id));
     FR.requests = [];
     rs.docs.forEach(d => {
@@ -1088,6 +1108,20 @@ async function friendsLoad(force) {
   finally { FR.loading = false; }
   friendsRender();
   grantsCheck(false);
+}
+// 1.4.7 내 펫 이름(동물)을 바꾼 뒤: 아직 수락 안 된 내 친구 요청을 새 이름으로 다시 쓴다 (받는 사람의 "받은 친구 요청"에 새 이름).
+// 받는 사람도 그 사이 이름을 바꿨으면 규칙에 막힌다 (via 가 옛 이름). 그러면 그대로 둔다
+async function resendRequests() {
+  const db = fs(), s = load();
+  if (!db || !(window.SDT && SDT.user) || !FR.me || !FR.pending.length) return;
+  const me = SDT.user.uid, TS = firebase.firestore.FieldValue.serverTimestamp();
+  FR.resendJob = Promise.all(FR.pending.map(p => {
+    const k = nameCheck(p.pet); if (!k.ok) return null;
+    const ref = db.collection('pet3Friends').doc(p.id).collection('requests').doc(me);
+    const doc = name => ({ name, pet: FR.me.pet, sp: fsp(s.sp), via: k.key, ts: TS });
+    return ref.set(doc(FR.me.who || '')).catch(() => ref.set(doc(''))).catch(() => null);
+  }));
+  return FR.resendJob;
 }
 async function friendsAdd(raw) {
   const db = fs(), s = load();
@@ -1274,6 +1308,9 @@ async function grantsCheck(force) {
   finally { GR.busy = false; }
   return got;
 }
+// 대화 보관 안내 (펫 프로그램 채팅 창, 메인 창과 같은 문장). 확인을 누르면 이 브라우저에서는 다시 안 나온다
+const LOG_NOTE_KEY = 'sdt_petchatlog_notice_v1';
+function logNoteSeen() { try { return localStorage.getItem(LOG_NOTE_KEY) === '1'; } catch (e) { return false; } }
 function friendsRender() {
   const host = $('#petFriends'); if (!host) return;
   const s = load();
@@ -1287,7 +1324,8 @@ function friendsRender() {
     if (state === 'off') h += '<p class="pf-empty">친구 기능은 사이트 주소(https://geonumul.github.io/Toolbox_Group_Study/)에서 로그인하면 쓸 수 있어요.</p>';
     else if (state === 'login') h += '<div class="pf-empty"><p>로그인하면 친구를 추가할 수 있어요.</p><button type="button" class="pet-btn main" data-f="login">로그인</button></div>';
     else if (state === 'nopet') h += '<p class="pf-empty">펫을 먼저 데려오면 친구를 추가할 수 있어요.</p>';
-    else h += '<div class="pf-pokes" id="pfPokes" hidden></div><div class="pf-code"><span>내 펫 이름</span><b id="pfMine"></b><button type="button" class="pet-btn" data-f="copy">복사</button>'
+    else h += '<div class="pf-lognote" id="pfLogNote" hidden><span>대화는 서버에 보관되고, 안전을 위해 관리자가 볼 수 있어요</span><button type="button" class="pet-btn" data-f="logok">확인</button></div>'
+      + '<div class="pf-pokes" id="pfPokes" hidden></div><div class="pf-code"><span>내 펫 이름</span><b id="pfMine"></b><button type="button" class="pet-btn" data-f="copy">복사</button>'
       + '<div class="pf-wholine"><span>친구에게 보이는 내 이름</span><b id="pfWho"></b><button type="button" class="pet-btn" data-f="who">바꾸기</button></div>'
       + '<form class="pf-whoform" id="pfWhoForm" hidden autocomplete="off"><input id="pfWhoIn" maxlength="20" aria-label="친구에게 보이는 내 이름" spellcheck="false"><button type="submit" class="pet-btn main">저장</button><button type="button" class="pet-btn" data-f="whoCancel">취소</button><small>20글자까지. 서로 친구인 사람에게만 보여요</small></form></div>'
       + '<p class="pf-issue" id="pfIssue" hidden></p>'
@@ -1296,6 +1334,7 @@ function friendsRender() {
     host.innerHTML = h + '</section>';
   }
   if (state !== 'ready') return;
+  const ln = $('#pfLogNote'); if (ln) ln.hidden = logNoteSeen();
   pokesRender();
   $('#pfMine').textContent = FR.me ? FR.me.pet : (FR.nameIssue ? s.name : '확인하는 중');
   $('#pfWho').textContent = FR.me ? (FR.me.who || '(없음)') : '';
@@ -1348,6 +1387,7 @@ function friendsBoot() {
       return;
     }
     if (f === 'poke') { friendsPoke(id); return; }
+    if (f === 'logok') { try { localStorage.setItem(LOG_NOTE_KEY, '1'); } catch (err) { /* 무시 */ } const ln = $('#pfLogNote'); if (ln) ln.hidden = true; return; }
     const pk = b.closest('.pf-poke'), pid = pk ? pk.dataset.id : '';
     if (f === 'pokeBack') { friendsPoke(pid).then(() => { if (FR.ok) pokeDismiss(pid); }); return; }
     if (f === 'pokeX') { pokeDismiss(pid); return; }
@@ -1360,6 +1400,8 @@ function friendsBoot() {
   window.addEventListener('focus', () => friendsLoad(false));
   // 펫 페이지를 열어 둔 동안 1분마다 받은 콕만 다시 본다 (문서 하나 읽기)
   setInterval(() => { if (!document.hidden && FR.loaded && window.SDT && SDT.user) pokeCheck().then(pokesRender); }, 60000);
+  // 1.4.7 친구 목록(친구가 바꾼 펫 이름, 받은 요청)도 90초마다 다시 (창을 보고 있을 때만)
+  setInterval(() => { if (!document.hidden && FR.loaded && window.SDT && SDT.user) friendsLoad(true); }, 90000);
 }
 
 /* ---------- 노트북 화면에 펫 띄우기 (설치한 펫 프로그램을 tsgpet:// 주소로 켜고 끔) ---------- */
@@ -1482,7 +1524,8 @@ const DOWNLOAD = (function () {
 const PET_PAGE = DOWNLOAD.replace(/desktop-pet\/download\.html$/, 'pet/index.html');
 
 /* ---------- 시작 ---------- */
-window.SDTPet = { onAnswer, onUndo, canStart, onSetEnd, onRead, openPanel, startBoss, petSvg, SPECIES, launchDesktop, care: { lastPing: () => lastPing, state: () => load(), tick: () => tick(load()), save, needAsk, needs: () => careNeeds(load(), now()), grants: () => grantsCheck(true), pokes: () => pokeCheck().then(pokesRender), live: () => ({ ev: LIVE.ev.slice(), act: liveAct(load()) }), beat: () => presenceBeat() } };
+window.SDTPet = { onAnswer, onUndo, canStart, onSetEnd, onRead, openPanel, startBoss, petSvg, SPECIES, launchDesktop, care: { lastPing: () => lastPing, state: () => load(), tick: () => tick(load()), save, needAsk, needs: () => careNeeds(load(), now()), grants: () => grantsCheck(true), pokes: () => pokeCheck().then(pokesRender), live: () => ({ ev: LIVE.ev.slice(), act: liveAct(load()) }), beat: () => presenceBeat() },
+  friends: { reload: () => friendsLoad(true), jobs: () => Promise.all([FR.cacheJob, FR.resendJob]), view: () => ({ loaded: FR.loaded, me: FR.me, friends: FR.friends.map(f => ({ id: f.id, pet: f.pet, who: f.who })), pending: FR.pending.map(f => ({ id: f.id, pet: f.pet })), requests: FR.requests.map(q => ({ id: q.id, pet: q.pet, name: q.name })) }) } };
 window.addEventListener('sdt:read', e => onRead(e.detail && e.detail.id));
 function bootPage(pg) {
   if (load().adopted) { fillPanel(pg); return; }

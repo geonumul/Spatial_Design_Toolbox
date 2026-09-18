@@ -74,13 +74,14 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
 .coin-sum b{color:var(--ink);font-weight:600}
 .delask td{background:var(--no-soft)}
 .delask p{margin:0 0 8px;color:var(--ink-2);font-size:14px}
+.cl-del td{background:var(--no-soft)}
 </style>
 </head>
 <body>
 <header><div class="hwrap"><a class="brand" href="../index.html">TSG</a><a class="back" href="../index.html">사이트로 돌아가기</a></div></header>
 <main>
 <h1>관리자</h1>
-<p class="lead">이용권을 주고 회수하고, 펫 코인을 주고, 이벤트 코드를 만들어요.</p>
+<p class="lead">이용권을 주고 회수하고, 펫 코인을 주고, 이벤트 코드를 만들고, 펫 친구 대화 기록을 봐요.</p>
 
 <div id="state" class="panel"><p style="margin:0">로그인 정보를 확인하고 있어요.</p></div>
 
@@ -179,6 +180,9 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
       <div class="tbl" id="redList"></div>
     </div>
   </section>
+
+  <!-- 펫 친구 대화 기록 (관리자만, admin/chatlog.js) -->
+  <section class="panel" id="chatLog" hidden></section>
 </div>
 </main>
 
@@ -505,5 +509,6 @@ td code{font-size:13.5px;background:var(--soft);padding:1px 6px;border-radius:4p
   }
 })();
 </script>
+<script src="chatlog.js"></script>
 </body>
 </html>
