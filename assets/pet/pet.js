@@ -1308,9 +1308,6 @@ async function grantsCheck(force) {
   finally { GR.busy = false; }
   return got;
 }
-// 대화 보관 안내 (펫 프로그램 채팅 창, 메인 창과 같은 문장). 확인을 누르면 이 브라우저에서는 다시 안 나온다
-const LOG_NOTE_KEY = 'sdt_petchatlog_notice_v1';
-function logNoteSeen() { try { return localStorage.getItem(LOG_NOTE_KEY) === '1'; } catch (e) { return false; } }
 function friendsRender() {
   const host = $('#petFriends'); if (!host) return;
   const s = load();
@@ -1324,8 +1321,7 @@ function friendsRender() {
     if (state === 'off') h += '<p class="pf-empty">친구 기능은 사이트 주소(https://geonumul.github.io/Toolbox_Group_Study/)에서 로그인하면 쓸 수 있어요.</p>';
     else if (state === 'login') h += '<div class="pf-empty"><p>로그인하면 친구를 추가할 수 있어요.</p><button type="button" class="pet-btn main" data-f="login">로그인</button></div>';
     else if (state === 'nopet') h += '<p class="pf-empty">펫을 먼저 데려오면 친구를 추가할 수 있어요.</p>';
-    else h += '<div class="pf-lognote" id="pfLogNote" hidden><span>대화는 서버에 보관되고, 안전을 위해 관리자가 볼 수 있어요</span><button type="button" class="pet-btn" data-f="logok">확인</button></div>'
-      + '<div class="pf-pokes" id="pfPokes" hidden></div><div class="pf-code"><span>내 펫 이름</span><b id="pfMine"></b><button type="button" class="pet-btn" data-f="copy">복사</button>'
+    else h += '<div class="pf-pokes" id="pfPokes" hidden></div><div class="pf-code"><span>내 펫 이름</span><b id="pfMine"></b><button type="button" class="pet-btn" data-f="copy">복사</button>'
       + '<div class="pf-wholine"><span>친구에게 보이는 내 이름</span><b id="pfWho"></b><button type="button" class="pet-btn" data-f="who">바꾸기</button></div>'
       + '<form class="pf-whoform" id="pfWhoForm" hidden autocomplete="off"><input id="pfWhoIn" maxlength="20" aria-label="친구에게 보이는 내 이름" spellcheck="false"><button type="submit" class="pet-btn main">저장</button><button type="button" class="pet-btn" data-f="whoCancel">취소</button><small>20글자까지. 서로 친구인 사람에게만 보여요</small></form></div>'
       + '<p class="pf-issue" id="pfIssue" hidden></p>'
@@ -1334,7 +1330,6 @@ function friendsRender() {
     host.innerHTML = h + '</section>';
   }
   if (state !== 'ready') return;
-  const ln = $('#pfLogNote'); if (ln) ln.hidden = logNoteSeen();
   pokesRender();
   $('#pfMine').textContent = FR.me ? FR.me.pet : (FR.nameIssue ? s.name : '확인하는 중');
   $('#pfWho').textContent = FR.me ? (FR.me.who || '(없음)') : '';
@@ -1387,7 +1382,6 @@ function friendsBoot() {
       return;
     }
     if (f === 'poke') { friendsPoke(id); return; }
-    if (f === 'logok') { try { localStorage.setItem(LOG_NOTE_KEY, '1'); } catch (err) { /* 무시 */ } const ln = $('#pfLogNote'); if (ln) ln.hidden = true; return; }
     const pk = b.closest('.pf-poke'), pid = pk ? pk.dataset.id : '';
     if (f === 'pokeBack') { friendsPoke(pid).then(() => { if (FR.ok) pokeDismiss(pid); }); return; }
     if (f === 'pokeX') { pokeDismiss(pid); return; }

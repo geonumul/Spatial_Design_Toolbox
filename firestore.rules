@@ -138,6 +138,8 @@ service cloud.firestore {
   //        관리자(admins/{uid})는 안전과 운영을 위해 모든 대화(지운 것 포함)와 이름표, 친구 목록을 읽을 수 있다 (사이트 관리자 페이지 "대화 기록")
   //   pet3Inbox/{uid}                    알림 {보낸 친구 uid: 1:1 새 메시지, p_uid: 콕 찌르기, b_uid: 전체 채팅 새 글}. 친구는 자기 칸 세 개만 고친다
   //   users/{uid}/stores/pet3__state     펫 상태 (위 stores 규칙). 사이트와 펫 프로그램이 같이 쓴다
+  //   pet3Rtc/{a_b}/sig/{id}             펫 프로그램 1.4.8 파일 바로 보내기 신호 {from, to, kind, xfer, sdp, ts}. 서로 친구 둘만 읽고 쓰고 지운다(고치기 없음).
+  //        파일 내용은 서버에 가지 않는다. 1:1 메시지에 file {id, name, size, type, sha} 칸이 붙을 수 있다
   match /databases/{database}/documents {
     function p3In() { return request.auth != null; }
     function p3Me(uid) { return request.auth != null && request.auth.uid == uid; }
@@ -172,6 +174,12 @@ service cloud.firestore {
         && (!('head' in w) || p3Str(w.head, 20))
         && (!('neck' in w) || p3Str(w.neck, 20))
         && (!('face' in w) || p3Str(w.face, 20));
+    }
+    // 1.4.8 파일 메시지의 파일 정보 (이름, 크기, 종류, sha256, 전송 id)
+    function p3FileMeta(f) {
+      return f is map && f.keys().hasOnly(['id', 'name', 'size', 'type', 'sha'])
+        && p3Str(f.id, 40) && f.name is string && f.name.size() > 0 && f.name.size() <= 120
+        && f.size is int && f.size >= 0 && p3Str(f.type, 80) && p3Str(f.sha, 64);
     }
     function p3InPair(pair) {
       let p = pair.split('_');
@@ -285,7 +293,8 @@ service cloud.firestore {
     match /pet3Chats/{pair}/messages/{id} {
       allow read: if (p3In() && p3InPair(pair)) || p3Admin();
       allow create: if p3In() && id.size() <= 40 && p3InPair(pair)
-        && request.resource.data.keys().hasOnly(['from', 'text', 'ts'])
+        && request.resource.data.keys().hasOnly(['from', 'text', 'ts', 'file'])
+        && (!('file' in request.resource.data) || p3FileMeta(request.resource.data.file))
         && request.resource.data.from == request.auth.uid
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 120
@@ -314,22 +323,36 @@ service cloud.firestore {
     // 칸을 지우는 것은 주인만 (문서 삭제) 할 수 있어서 보낸 사람이 기다리는 시간을 없앨 수 없다
     function p3PokeKey() { return 'p_' + request.auth.uid; }
     function p3BoardKey() { return 'b_' + request.auth.uid; }
+    function p3RtcKey() { return 'r_' + request.auth.uid; }
     function p3NowIfSet(k) { return !(k in request.resource.data) || request.resource.data[k] == request.time; }
     function p3NowIfChanged(k) {
       return !(k in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data[k] == request.time;
     }
+    // 1.4.8 파일 바로 보내기 신호: 서로 친구 둘만. 새로 쓰기(내 이름으로, 상대에게)와 지우기만
+    match /pet3Rtc/{pair}/sig/{id} {
+      allow read, delete: if p3In() && p3InPair(pair);
+      allow create: if p3In() && id.size() <= 40 && p3InPair(pair)
+        && request.resource.data.keys().hasOnly(['from', 'to', 'kind', 'xfer', 'sdp', 'ts'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.to is string && request.resource.data.to != request.auth.uid && pair.split('_').hasAny([request.resource.data.to])
+        && request.resource.data.kind in ['accept', 'offer', 'answer', 'cancel']
+        && p3Str(request.resource.data.xfer, 40) && p3Str(request.resource.data.sdp, 30000)
+        && request.resource.data.ts == request.time;
+      allow update: if false;
+    }
+
     match /pet3Inbox/{owner} {
       allow get, delete: if p3Me(owner);
       allow list: if false;
       allow create: if p3In() && request.auth.uid != owner
-        && request.resource.data.keys().hasOnly([request.auth.uid, p3PokeKey(), p3BoardKey()])
+        && request.resource.data.keys().hasOnly([request.auth.uid, p3PokeKey(), p3BoardKey(), p3RtcKey()])
         && request.resource.data.size() > 0
-        && p3NowIfSet(request.auth.uid) && p3NowIfSet(p3PokeKey()) && p3NowIfSet(p3BoardKey())
+        && p3NowIfSet(request.auth.uid) && p3NowIfSet(p3PokeKey()) && p3NowIfSet(p3BoardKey()) && p3NowIfSet(p3RtcKey())
         && p3Mutual(owner);
       allow update: if p3In() && request.auth.uid != owner
         && request.resource.data.diff(resource.data).affectedKeys().size() > 0
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([request.auth.uid, p3PokeKey(), p3BoardKey()])
-        && p3NowIfChanged(request.auth.uid) && p3NowIfChanged(p3BoardKey())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([request.auth.uid, p3PokeKey(), p3BoardKey(), p3RtcKey()])
+        && p3NowIfChanged(request.auth.uid) && p3NowIfChanged(p3BoardKey()) && p3NowIfChanged(p3RtcKey())
         && (!(p3PokeKey() in request.resource.data.diff(resource.data).affectedKeys())
           || (request.resource.data[p3PokeKey()] == request.time
             && (!(p3PokeKey() in resource.data) || request.time > resource.data[p3PokeKey()] + duration.value(30, 's'))))
