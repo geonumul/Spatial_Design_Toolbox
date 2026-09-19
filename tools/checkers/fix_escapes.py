@@ -4,7 +4,7 @@
 """
 import re, sys, json, pathlib
 sys.stdout.reconfigure(encoding="utf-8")
-W = pathlib.Path(r"D:\GRAPH_LECTURE_OJLEE\2026\최종정리\_작업")
+W = pathlib.Path(__file__).resolve().parents[4] / "02_작업" / "그래프신경망" / "최종정리" / "_작업"   # checkers > tools > 저장소 > 03_사이트 > 프로젝트
 CTRL = {"\x0b": "\\v", "\x08": "\\b", "\x07": "\\a", "\x0c": "\\f"}
 # 탭은 정상 글자일 수도 있으니 TeX 명령 이름 앞일 때만
 TAB_CMDS = r"(heta|ext|imes|au|ilde|op|riangle|frac|o\b|extbf|extrm)"

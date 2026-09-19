@@ -4,7 +4,7 @@
 
 ## 1. 로컬 폴더와 사이트 과목의 대응
 
-| 로컬 폴더 (`D:\공간디자인 수업 문제은행\`) | 사이트 페이지 |
+| 로컬 폴더 (`D:\GRAPH_LECTURE_OJLEE\toolbox과목\`) | 사이트 페이지 |
 |---|---|
 | `0. 근현대공간디자인` | `subjects/modern-space-design/` |
 | `1. 실내디자인시공과실무` | `subjects/interior-construction/` |

@@ -11,8 +11,12 @@ import sys, re, html, pathlib, subprocess, argparse
 sys.stdout.reconfigure(encoding="utf-8")
 import fitz
 
-ROOT = pathlib.Path(r"D:\GRAPH_LECTURE_OJLEE\2026\번역")
-FINAL = pathlib.Path(r"D:\GRAPH_LECTURE_OJLEE\2026\최종정리")
+_GNN = pathlib.Path(__file__).resolve().parents[4] / "02_작업" / "그래프신경망"   # checkers > tools > 저장소 > 03_사이트 > 프로젝트
+ROOT = _GNN / "번역"
+SLIDES = _GNN.parents[1] / "01_수업자료" / "그래프신경망" / "강의자료"
+DECK_FILE = {"L0": "00_OT_Orientation.pdf", "L1": "01주차_Introduction to Graphs.pdf",
+             "L2": "02주차_Message Passing Mechanism & GNNs.pdf", "L3": "03주차_Expressivity of GNNs_Extended.pdf"}
+FINAL = _GNN / "최종정리"
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 NAMES = {"L0": "0-Orientation", "L1": "1-Introduction to Graphs", "L2": "2-Message Passing Mechanism & GNNs",
          "L3": "3-Expressivity of GNNs"}
@@ -255,7 +259,7 @@ def load_lectures(tag, lect_dir):
 
 def vectorize(tag, pdf_path, order):
     """Chrome 이 넣은 슬라이드 PNG 자리에 원본 벡터 페이지를 덮어쓴다. order = 문서에 실린 슬라이드 번호 순서."""
-    en_path = ROOT.parent / "강의자료" / f"{NAMES[tag]}.pdf"
+    en_path = SLIDES / DECK_FILE[tag]
     ko_path = ROOT / "img" / f"{tag}_ko.pdf"
     if not ko_path.exists():
         print(f"  [vectorize] {ko_path.name} 없음: 그림 그대로"); return

@@ -24,7 +24,14 @@ import fitz
 
 sys.stdout.reconfigure(encoding="utf-8")
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-GNN = pathlib.Path(r"D:/GRAPH_LECTURE_OJLEE/2026")
+# 프로젝트 폴더: 저장소(03_사이트/Toolbox_Group_Study)에서 두 칸 위. GNN 작업 폴더와 GNN 홈페이지 저장소는 여기 기준 상대 경로
+GNN = ROOT.parents[1] / "02_작업" / "그래프신경망"   # 번역/, 최종정리/_작업/
+GNN_SITE = ROOT.parent / "Graph-Neural-Networks-Fall-2026"
+
+
+def _pdf(p):
+    """subject.json 의 pdf 는 저장소 기준 상대 경로 (절대 경로도 된다)"""
+    return str((ROOT / p).resolve())
 
 
 def _iot():
@@ -32,7 +39,7 @@ def _iot():
     cfg = json.loads((w / "subject.json").read_text(encoding="utf-8"))
     return {
         "name": "iot-smart-home",
-        "decks": {k: v["pdf"] for k, v in cfg["decks"].items()},
+        "decks": {k: _pdf(v["pdf"]) for k, v in cfg["decks"].items()},
         "lesson": str(w / "lesson" / "{deck}_*.json"),
         "glossary": [str(w / "rules" / "용어사전.json")],
         "corpus": [str(w / "bank" / "*.json"), str(w / "_src" / "exam_2026_3.txt")],
@@ -52,7 +59,7 @@ def _gnn():
         "glossary": [],
         "corpus": [str(work / "문제은행" / "*.json"), str(work / "기출_텍스트" / "*.txt")],
         "out": work / "recall",
-        "img": GNN / "최종정리" / "홈페이지" / "img",
+        "img": GNN_SITE / "img",
         "layout": "wide",
     }
 
@@ -62,7 +69,7 @@ def _eco():
     cfg = json.loads((w / "subject.json").read_text(encoding="utf-8"))
     return {
         "name": "eco-architecture",
-        "decks": {k: v["pdf"] for k, v in cfg["decks"].items()},
+        "decks": {k: _pdf(v["pdf"]) for k, v in cfg["decks"].items()},
         "lesson": str(w / "lesson" / "{deck}_*.json"),
         "glossary": [],
         # 레슨이 없어서 정리 슬라이드 단원 용어, 주차 용어집을 용어로 쓴다

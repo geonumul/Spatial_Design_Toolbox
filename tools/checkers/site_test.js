@@ -1,6 +1,6 @@
 // 홈페이지 jsdom 스모크 테스트: 라우트 전부 열고, 문제 풀이, 오답노트, 용어 카드, (있으면) 회독과 정리 슬라이드 넘기기
 const { JSDOM } = require('jsdom'); const fs = require('fs'); const path = require('path');
-const ROOT = 'D:/GRAPH_LECTURE_OJLEE/2026/최종정리/홈페이지';
+const ROOT = process.argv[2] || path.resolve(__dirname, '..', '..', '..', 'Graph-Neural-Networks-Fall-2026');   // 03_사이트 안의 GNN 홈페이지 저장소
 let html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')
   .replace(/<script src="https?:[^"]+"[^>]*><\/script>/g, '')
   .replace(/<link [^>]*>/g, '')

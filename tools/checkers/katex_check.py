@@ -4,7 +4,7 @@
 """
 import sys, re, json, html, pathlib, subprocess, argparse
 sys.stdout.reconfigure(encoding="utf-8")
-FINAL = pathlib.Path(r"D:\GRAPH_LECTURE_OJLEE\2026\최종정리")
+FINAL = pathlib.Path(__file__).resolve().parents[4] / "02_작업" / "그래프신경망" / "최종정리"   # checkers > tools > 저장소 > 03_사이트 > 프로젝트
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$\n]+?)\$", re.S)
 

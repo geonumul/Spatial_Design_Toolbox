@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """그래프 신경망(GNN) 사이트를 과목 하나로 가져오기
-원본: D:/GRAPH_LECTURE_OJLEE/2026/최종정리/홈페이지 (GNN 빌드 결과, python build_site.py 로 만든 것)
+원본: 03_사이트/Graph-Neural-Networks-Fall-2026, 이 저장소 옆 폴더 (GNN 빌드 결과, python build_site.py 로 만든 것)
 출력: subjects/gnn/ (index.html, assets, data, img, practice) + 홈 index.html 의 GNN 카드 숫자
 사용: python tools/import_gnn.py
 """
@@ -8,7 +8,7 @@ import json, pathlib, re, shutil, sys
 
 sys.stdout.reconfigure(encoding="utf-8")
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SRC = pathlib.Path(r"D:/GRAPH_LECTURE_OJLEE/2026/최종정리/홈페이지")
+SRC = ROOT.parent / "Graph-Neural-Networks-Fall-2026"   # 03_사이트 안의 GNN 홈페이지 저장소
 DST = ROOT / "subjects" / "gnn"
 HREF = "subjects/gnn/index.html"
 

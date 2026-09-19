@@ -212,7 +212,7 @@ def main():
     decks = [a for a in argv[1:] if a in cfg.get("decks", {})] or list(cfg.get("decks", {}))
     print(f"부분 읽기: {slug}")
     for deck in decks:
-        build(slug, deck, cfg["decks"][deck]["pdf"], sheet)
+        build(slug, deck, str((ROOT / cfg["decks"][deck]["pdf"]).resolve()), sheet)   # pdf 는 저장소 기준 상대 경로
 
 
 if __name__ == "__main__":

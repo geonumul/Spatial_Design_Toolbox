@@ -6,7 +6,7 @@
 
 - 외부 라이브러리 없음. SVG 와 `requestAnimationFrame` 만 써요.
 - 과목 공통 틀은 `viz.js` 하나, 그림은 과목 묶음 파일(`gnn.js`, `iot.js` ...)에 들어 있어요.
-- GNN 사이트(`D:/GRAPH_LECTURE_OJLEE/2026/최종정리/_작업/html/viz/`)에도 `viz.js`, `gnn.js`, 이 문서가 똑같이 들어 있어요. 원본은 이 폴더예요.
+- GNN 사이트(`D:/GRAPH_LECTURE_OJLEE/02_작업/그래프신경망/최종정리/_작업/html/viz/`)에도 `viz.js`, `gnn.js`, 이 문서가 똑같이 들어 있어요. 원본은 이 폴더예요.
 
 ## 파일
 
@@ -167,11 +167,11 @@
    - 자리표에 나온 슬라이드 파일에서 `"vp"` 표시가 있는 프레임을 지우고 다시 넣어요. 몇 번 돌려도 결과가 같아요.
    - `build_slides_*.py` 로 슬라이드 JSON 을 새로 만들었으면 이 명령을 다시 돌려요. 예를 들어 친환경건축은
      `python work/eco-architecture/notes/build_slides_wb.py` 다음에 꼭 `python tools/viz_tool.py place work/eco-architecture/notes/viz_place.json` 을 돌려요.
-     (IoT: `work/iot-smart-home/notes/viz_place.json`, GNN: `2026/최종정리/_작업/html/viz_place.json`)
+     (IoT: `work/iot-smart-home/notes/viz_place.json`, GNN: `02_작업/그래프신경망/최종정리/_작업/html/viz_place.json`)
 4. `python tools/checkers/slide_check.py work/<과목>/notes/slides_w*.json`
 5. `python tools/build_site.py <과목> --no-home`. `index.html` 에 `engine/viz/viz.js` 와 묶음 파일이 자동으로 들어가요.
 
-GNN 은 `python tools/viz_tool.py place "D:/GRAPH_LECTURE_OJLEE/2026/최종정리/_작업/html/viz_place.json"`, 체커는 `2026/번역/_tools/slide_check.py`,
+GNN 은 `python tools/viz_tool.py place "D:/GRAPH_LECTURE_OJLEE/02_작업/그래프신경망/최종정리/_작업/html/viz_place.json"`, 체커는 `02_작업/그래프신경망/번역/_tools/slide_check.py`,
 빌드는 `_작업/html/build_site.py` (`html/viz/*.js` 를 `홈페이지/assets/viz/` 로 복사) 다음 `python tools/import_gnn.py` 예요.
 
 ## GNN 과 맞추기

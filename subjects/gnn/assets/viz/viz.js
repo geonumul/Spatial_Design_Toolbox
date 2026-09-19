@@ -2,7 +2,7 @@
    정리 슬라이드, 회독 레슨의 {"kind": "viz", "viz": "<이름>", ...} 프레임을 그린다.
    그림 하나하나는 engine/viz/<묶음>.js 에서 SDTViz.add('<묶음>.<이름>', {...}) 로 등록한다.
    쓰는 법, JSON 모양, 새 그림 추가 방법: engine/viz/README.md
-   GNN 사이트(2026/최종정리/_작업/html/viz/)에도 같은 파일이 있다. 고치면 tools/viz_tool.py sync-gnn 으로 맞춘다. */
+   GNN 사이트(02_작업/그래프신경망/최종정리/_작업/html/viz/)에도 같은 파일이 있다. 고치면 tools/viz_tool.py sync-gnn 으로 맞춘다. */
 (function () {
   'use strict';
   if (window.SDTViz) return;

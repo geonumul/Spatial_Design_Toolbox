@@ -29,7 +29,7 @@ CSS = K.CSS + """
 def compose(slug, deck, pages=None):
     cfg = json.loads((ROOT / "work" / slug / "subject.json").read_text(encoding="utf-8"))
     d = cfg["decks"][deck]
-    src = fitz.open(d["pdf"])
+    src = fitz.open((ROOT / d["pdf"]).resolve())   # pdf 는 저장소 기준 상대 경로
     lectures, titles = K.load_lectures(deck, ROOT / "work" / slug / "lecture")
     img = ROOT / "subjects" / slug / "img" / deck
     total = len(src)

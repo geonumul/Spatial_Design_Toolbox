@@ -54,17 +54,17 @@
   "I1": {
    "title": "1강 AI@Home 개요와 지능형홈 시스템 구조",
    "week": "1",
-   "pdf": "D:/GRAPH_LECTURE_OJLEE/toolbox과목/3. IoT 스마트홈/강의자료/iot 1주차.pdf"
+   "pdf": "../../01_수업자료/IoT스마트홈/강의자료/01주차_AI@Home 개요와 지능형홈 시스템 구조.pdf"
   },
   "I2": {
    "title": "2강 데이터 흐름과 IoT 파이프라인",
    "week": "2",
-   "pdf": "D:/GRAPH_LECTURE_OJLEE/toolbox과목/3. IoT 스마트홈/강의자료/iot 2주차.pdf"
+   "pdf": "../../01_수업자료/IoT스마트홈/강의자료/02주차_데이터 흐름과 IoT 파이프라인.pdf"
   },
   "I3": {
    "title": "3강 무선통신 I: 허브와 근거리 무선(WPAN)",
    "week": "3",
-   "pdf": "D:/GRAPH_LECTURE_OJLEE/toolbox과목/3. IoT 스마트홈/강의자료/2026-2학기 IoT스마트홈 · 3강 — 무선통신 I_ 허브와 근거리 무선(WPAN) (마스터 교안).pdf"
+   "pdf": "../../01_수업자료/IoT스마트홈/강의자료/03주차_무선통신 I_허브와 근거리 무선(WPAN).pdf"
   }
  },
  "prereq": {},

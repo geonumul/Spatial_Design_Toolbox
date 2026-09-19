@@ -17,7 +17,7 @@ def main(slug, only):
     for deck, d in cfg.get("decks", {}).items():
         if only and deck not in only:
             continue
-        doc = fitz.open(d["pdf"])
+        doc = fitz.open((ROOT / d["pdf"]).resolve())   # pdf 는 저장소 기준 상대 경로
         site = ROOT / "subjects" / slug / "img" / deck
         png = ROOT / "work" / slug / "_src" / "png" / deck
         site.mkdir(parents=True, exist_ok=True)

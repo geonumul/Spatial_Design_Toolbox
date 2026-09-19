@@ -24,7 +24,7 @@ import hashlib, json, pathlib, re, shutil, sys
 sys.stdout.reconfigure(encoding="utf-8")
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 VIZ = ROOT / "engine" / "viz"
-GNN_VIZ = pathlib.Path(r"D:/GRAPH_LECTURE_OJLEE/2026/최종정리/_작업/html/viz")
+GNN_VIZ = ROOT.parents[1] / "02_작업" / "그래프신경망" / "최종정리" / "_작업" / "html" / "viz"
 GNN_FILES = ("viz.js", "gnn.js", "README.md")
 BAD = ("\u2014", "\u2013", "\u00b7")
 
